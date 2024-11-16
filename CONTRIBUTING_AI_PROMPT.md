@@ -3,6 +3,12 @@
 This guide supplements CONTRIBUTING.md with specific guidelines for AI/LLM contributors.
 Follow both this guide and the main CONTRIBUTING.md when making changes.
 
+## Workflow
+
+The currently active task is described in [doing.md](./work/doing.md).
+
+Things we consider doing in the future is described in [backlog.md](./work/backlog.md).
+
 ## Context Understanding
 
 Try to write tests to build your understanding of the context.
@@ -63,9 +69,12 @@ Before making changes:
 
 ## Version Control
 
-1. Make atomic commits representing single logical changes
+1. Do not commit and push at with a single command.
+   Commits should be done often, pushes when they make sense.
 
-1. Follow Conventional Commits format:
+2. Make atomic commits representing single logical changes
+
+3. Follow Conventional Commits format:
 
    ```text
    <type>[optional scope]: <description>
@@ -81,7 +90,7 @@ Before making changes:
    - test: Test changes
    - chore: Build/tool changes
 
-1. Commit messages should:
+4. Commit messages should:
 
    - Clearly explain the change
    - Include context and reasoning
