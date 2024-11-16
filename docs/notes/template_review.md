@@ -9,6 +9,8 @@ venvg was ignored intead of venv
 
 .python-version was missing, so wrong venv was created. Maybe do an assertion in the make bootstrap file
 
+scripts directory was missing
+
 ## Advice
 
 In general, do a git log on the template files to see what has changed and why.
