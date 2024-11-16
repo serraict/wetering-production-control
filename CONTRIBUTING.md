@@ -43,30 +43,31 @@ We record the coverage of our unit tests.
 ## Development Environment
 
 1. Create and activate a virtual environment:
+
 ```shell
 make bootstrap
 source venv/bin/activate
 ```
 
-2. Install dependencies and development tools:
+1. Install dependencies and development tools:
+
 ```shell
 make update
 ```
 
-3. Run tests to verify setup:
+1. Run tests to verify setup:
+
 ```shell
 make test
 ```
 
-4. Start the development server:
+1. Start the development server:
+
 ```shell
 make server
 ```
 
-
 ## Docker Development
-
-For Docker-based development:
 
 1. Build and start services:
 
@@ -74,7 +75,7 @@ For Docker-based development:
 make docker_compose_debug
 ```
 
-2. Build Docker image:
+1. Build Docker image:
 
 ```shell
 make docker_image
