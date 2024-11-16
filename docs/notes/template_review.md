@@ -9,7 +9,12 @@ venvg was ignored intead of venv
 
 ## Advice
 
+In general, do a git log on the template files to see what has changed and why.
+
 ### Start
+
+Consider adding some form of work organization to get started.
+I used the work directory.
 
 ### More
 
