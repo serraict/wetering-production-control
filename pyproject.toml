@@ -1,0 +1,56 @@
+[project]
+name = "production_control"
+version = "0.1.0"
+description = "Application to help track prodcution information at Wetering Potlilium"
+authors = [{ name = "Marijn vander Zee", email = "marijn@serraict.com" }]
+requires-python = ">=3.10"
+urls = { project = "https://github.com/serraict/wetering_production_control", docs = "https://github.com/serraict/wetering_production_control/blob/main/README.md" }
+dependencies = [
+    "nicegui",
+    "typer",
+    "sqlmodel",
+    "rich",
+    "sqlalchemy-dremio",
+    "pyarrow",
+    "pandas",
+]
+license.file = "LICENCE"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+cliapp = "production_control.__cli__:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "asyncio: mark test as async",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-p nicegui.testing.user_plugin"
+filterwarnings = [
+    # Ignore HTTPX deprecation warning from NiceGUI testing plugin
+    "ignore:The 'app' shortcut is now deprecated:DeprecationWarning:httpx",
+]
+
+[tool.mdformat]
+wrap = 80
+number = false
+end_of_line = "lf"
+
+[tool.mdformat.plugins]
+gfm = { task_list_item = true }
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+include = '\.pyi?$'
