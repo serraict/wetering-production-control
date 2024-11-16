@@ -12,6 +12,11 @@ Get the project started with a first minimal release to production.
 - [x] Setup automation
   - [x] CI workflow for tests and quality checks
   - [x] Package workflow for Docker images
-  - [ ] Configure Codecov token in GitHub secrets
+  - [x] Configure Codecov token in GitHub secrets
+
+- [ ] Setup local development environment.
+- [ ] First successful CI build.
+- [ ] First successful package release.
+- [ ] Add the app to production.
 - [ ] Review contributing guidelines and AI prompt
 - [ ] Review cookiecutter template in terms of starting a project
