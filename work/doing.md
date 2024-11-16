@@ -15,7 +15,7 @@ Get the project started with a first minimal release to production.
   - [x] Configure Codecov token in GitHub secrets
 
 - [x] Setup local development environment.
-- [ ] First successful CI build.
+- [x] First successful CI build.
 - [ ] First successful package release.
 - [ ] Add the app to production.
 - [ ] Review contributing guidelines and AI prompt
