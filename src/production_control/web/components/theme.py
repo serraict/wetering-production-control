@@ -24,9 +24,7 @@ def frame(navigation_title: str):
         warning="#d38334",
     )
 
-    with ui.header().classes(
-        "w-full px-6 py-2 bg-primary flex justify-between items-center"
-    ):
+    with ui.header().classes("w-full px-6 py-2 bg-primary flex justify-between items-center"):
         # Left section: App logo and navigation
         with ui.row().classes("items-center gap-8"):
             # Logo that navigates home on click

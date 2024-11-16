@@ -7,6 +7,8 @@ These notes will be used to improve the template for future projects.
 
 venvg was ignored intead of venv
 
+.python-version was missing, so wrong venv was created. Maybe do an assertion in the make bootstrap file
+
 ## Advice
 
 In general, do a git log on the template files to see what has changed and why.

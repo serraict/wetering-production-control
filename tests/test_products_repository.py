@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch, MagicMock
 import pytest
-from sqlmodel import create_engine, Session, SQLModel
+from sqlmodel import create_engine, Session
 from production_control.products.models import (
     Product,
     ProductRepository,
@@ -122,7 +122,6 @@ def test_get_paginated(mock_session_class, repository, mock_products):
     """Test get_paginated returns correct page of products."""
     # Setup mock
     session = mock_session_class.return_value.__enter__.return_value
-    
     # Mock count query
     count_result = MagicMock()
     count_result.one.return_value = 3
@@ -143,7 +142,6 @@ def test_get_paginated_with_filter(mock_session_class, repository, mock_products
     """Test get_paginated with text filter."""
     # Setup mock
     session = mock_session_class.return_value.__enter__.return_value
-    
     # Mock count query
     count_result = MagicMock()
     count_result.one.return_value = 1

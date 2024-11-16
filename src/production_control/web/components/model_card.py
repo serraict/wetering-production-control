@@ -30,9 +30,7 @@ def display_model_card(
         if title:
             ui.label(title).classes(HEADER_CLASSES + " mb-4")
         elif description_field and hasattr(model, description_field):
-            ui.label(getattr(model, description_field)).classes(
-                HEADER_CLASSES + " mb-4"
-            )
+            ui.label(getattr(model, description_field)).classes(HEADER_CLASSES + " mb-4")
 
         with ui.column().classes("gap-4"):
             # Display regular fields
@@ -42,31 +40,23 @@ def display_model_card(
                     continue
 
                 with ui.row().classes("gap-2 items-start"):
-                    ui.label(field_name.replace("_", " ").title()).classes(
-                        LABEL_CLASSES
-                    )
+                    ui.label(field_name.replace("_", " ").title()).classes(LABEL_CLASSES)
                     # Get the field value
                     value = getattr(model, field_name)
                     # Check if field type contains 'Url' in its string representation
                     if "Url" in str(field.annotation):
-                        ui.link(str(value), str(value), new_tab=True).classes(
-                            LINK_CLASSES
-                        )
+                        ui.link(str(value), str(value), new_tab=True).classes(LINK_CLASSES)
                     else:
                         ui.label(str(value)).classes(VALUE_CLASSES)
 
             # Display computed fields
             for field_name, field in model.__class__.model_computed_fields.items():
                 with ui.row().classes("gap-2 items-start"):
-                    ui.label(field_name.replace("_", " ").title()).classes(
-                        LABEL_CLASSES
-                    )
+                    ui.label(field_name.replace("_", " ").title()).classes(LABEL_CLASSES)
                     # Get the computed field value
                     value = getattr(model, field_name)
                     # Check if return type contains 'Url'
                     if "Url" in str(field.return_type):
-                        ui.link(str(value), str(value), new_tab=True).classes(
-                            LINK_CLASSES
-                        )
+                        ui.link(str(value), str(value), new_tab=True).classes(LINK_CLASSES)
                     else:
                         ui.label(str(value)).classes(VALUE_CLASSES)

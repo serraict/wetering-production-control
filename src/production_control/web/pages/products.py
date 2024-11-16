@@ -94,9 +94,7 @@ def products_page() -> None:
                 """Handle table request events (pagination and sorting)."""
                 # Update pagination state from request
                 new_pagination = (
-                    event["pagination"]
-                    if isinstance(event, dict)
-                    else event.args["pagination"]
+                    event["pagination"] if isinstance(event, dict) else event.args["pagination"]
                 )
                 table_data["pagination"].update(new_pagination)
 

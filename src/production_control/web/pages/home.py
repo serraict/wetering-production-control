@@ -25,9 +25,7 @@ def index_page() -> None:
         with ui.card().classes(CARD_CLASSES):
             # Header section
             with ui.row().classes("w-full justify-center mb-4"):
-                ui.label("Welcome to Production Control").classes(
-                    HEADER_CLASSES
-                )
+                ui.label("Welcome to Production Control").classes(HEADER_CLASSES)
 
             # Main content section
             with ui.column().classes("w-full items-center gap-4"):
@@ -44,9 +42,9 @@ def index_page() -> None:
 
                     with ui.card().classes(NAV_CARD_CLASSES):
                         ui.label("About").classes(HEADER_CLASSES + " mb-2")
-                        ui.label(
-                            "Learn more about Production Control"
-                        ).classes(SUBHEADER_CLASSES + " mb-4")
+                        ui.label("Learn more about Production Control").classes(
+                            SUBHEADER_CLASSES + " mb-4"
+                        )
                         ui.link("About", "/about").classes(LINK_CLASSES)
 
 

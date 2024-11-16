@@ -59,17 +59,13 @@ class ProductRepository:
         if isinstance(connection, Engine):
             self.engine = connection
         else:
-            conn_str = os.getenv(
-                "VINEAPP_DB_CONNECTION", "dremio+flight://localhost:32010/dremio"
-            )
+            conn_str = os.getenv("VINEAPP_DB_CONNECTION", "dremio+flight://localhost:32010/dremio")
             self.engine = create_engine(conn_str)
 
     def get_all(self) -> List[Product]:
         """Get all products from the data source."""
         with Session(self.engine) as session:
-            statement = select(Product).order_by(
-                Product.product_group_name, Product.name
-            )
+            statement = select(Product).order_by(Product.product_group_name, Product.name)
             result = session.execute(statement)
             return [row[0] for row in result]
 
@@ -151,9 +147,7 @@ class ProductRepository:
                     base_query = base_query.order_by(column)
             else:
                 # Default sorting
-                base_query = base_query.order_by(
-                    Product.product_group_name, Product.name
-                )
+                base_query = base_query.order_by(Product.product_group_name, Product.name)
 
             # Apply pagination
             query = base_query.limit(

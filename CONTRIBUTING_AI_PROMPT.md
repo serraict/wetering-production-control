@@ -18,6 +18,7 @@ Try to write tests to build your understanding of the context.
    - `src/web/components`
 
    - test infrastructure
+
    - shared base classes
 
 Before making changes:
@@ -72,9 +73,9 @@ Before making changes:
 1. Do not commit and push at with a single command.
    Commits should be done often, pushes when they make sense.
 
-2. Make atomic commits representing single logical changes
+1. Make atomic commits representing single logical changes
 
-3. Follow Conventional Commits format:
+1. Follow Conventional Commits format:
 
    ```text
    <type>[optional scope]: <description>
@@ -90,7 +91,7 @@ Before making changes:
    - test: Test changes
    - chore: Build/tool changes
 
-4. Commit messages should:
+1. Commit messages should:
 
    - Clearly explain the change
    - Include context and reasoning

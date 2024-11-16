@@ -17,6 +17,7 @@ def test_version():
 
 def test_products_command(monkeypatch: MonkeyPatch):
     """Test products list command."""
+
     class MockProductRepository:
         def get_all(self):
             return [
