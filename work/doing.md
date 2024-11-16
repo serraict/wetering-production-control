@@ -16,7 +16,7 @@ Get the project started with a first minimal release to production.
 
 - [x] Setup local development environment.
 - [x] First successful CI build.
-- [ ] First successful package release.
+- [x] First successful package release.
 - [ ] Add the app to production.
 - [ ] Review contributing guidelines and AI prompt
 - [ ] Review cookiecutter template in terms of starting a project
