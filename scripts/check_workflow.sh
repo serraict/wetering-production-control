@@ -8,6 +8,7 @@ if [ -z "$1" ]; then
 fi
 
 WORKFLOW_NAME=$1
+INTERVAL=5  # Number of seconds to wait between checks
 
 # Get the latest run of the specified workflow
 echo "Checking status of workflow: $WORKFLOW_NAME"
@@ -19,6 +20,7 @@ if [ "$2" = "--watch" ]; then
     echo -e "\nWatching workflow progress (Ctrl+C to stop)..."
     while true; do
         clear
+        echo "Workflow: $WORKFLOW_NAME"
         gh run list --workflow=$WORKFLOW_NAME --limit=1 --json status,conclusion,createdAt,updatedAt,headBranch,displayTitle \
             | jq -r '.[] | "Status: \(.status)\nConclusion: \(.conclusion)\nBranch: \(.headBranch)\nTitle: \(.displayTitle)\nCreated: \(.createdAt)\nLast Update: \(.updatedAt)"'
         
@@ -31,8 +33,8 @@ if [ "$2" = "--watch" ]; then
         fi
         
         # Show countdown with dots
-        for i in {5..1}; do
-            echo -ne "\r     \r"
+        for i in $(seq $INTERVAL -1 1); do
+            echo -ne "\r$(printf '%*s' "$INTERVAL" | tr ' ' ' ')\r"
             printf '.%.0s' $(seq 1 $i)
             sleep 1
         done
