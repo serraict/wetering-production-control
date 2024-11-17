@@ -1,6 +1,5 @@
 [project]
 name = "production_control"
-version = "0.1.0"
 description = "Application to help track prodcution information at Wetering Potlilium"
 authors = [{ name = "Marijn vander Zee", email = "marijn@serraict.com" }]
 requires-python = ">=3.10"
@@ -14,10 +13,11 @@ dependencies = [
     "pyarrow",
     "pandas",
 ]
+dynamic = ["version"]
 license.file = "LICENCE"
 
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
@@ -25,6 +25,8 @@ cliapp = "production_control.__cli__:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
