@@ -11,6 +11,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Optional
 
 from rich.console import Console
@@ -18,8 +19,6 @@ from rich.panel import Panel
 from rich.progress import (
     Progress,
     BarColumn,
-    TextColumn,
-    TimeRemainingColumn,
 )
 from rich.table import Table
 
@@ -48,6 +47,15 @@ class WorkflowRun:
             created_at=data["createdAt"],
             updated_at=data["updatedAt"],
         )
+
+    def get_runtime(self, additional_seconds: int = 0) -> str:
+        """Calculate the total runtime including additional waiting time."""
+        start = datetime.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        end = datetime.strptime(self.updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        runtime = end - start
+        total_seconds = runtime.total_seconds() + additional_seconds
+        minutes, seconds = divmod(int(total_seconds), 60)
+        return f"{minutes}m {seconds}s"
 
 
 def get_workflow_run(workflow_name: str) -> WorkflowRun:
@@ -80,7 +88,7 @@ def get_workflow_run(workflow_name: str) -> WorkflowRun:
         sys.exit(1)
 
 
-def create_status_table(run: WorkflowRun) -> Table:
+def create_status_table(run: WorkflowRun, total_wait_time: int = 0) -> Table:
     """Create a Rich table displaying workflow run information."""
     table = Table(show_header=False, box=None)
     table.add_row("Status", f"[bold]{run.status}[/bold]")
@@ -89,51 +97,47 @@ def create_status_table(run: WorkflowRun) -> Table:
     table.add_row("Title", f"[bold]{run.display_title}[/bold]")
     table.add_row("Created", f"[bold]{run.created_at}[/bold]")
     table.add_row("Last Update", f"[bold]{run.updated_at}[/bold]")
+    table.add_row("Total Runtime", f"[bold]{run.get_runtime(total_wait_time)}[/bold]")
     return table
 
 
 def watch_workflow(workflow_name: str, interval: int = 5) -> None:
     """Watch workflow progress with live updates."""
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TimeRemainingColumn(),
-        console=console,
-        transient=True,
-    ) as progress:
-        task = progress.add_task("Time until next check", total=interval)
+    total_wait_time = 0
+    
+    while True:
+        run = get_workflow_run(workflow_name)
         
-        while True:
-            run = get_workflow_run(workflow_name)
-            table = create_status_table(run)
-            
-            # Clear any previous output
-            console.clear()
-            
-            # Show current status
-            console.print(
-                Panel(
-                    table,
-                    title=f"Workflow: {workflow_name}",
-                    border_style="blue",
-                )
+        # Clear any previous output
+        console.clear()
+        
+        # Show current status
+        console.print(
+            Panel(
+                create_status_table(run, total_wait_time),
+                title=f"Workflow: {workflow_name}",
+                border_style="blue",
             )
+        )
 
-            if run.status == "completed":
-                # Stop the progress display before showing final status
-                progress.stop()
-                
-                conclusion_color = "green" if run.conclusion == "success" else "red"
-                console.print(
-                    f"\nWorkflow completed with conclusion: [{conclusion_color}]{run.conclusion}[/]"
-                )
-                break
+        if run.status == "completed":
+            conclusion_color = "green" if run.conclusion == "success" else "red"
+            console.print(
+                f"\nWorkflow completed with conclusion: [{conclusion_color}]{run.conclusion}[/]"
+            )
+            break
 
-            # Reset and start countdown
-            progress.update(task, completed=0, description="Time until next check")
-            for remaining in range(interval, 0, -1):
-                progress.update(task, completed=interval - remaining)
+        # Show countdown progress
+        with Progress(
+            BarColumn(),
+            console=console,
+            transient=True,
+        ) as progress:
+            task = progress.add_task("", total=interval)
+            for _ in range(interval):
+                progress.update(task, completed=interval - progress.tasks[0].completed - 1)
                 time.sleep(1)
+                total_wait_time += 1
 
 
 def main() -> None:
