@@ -11,7 +11,8 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from typing import Optional
 
 from rich.console import Console
@@ -101,9 +102,10 @@ def create_status_table(run: WorkflowRun, total_wait_time: int = 0) -> Table:
     return table
 
 
-def watch_workflow(workflow_name: str, interval: int = 5) -> None:
+def watch_workflow(workflow_name: str, interval: int = 10) -> None:
     """Watch workflow progress with live updates."""
     total_wait_time = 0
+    update_interval = 0.5  # Update progress every 500ms
     
     while True:
         run = get_workflow_run(workflow_name)
@@ -134,10 +136,11 @@ def watch_workflow(workflow_name: str, interval: int = 5) -> None:
             transient=True,
         ) as progress:
             task = progress.add_task("", total=interval)
-            for _ in range(interval):
-                progress.update(task, completed=interval - progress.tasks[0].completed - 1)
-                time.sleep(1)
-                total_wait_time += 1
+            steps = int(interval / update_interval)
+            for step in range(steps):
+                progress.update(task, completed=interval - (step * update_interval))
+                time.sleep(update_interval)
+                total_wait_time += update_interval
 
 
 def main() -> None:
