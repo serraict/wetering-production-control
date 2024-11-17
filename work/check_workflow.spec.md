@@ -6,7 +6,7 @@ A Python implementation of the workflow status checker using Rich for improved U
 ## Features
 - Monitor GitHub workflow status with real-time updates
 - Display workflow information in a formatted panel
-- Show countdown progress bar for next check
+- Show smooth countdown progress bar for next check
 - Calculate and display total runtime
 - Support both one-time check and continuous watch mode
 
@@ -29,6 +29,8 @@ A Python implementation of the workflow status checker using Rich for improved U
 2. Progress Display
    - Visual countdown bar
    - Bar fills from right to left (countdown)
+   - 10-second interval between status checks
+   - Smooth updates every 500ms
    - No text labels on progress bar
 
 ### Data Source
