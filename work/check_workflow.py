@@ -5,15 +5,13 @@ A Python implementation of the check_workflow.sh script using Rich for improved 
 """
 from __future__ import annotations
 
-import argparse
 import json
 import subprocess
-import sys
-import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
 
+import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import (
@@ -22,6 +20,7 @@ from rich.progress import (
 )
 from rich.table import Table
 
+app = typer.Typer(help="Check GitHub workflow status with Rich UI")
 console = Console()
 
 
@@ -85,14 +84,14 @@ def get_workflow_run(workflow_name: str) -> WorkflowRun:
         data = json.loads(result.stdout)
         if not data:
             console.print(f"[red]No runs found for workflow: {workflow_name}")
-            sys.exit(1)
+            raise typer.Exit(code=1)
         return WorkflowRun.from_json(data[0])
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error fetching workflow: {e}")
-        sys.exit(1)
+        raise typer.Exit(code=1)
     except json.JSONDecodeError as e:
         console.print(f"[red]Error parsing GitHub CLI output: {e}")
-        sys.exit(1)
+        raise typer.Exit(code=1)
 
 
 def create_status_table(run: WorkflowRun) -> Table:
@@ -144,33 +143,39 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
             steps = int(interval / update_interval)
             for step in range(steps):
                 progress.update(task, completed=interval - (step * update_interval))
-                time.sleep(update_interval)
+                typer.sleep(update_interval)
 
 
-def main() -> None:
-    """Main entry point for the script."""
-    parser = argparse.ArgumentParser(description="Check GitHub workflow status with Rich UI")
-    parser.add_argument("workflow_name", help="Name of the workflow to check")
-    parser.add_argument(
+@app.command()
+def check(
+    workflow_name: str = typer.Argument(..., help="Name of the workflow to check"),
+    watch: bool = typer.Option(
+        False,
         "--watch",
-        action="store_true",
+        "-w",
         help="Watch workflow progress until completion",
-    )
-    args = parser.parse_args()
-
-    if args.watch:
-        watch_workflow(args.workflow_name)
+    ),
+    interval: int = typer.Option(
+        10,
+        "--interval",
+        "-i",
+        help="Interval in seconds between status checks (only used with --watch)",
+    ),
+) -> None:
+    """Check GitHub workflow status with Rich UI."""
+    if watch:
+        watch_workflow(workflow_name, interval)
     else:
-        run = get_workflow_run(args.workflow_name)
+        run = get_workflow_run(workflow_name)
         table = create_status_table(run)
         console.print(
             Panel(
                 table,
-                title=f"Workflow: {args.workflow_name}",
+                title=f"Workflow: {workflow_name}",
                 border_style="blue",
             )
         )
 
 
 if __name__ == "__main__":
-    main()
+    app()
