@@ -15,7 +15,12 @@ from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 
 console = Console()
@@ -90,12 +95,13 @@ def create_status_table(run: WorkflowRun) -> Table:
 def watch_workflow(workflow_name: str, interval: int = 5) -> None:
     """Watch workflow progress with live updates."""
     with Progress(
-        SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TimeRemainingColumn(),
         console=console,
         transient=True,
     ) as progress:
-        task = progress.add_task("Checking workflow status...", total=None)
+        task = progress.add_task("Time until next check", total=interval)
         
         while True:
             run = get_workflow_run(workflow_name)
@@ -114,14 +120,20 @@ def watch_workflow(workflow_name: str, interval: int = 5) -> None:
             )
 
             if run.status == "completed":
+                # Stop the progress display before showing final status
+                progress.stop()
+                
                 conclusion_color = "green" if run.conclusion == "success" else "red"
                 console.print(
                     f"\nWorkflow completed with conclusion: [{conclusion_color}]{run.conclusion}[/]"
                 )
                 break
 
-            progress.update(task, description="Waiting for next update...")
-            time.sleep(interval)
+            # Reset and start countdown
+            progress.update(task, completed=0, description="Time until next check")
+            for remaining in range(interval, 0, -1):
+                progress.update(task, completed=interval - remaining)
+                time.sleep(1)
 
 
 def main() -> None:
