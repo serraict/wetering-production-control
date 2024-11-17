@@ -2,12 +2,12 @@
 
 VERSION := $(shell git describe --tags 2>/dev/null || echo "")
 ifeq ($(VERSION),)
-    VERSION := v0.0.1
+    VERSION := v0.1.0
 endif
 
-NEW_VERSION := $(shell python -m setuptools_scm --strip-dev 2>/dev/null || echo "")
+NEW_VERSION := $(shell python -m setuptools_scm 2>/dev/null || echo "")
 ifeq ($(NEW_VERSION),)
-    NEW_VERSION := 0.0.1
+    NEW_VERSION := 0.1.0
 endif
 
 bootstrap:
