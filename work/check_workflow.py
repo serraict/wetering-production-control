@@ -11,8 +11,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime
-from datetime import timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 from rich.console import Console
@@ -49,12 +48,19 @@ class WorkflowRun:
             updated_at=data["updatedAt"],
         )
 
-    def get_runtime(self, additional_seconds: int = 0) -> str:
-        """Calculate the total runtime including additional waiting time."""
-        start = datetime.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-        end = datetime.strptime(self.updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    def get_runtime(self) -> str:
+        """Calculate the total runtime using current time or last update for completed runs."""
+        start = datetime.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=timezone.utc
+        )
+        if self.status == "completed":
+            end = datetime.strptime(self.updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc
+            )
+        else:
+            end = datetime.now(timezone.utc)
         runtime = end - start
-        total_seconds = runtime.total_seconds() + additional_seconds
+        total_seconds = runtime.total_seconds()
         minutes, seconds = divmod(int(total_seconds), 60)
         return f"{minutes}m {seconds}s"
 
@@ -89,7 +95,7 @@ def get_workflow_run(workflow_name: str) -> WorkflowRun:
         sys.exit(1)
 
 
-def create_status_table(run: WorkflowRun, total_wait_time: int = 0) -> Table:
+def create_status_table(run: WorkflowRun) -> Table:
     """Create a Rich table displaying workflow run information."""
     table = Table(show_header=False, box=None)
     table.add_row("Status", f"[bold]{run.status}[/bold]")
@@ -98,25 +104,24 @@ def create_status_table(run: WorkflowRun, total_wait_time: int = 0) -> Table:
     table.add_row("Title", f"[bold]{run.display_title}[/bold]")
     table.add_row("Created", f"[bold]{run.created_at}[/bold]")
     table.add_row("Last Update", f"[bold]{run.updated_at}[/bold]")
-    table.add_row("Total Runtime", f"[bold]{run.get_runtime(total_wait_time)}[/bold]")
+    table.add_row("Total Runtime", f"[bold]{run.get_runtime()}[/bold]")
     return table
 
 
 def watch_workflow(workflow_name: str, interval: int = 10) -> None:
     """Watch workflow progress with live updates."""
-    total_wait_time = 0
     update_interval = 0.5  # Update progress every 500ms
-    
+
     while True:
         run = get_workflow_run(workflow_name)
-        
+
         # Clear any previous output
         console.clear()
-        
+
         # Show current status
         console.print(
             Panel(
-                create_status_table(run, total_wait_time),
+                create_status_table(run),
                 title=f"Workflow: {workflow_name}",
                 border_style="blue",
             )
@@ -140,14 +145,11 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
             for step in range(steps):
                 progress.update(task, completed=interval - (step * update_interval))
                 time.sleep(update_interval)
-                total_wait_time += update_interval
 
 
 def main() -> None:
     """Main entry point for the script."""
-    parser = argparse.ArgumentParser(
-        description="Check GitHub workflow status with Rich UI"
-    )
+    parser = argparse.ArgumentParser(description="Check GitHub workflow status with Rich UI")
     parser.add_argument("workflow_name", help="Name of the workflow to check")
     parser.add_argument(
         "--watch",
