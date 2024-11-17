@@ -69,3 +69,13 @@ quality:
 server:
 	@echo "Starting web server..."
 	python -m production_control.__web__
+
+check-ci:
+@echo "Checking CI workflow..."
+./scripts/check_workflow.py ci.yml --watch
+
+check-package:
+@echo "Checking package workflow..."
+./scripts/check_workflow.py package.yml --watch
+
+check-workflows: check-ci check-package
