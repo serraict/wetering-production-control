@@ -32,7 +32,7 @@ if [ "$2" = "--watch" ]; then
         
         # Show countdown with dots
         for i in {5..1}; do
-            echo -ne "\r$(yes . | head -n $i | tr -d '\n')"
+            printf "\r%.*s" "$i" "....."
             sleep 1
         done
         echo -ne "\r     \r"
