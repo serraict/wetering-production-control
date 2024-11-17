@@ -34,8 +34,8 @@ if [ "$2" = "--watch" ]; then
         
         # Show countdown with dots
         for i in $(seq $INTERVAL -1 1); do
-            echo -ne "\r$(printf '%*s' "$INTERVAL" | tr ' ' ' ')\r"
-            printf '.%.0s' $(seq 1 $i)
+            echo -ne "\r$(printf '%*s' "$INTERVAL")\r"
+            printf '%.*s' "$i" "$(printf '%*s' "$INTERVAL" | tr ' ' '.')"
             sleep 1
         done
     done
