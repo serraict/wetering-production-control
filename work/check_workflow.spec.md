@@ -9,6 +9,7 @@ A Python implementation of the workflow status checker using Typer for CLI and R
 - Show smooth countdown progress bar for next check
 - Calculate and display total runtime
 - Support both one-time check and continuous watch mode
+- Live monitoring of running workflows
 
 ## Implementation Details
 
@@ -22,8 +23,8 @@ A Python implementation of the workflow status checker using Typer for CLI and R
 
 ### Display Components
 1. Status Panel
-   - Workflow status
-   - Conclusion (if available)
+   - Workflow status (in_progress/completed)
+   - Conclusion (success/failure/N/A)
    - Branch name
    - Workflow title
    - Creation timestamp
