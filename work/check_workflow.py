@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
@@ -143,7 +144,7 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
             steps = int(interval / update_interval)
             for step in range(steps):
                 progress.update(task, completed=interval - (step * update_interval))
-                typer.sleep(update_interval)
+                time.sleep(update_interval)
 
 
 @app.command()
