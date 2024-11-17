@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from typing import Any, Dict
@@ -117,10 +118,14 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
 
         if is_completed:
             display_status(workflow_name, run)
-            conclusion_color = "green" if run["conclusion"] == "success" else "red"
+            conclusion = run["conclusion"]
+            conclusion_color = "green" if conclusion == "success" else "red"
             console.print(
-                f"\nWorkflow completed with conclusion: [{conclusion_color}]{run['conclusion']}[/]"
+                f"\nWorkflow completed with conclusion: [{conclusion_color}]{conclusion}[/]"
             )
+            # Exit with non-zero status if workflow failed
+            if conclusion != "success":
+                sys.exit(1)
             break
 
         # Show countdown progress with live runtime updates
@@ -165,6 +170,9 @@ def check(
     else:
         run = get_workflow_run(workflow_name)
         display_status(workflow_name, run)
+        # Exit with non-zero status if workflow failed
+        if run["status"] == "completed" and run["conclusion"] != "success":
+            sys.exit(1)
 
 
 if __name__ == "__main__":

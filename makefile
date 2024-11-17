@@ -1,38 +1,49 @@
-.phony : all
+.PHONY: all
 
 VERSION := $(shell git describe --tags 2>/dev/null || echo "")
-ifeq ($(VERSION),)
-    VERSION := v0.0.1
+ifeq ($(strip $(VERSION)),)
+VERSION := v0.0.1
 endif
 
 NEW_VERSION := $(shell python -m setuptools_scm --strip-dev 2>/dev/null || echo "")
-ifeq ($(NEW_VERSION),)
-    NEW_VERSION := 0.0.1
+ifeq ($(strip $(NEW_VERSION)),)
+NEW_VERSION := 0.0.1
 endif
 
 bootstrap:
 	python -m venv venv
-	@echo "Run 'source venv/bin/activate' to activate the virtual environment, followed by 'make update' to install dependencies."
+	@echo "Run 'source venv/bin/activate' to activate the virtual environment followed by 'make update' to install dependencies."
+
 update:
 	python -m pip install --upgrade pip build
 	python -m pip install -r requirements-dev.txt
 	pip install -e .
+
 console:
+
 format-python:
 	black src tests
+
 format-markdown:
 	mdformat .
+
 format: format-python format-markdown
+
 test:
 	pytest --cov=src/production_control --cov-report=term -m "not integration"
+
 test-integration:
 	pytest --cov=src/production_control --cov-report=term -m "integration"
+
 coverage:
 	pytest --cov=src/production_control --cov-report=term --cov-report=html
+
 build:
 	python -m build
+
 printversion:
 	@python -m setuptools_scm
+
 release:
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "There are uncommitted changes or untracked files"; \
@@ -53,12 +64,16 @@ release:
 	fi
 	git tag v$(NEW_VERSION) && \
 	git push origin main --tags
+
 docker_image:
 	docker build -t ghcr.io/serraict/production_control:$(VERSION) .
+
 docker_push: docker_image
 	docker push ghcr.io/serraict/production_control:$(VERSION)
+
 docker_compose_debug:
 	docker compose up --build
+
 quality:
 	@echo "Running code quality checks..."
 	flake8 src tests
@@ -66,16 +81,17 @@ quality:
 	@echo "Running tests with coverage..."
 	pytest --cov=src/production_control --cov-report=term --cov-report=xml  -m "not integration"
 	@echo "Code quality checks completed."
+
 server:
 	@echo "Starting web server..."
 	python -m production_control.__web__
 
 check-ci:
-@echo "Checking CI workflow..."
-./scripts/check_workflow.py ci.yml --watch
+	@echo "Checking CI workflow..."
+	./scripts/check_workflow.py ci.yml --watch
 
 check-package:
-@echo "Checking package workflow..."
-./scripts/check_workflow.py package.yml --watch
+	@echo "Checking package workflow..."
+	./scripts/check_workflow.py package.yml --watch
 
 check-workflows: check-ci check-package
