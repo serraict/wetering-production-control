@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from rich.console import Console
-from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
@@ -90,46 +89,39 @@ def create_status_table(run: WorkflowRun) -> Table:
 
 def watch_workflow(workflow_name: str, interval: int = 5) -> None:
     """Watch workflow progress with live updates."""
-    with Live(
-        Panel("Fetching workflow status..."),
-        refresh_per_second=1,
-        transient=True,  # This ensures the live display is cleaned up properly
-    ) as live:
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Checking workflow status...", total=None)
+        
         while True:
             run = get_workflow_run(workflow_name)
             table = create_status_table(run)
-            panel = Panel(
-                table,
-                title=f"Workflow: {workflow_name}",
-                border_style="blue",
-            )
             
-            # Update display with current status
-            live.update(panel)
+            # Clear any previous output
+            console.clear()
+            
+            # Show current status
+            console.print(
+                Panel(
+                    table,
+                    title=f"Workflow: {workflow_name}",
+                    border_style="blue",
+                )
+            )
 
             if run.status == "completed":
-                # Clear the live display
-                live.stop()
-                
-                # Show final status with color-coded conclusion
                 conclusion_color = "green" if run.conclusion == "success" else "red"
                 console.print(
                     f"\nWorkflow completed with conclusion: [{conclusion_color}]{run.conclusion}[/]"
                 )
-                
-                # Show final status table
-                console.print(panel)
                 break
 
-            # Show progress below the panel
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-                transient=True,  # Ensures progress bar doesn't leave artifacts
-            ) as progress:
-                progress.add_task(description="Waiting for next update...", total=None)
-                time.sleep(interval)
+            progress.update(task, description="Waiting for next update...")
+            time.sleep(interval)
 
 
 def main() -> None:
