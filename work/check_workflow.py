@@ -8,9 +8,8 @@ from __future__ import annotations
 import json
 import subprocess
 import time
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Dict
 
 import typer
 from rich.console import Console
@@ -24,48 +23,31 @@ from rich.table import Table
 app = typer.Typer(help="Check GitHub workflow status with Rich UI")
 console = Console()
 
-
-@dataclass
-class WorkflowRun:
-    """Represents a GitHub workflow run."""
-
-    status: str
-    conclusion: Optional[str]
-    head_branch: str
-    display_title: str
-    created_at: str
-    updated_at: str
-
-    @classmethod
-    def from_json(cls, data: dict) -> "WorkflowRun":
-        """Create WorkflowRun instance from GitHub CLI JSON output."""
-        return cls(
-            status=data["status"],
-            conclusion=data["conclusion"],
-            head_branch=data["headBranch"],
-            display_title=data["displayTitle"],
-            created_at=data["createdAt"],
-            updated_at=data["updatedAt"],
-        )
-
-    def get_runtime(self) -> str:
-        """Calculate the total runtime using current time or last update for completed runs."""
-        start = datetime.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=timezone.utc
-        )
-        if self.status == "completed":
-            end = datetime.strptime(self.updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(
-                tzinfo=timezone.utc
-            )
-        else:
-            end = datetime.now(timezone.utc)
-        runtime = end - start
-        total_seconds = runtime.total_seconds()
-        minutes, seconds = divmod(int(total_seconds), 60)
-        return f"{minutes}m {seconds}s"
+# Field mapping from GitHub CLI to display labels
+FIELDS = [
+    ("status", "Status"),
+    ("conclusion", "Conclusion"),
+    ("headBranch", "Branch"),
+    ("displayTitle", "Title"),
+    ("createdAt", "Created"),
+    ("updatedAt", "Last Update"),
+]
 
 
-def get_workflow_run(workflow_name: str) -> WorkflowRun:
+def calculate_runtime(created_at: str, updated_at: str, is_completed: bool) -> str:
+    """Calculate runtime from timestamps."""
+    start = datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    if is_completed:
+        end = datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    else:
+        end = datetime.now(timezone.utc)
+    runtime = end - start
+    total_seconds = runtime.total_seconds()
+    minutes, seconds = divmod(int(total_seconds), 60)
+    return f"{minutes}m {seconds}s"
+
+
+def get_workflow_run(workflow_name: str) -> Dict[str, Any]:
     """Fetch latest workflow run information using GitHub CLI."""
     try:
         result = subprocess.run(
@@ -76,7 +58,7 @@ def get_workflow_run(workflow_name: str) -> WorkflowRun:
                 f"--workflow={workflow_name}",
                 "--limit=1",
                 "--json",
-                "status,conclusion,createdAt,updatedAt,headBranch,displayTitle",
+                ",".join(field for field, _ in FIELDS),
             ],
             capture_output=True,
             text=True,
@@ -86,7 +68,7 @@ def get_workflow_run(workflow_name: str) -> WorkflowRun:
         if not data:
             console.print(f"[red]No runs found for workflow: {workflow_name}")
             raise typer.Exit(code=1)
-        return WorkflowRun.from_json(data[0])
+        return data[0]
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error fetching workflow: {e}")
         raise typer.Exit(code=1)
@@ -95,16 +77,20 @@ def get_workflow_run(workflow_name: str) -> WorkflowRun:
         raise typer.Exit(code=1)
 
 
-def create_status_table(run: WorkflowRun) -> Table:
+def create_status_table(run: Dict[str, Any]) -> Table:
     """Create a Rich table displaying workflow run information."""
     table = Table(show_header=False, box=None)
-    table.add_row("Status", f"[bold]{run.status}[/bold]")
-    table.add_row("Conclusion", f"[bold]{run.conclusion or 'N/A'}[/bold]")
-    table.add_row("Branch", f"[bold]{run.head_branch}[/bold]")
-    table.add_row("Title", f"[bold]{run.display_title}[/bold]")
-    table.add_row("Created", f"[bold]{run.created_at}[/bold]")
-    table.add_row("Last Update", f"[bold]{run.updated_at}[/bold]")
-    table.add_row("Total Runtime", f"[bold]{run.get_runtime()}[/bold]")
+
+    # Add standard fields
+    for gh_field, display_label in FIELDS:
+        value = run.get(gh_field, "N/A")
+        table.add_row(display_label, f"[bold]{value}[/bold]")
+
+    # Add runtime calculation
+    is_completed = run["status"] == "completed"
+    runtime = calculate_runtime(run["createdAt"], run["updatedAt"], is_completed)
+    table.add_row("Total Runtime", f"[bold]{runtime}[/bold]")
+
     return table
 
 
@@ -127,10 +113,10 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
             )
         )
 
-        if run.status == "completed":
-            conclusion_color = "green" if run.conclusion == "success" else "red"
+        if run["status"] == "completed":
+            conclusion_color = "green" if run["conclusion"] == "success" else "red"
             console.print(
-                f"\nWorkflow completed with conclusion: [{conclusion_color}]{run.conclusion}[/]"
+                f"\nWorkflow completed with conclusion: [{conclusion_color}]{run['conclusion']}[/]"
             )
             break
 
