@@ -20,6 +20,8 @@ In general, do a git log on the template files to see what has changed and why.
 Consider adding some form of work organization to get started.
 I used the work directory.
 
+Have Claude create its own commits, signed of by the navigator.
+
 ### More
 
 ### Keep
