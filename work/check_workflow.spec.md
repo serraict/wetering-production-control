@@ -7,7 +7,7 @@ A Python implementation of the workflow status checker using Typer for CLI and R
 - Monitor GitHub workflow status with real-time updates
 - Display workflow information in a formatted panel
 - Show smooth countdown progress bar for next check
-- Calculate and display total runtime
+- Live runtime updates during monitoring
 - Support both one-time check and continuous watch mode
 - Live monitoring of running workflows
 
@@ -26,6 +26,28 @@ FIELDS = [
 ]
 ```
 
+### Display Components
+1. Status Panel
+   - Dynamic fields based on field mapping
+   - Live runtime updates every 500ms
+   - Clean table layout without headers
+   - Centralized display logic for consistency
+
+2. Progress Display
+   - Visual countdown bar
+   - Bar fills from right to left (countdown)
+   - 10-second default interval between status checks
+   - Smooth updates every 500ms
+   - Runtime updates synchronized with progress bar
+   - No text labels on progress bar
+
+### Runtime Calculation
+- Accurate tracking for both completed and in-progress runs
+- Uses workflow timestamps for completed runs
+- Uses current time for in-progress runs
+- Updates in real-time during monitoring
+- Proper timezone handling with UTC
+
 ### Command Line Interface (Typer)
 - Required argument: workflow_name (name of the workflow to check)
 - Optional flags:
@@ -33,19 +55,6 @@ FIELDS = [
   * --interval, -i: Set interval between checks (default: 10s)
 - Built-in help with `--help`
 - Shell completion support
-
-### Display Components
-1. Status Panel
-   - Dynamic fields based on field mapping
-   - Runtime calculation for in-progress and completed runs
-   - Clean table layout without headers
-
-2. Progress Display
-   - Visual countdown bar
-   - Bar fills from right to left (countdown)
-   - 10-second default interval between status checks
-   - Smooth updates every 500ms
-   - No text labels on progress bar
 
 ### Data Source
 - Uses GitHub CLI (gh) for workflow data retrieval
