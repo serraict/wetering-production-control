@@ -30,11 +30,11 @@ if [ "$2" = "--watch" ]; then
             break
         fi
         
-        # Show countdown timer
+        # Show countdown with dots
         for i in {5..1}; do
-            echo -ne "\rNext update in $i seconds..."
+            echo -ne "\r$(printf '%*s' "$i" | tr ' ' '.')"
             sleep 1
         done
-        echo -ne "\r                             \r"
+        echo -ne "\r     \r"
     done
 fi
