@@ -93,34 +93,42 @@ def watch_workflow(workflow_name: str, interval: int = 5) -> None:
     with Live(
         Panel("Fetching workflow status..."),
         refresh_per_second=1,
+        transient=True,  # This ensures the live display is cleaned up properly
     ) as live:
         while True:
             run = get_workflow_run(workflow_name)
             table = create_status_table(run)
-            live.update(
-                Panel(
-                    table,
-                    title=f"Workflow: {workflow_name}",
-                    border_style="blue",
-                )
+            panel = Panel(
+                table,
+                title=f"Workflow: {workflow_name}",
+                border_style="blue",
             )
+            
+            # Update display with current status
+            live.update(panel)
 
             if run.status == "completed":
+                # Clear the live display
+                live.stop()
+                
+                # Show final status with color-coded conclusion
                 conclusion_color = "green" if run.conclusion == "success" else "red"
                 console.print(
                     f"\nWorkflow completed with conclusion: [{conclusion_color}]{run.conclusion}[/]"
                 )
+                
+                # Show final status table
+                console.print(panel)
                 break
 
+            # Show progress below the panel
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 console=console,
-                transient=True,
+                transient=True,  # Ensures progress bar doesn't leave artifacts
             ) as progress:
-                progress.add_task(
-                    description="Waiting for next update...", total=None
-                )
+                progress.add_task(description="Waiting for next update...", total=None)
                 time.sleep(interval)
 
 
