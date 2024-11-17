@@ -77,7 +77,7 @@ def get_workflow_run(workflow_name: str) -> Dict[str, Any]:
         raise typer.Exit(code=1)
 
 
-def create_status_table(run: Dict[str, Any]) -> Table:
+def create_status_table(run: Dict[str, Any], runtime: str | None = None) -> Table:
     """Create a Rich table displaying workflow run information."""
     table = Table(show_header=False, box=None)
 
@@ -86,12 +86,25 @@ def create_status_table(run: Dict[str, Any]) -> Table:
         value = run.get(gh_field, "N/A")
         table.add_row(display_label, f"[bold]{value}[/bold]")
 
-    # Add runtime calculation
-    is_completed = run["status"] == "completed"
-    runtime = calculate_runtime(run["createdAt"], run["updatedAt"], is_completed)
+    # Add runtime
+    if runtime is None:
+        is_completed = run["status"] == "completed"
+        runtime = calculate_runtime(run["createdAt"], run["updatedAt"], is_completed)
     table.add_row("Total Runtime", f"[bold]{runtime}[/bold]")
 
     return table
+
+
+def display_status(workflow_name: str, run: Dict[str, Any], runtime: str | None = None) -> None:
+    """Display current workflow status."""
+    console.clear()
+    console.print(
+        Panel(
+            create_status_table(run, runtime),
+            title=f"Workflow: {workflow_name}",
+            border_style="blue",
+        )
+    )
 
 
 def watch_workflow(workflow_name: str, interval: int = 10) -> None:
@@ -100,27 +113,17 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
 
     while True:
         run = get_workflow_run(workflow_name)
+        is_completed = run["status"] == "completed"
 
-        # Clear any previous output
-        console.clear()
-
-        # Show current status
-        console.print(
-            Panel(
-                create_status_table(run),
-                title=f"Workflow: {workflow_name}",
-                border_style="blue",
-            )
-        )
-
-        if run["status"] == "completed":
+        if is_completed:
+            display_status(workflow_name, run)
             conclusion_color = "green" if run["conclusion"] == "success" else "red"
             console.print(
                 f"\nWorkflow completed with conclusion: [{conclusion_color}]{run['conclusion']}[/]"
             )
             break
 
-        # Show countdown progress
+        # Show countdown progress with live runtime updates
         with Progress(
             BarColumn(),
             console=console,
@@ -129,6 +132,13 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
             task = progress.add_task("", total=interval)
             steps = int(interval / update_interval)
             for step in range(steps):
+                # Calculate current runtime
+                runtime = calculate_runtime(run["createdAt"], run["updatedAt"], False)
+                
+                # Update display
+                display_status(workflow_name, run, runtime)
+                
+                # Update progress bar
                 progress.update(task, completed=interval - (step * update_interval))
                 time.sleep(update_interval)
 
@@ -154,14 +164,7 @@ def check(
         watch_workflow(workflow_name, interval)
     else:
         run = get_workflow_run(workflow_name)
-        table = create_status_table(run)
-        console.print(
-            Panel(
-                table,
-                title=f"Workflow: {workflow_name}",
-                border_style="blue",
-            )
-        )
+        display_status(workflow_name, run)
 
 
 if __name__ == "__main__":
