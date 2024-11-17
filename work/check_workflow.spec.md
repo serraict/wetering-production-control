@@ -13,6 +13,19 @@ A Python implementation of the workflow status checker using Typer for CLI and R
 
 ## Implementation Details
 
+### Field Mapping
+- Uses a list of tuples to map GitHub CLI fields to display labels
+- Simplifies data handling and display formatting
+- Easy to extend with new fields
+```python
+FIELDS = [
+    ("status", "Status"),
+    ("conclusion", "Conclusion"),
+    ("headBranch", "Branch"),
+    # ...
+]
+```
+
 ### Command Line Interface (Typer)
 - Required argument: workflow_name (name of the workflow to check)
 - Optional flags:
@@ -23,13 +36,9 @@ A Python implementation of the workflow status checker using Typer for CLI and R
 
 ### Display Components
 1. Status Panel
-   - Workflow status (in_progress/completed)
-   - Conclusion (success/failure/N/A)
-   - Branch name
-   - Workflow title
-   - Creation timestamp
-   - Last update timestamp
-   - Total runtime (calculated from timestamps)
+   - Dynamic fields based on field mapping
+   - Runtime calculation for in-progress and completed runs
+   - Clean table layout without headers
 
 2. Progress Display
    - Visual countdown bar
@@ -40,7 +49,7 @@ A Python implementation of the workflow status checker using Typer for CLI and R
 
 ### Data Source
 - Uses GitHub CLI (gh) for workflow data retrieval
-- JSON-based data parsing
+- Dynamic JSON field selection based on mapping
 - Error handling with Typer exit codes
 
 ### Dependencies
