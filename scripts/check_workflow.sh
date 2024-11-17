@@ -23,8 +23,9 @@ if [ "$2" = "--watch" ]; then
             | jq -r '.[] | "Status: \(.status)\nConclusion: \(.conclusion)\nBranch: \(.headBranch)\nTitle: \(.displayTitle)\nCreated: \(.createdAt)\nLast Update: \(.updatedAt)"'
         
         # Check if workflow is completed
-        CONCLUSION=$(gh run list --workflow=$WORKFLOW_NAME --limit=1 --json conclusion | jq -r '.[].conclusion')
-        if [ "$CONCLUSION" != "null" ]; then
+        STATUS=$(gh run list --workflow=$WORKFLOW_NAME --limit=1 --json status | jq -r '.[].status')
+        if [ "$STATUS" = "completed" ]; then
+            CONCLUSION=$(gh run list --workflow=$WORKFLOW_NAME --limit=1 --json conclusion | jq -r '.[].conclusion')
             echo -e "\nWorkflow completed with conclusion: $CONCLUSION"
             break
         fi
