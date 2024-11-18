@@ -73,24 +73,6 @@ def spacing_page() -> None:
                 {"name": "actions", "label": "Acties", "field": "actions"},
             ]
 
-            @ui.refreshable
-            def spacing_table() -> ui.table:
-                """Create a refreshable table component."""
-                table = ui.table(
-                    columns=columns,
-                    rows=table_data["rows"] if "rows" in table_data else [],
-                    row_key="id",
-                    pagination=table_data["pagination"],
-                ).classes("w-full")
-                table.on("request", handle_table_request)
-                return table
-
-            async def handle_filter(e: Any) -> None:
-                """Handle changes to the search filter with debounce."""
-                table_data["filter"] = e.value if e.value else ""
-                table_data["pagination"]["page"] = 1  # Reset to first page
-                load_filtered_data()
-
             def handle_table_request(event: Dict[str, Any]) -> None:
                 """Handle table request events (pagination and sorting)."""
                 # Update pagination state from request
@@ -128,6 +110,12 @@ def spacing_page() -> None:
                 table_data["pagination"]["rowsNumber"] = total
                 spacing_table.refresh()
 
+            async def handle_filter(e: Any) -> None:
+                """Handle changes to the search filter with debounce."""
+                table_data["filter"] = e.value if e.value else ""
+                table_data["pagination"]["page"] = 1  # Reset to first page
+                load_filtered_data()
+
             def load_filtered_data() -> None:
                 """Load data with current filter and refresh table."""
                 handle_table_request({"pagination": table_data["pagination"]})
@@ -148,6 +136,18 @@ def spacing_page() -> None:
                 ]
                 table_data["pagination"]["rowsNumber"] = total
                 spacing_table.refresh()
+
+            @ui.refreshable
+            def spacing_table() -> ui.table:
+                """Create a refreshable table component."""
+                table = ui.table(
+                    columns=columns,
+                    rows=table_data["rows"] if "rows" in table_data else [],
+                    row_key="id",
+                    pagination=table_data["pagination"],
+                ).classes("w-full")
+                table.on("request", handle_table_request)
+                return table
 
             # Create table and load data
             table = spacing_table()
