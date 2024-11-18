@@ -17,7 +17,7 @@ def main():
     try:
         # Get first page of spacing records
         registraties, total = repository.get_paginated(page=1, items_per_page=50)
-        
+
         print(f"\nFound {total} spacing records. Showing first {len(registraties)}:")
         for reg in registraties:
             print(f"\nBatch {reg.partij_code} - {reg.product_naam}:")
@@ -29,11 +29,7 @@ def main():
 
         # Try filtering
         print("\nFiltering records with 'TEST':")
-        filtered, total = repository.get_paginated(
-            page=1,
-            items_per_page=5,
-            filter_text="TEST"
-        )
+        filtered, total = repository.get_paginated(page=1, items_per_page=5, filter_text="TEST")
         print(f"Found {total} matching records")
         for reg in filtered:
             print(f"- {reg.partij_code}: {reg.product_naam}")

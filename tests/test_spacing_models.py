@@ -70,11 +70,11 @@ def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
     # Arrange
     repository = SpacingRepository(mock_engine)
     session = mock_session_class.return_value.__enter__.return_value
-    
+
     # Mock count query
     count_result = MagicMock()
     count_result.one.return_value = 1
-    
+
     # Mock data query
     test_date = date(2023, 1, 1)
     test_record = WijderzetRegistratie(

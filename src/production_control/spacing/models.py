@@ -113,8 +113,7 @@ class SpacingRepository:
             else:
                 # Default sorting
                 base_query = base_query.order_by(
-                    WijderzetRegistratie.productgroep_naam,
-                    WijderzetRegistratie.partij_code
+                    WijderzetRegistratie.productgroep_naam, WijderzetRegistratie.partij_code
                 )
 
             # Apply pagination
