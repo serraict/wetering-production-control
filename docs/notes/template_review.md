@@ -22,6 +22,8 @@ I used the work directory.
 
 Have Claude create its own commits, signed of by the navigator.
 
+make bootstrap should create .python-version and .env
+
 ### More
 
 ### Keep

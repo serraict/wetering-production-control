@@ -30,6 +30,7 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ## Versioning
 
 We follow [Semantic Versioning](https://semver.org/) (SemVer) for version numbers.
+The project is version is determined using `setuptools_scm`.
 
 ## Changelog
 
@@ -80,3 +81,17 @@ make docker_compose_debug
 ```shell
 make docker_image
 ```
+
+## Releasing
+
+Release are created using a Github action.
+
+To release, commit any pending changes and push to origin.
+
+Then run:
+
+```shell
+make release
+```
+
+This will update the changelog, add a tag to the central repository and trigger a release build.
