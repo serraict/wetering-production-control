@@ -6,7 +6,17 @@ from decimal import Decimal
 from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
-from sqlalchemy import Engine, func, Integer, bindparam, text, distinct, desc, create_engine, nulls_last
+from sqlalchemy import (
+    Engine,
+    func,
+    Integer,
+    bindparam,
+    text,
+    distinct,
+    desc,
+    create_engine,
+    nulls_last,
+)
 from sqlmodel import Field, Session, SQLModel, select
 
 
@@ -17,35 +27,97 @@ class WijderzetRegistratie(SQLModel, table=True):
     __table_args__ = {"schema": "Productie.Controle"}
 
     # Primary key
-    id: UUID = Field(primary_key=True)
+    id: UUID = Field(
+        primary_key=True,
+        title="ID",
+        sa_column_kwargs={"info": {"ui_hidden": True}},
+    )
 
     # Batch information
-    partij_code: str
-    product_naam: str
-    productgroep_naam: str
+    partij_code: str = Field(
+        title="Partij",
+        description="Code van de partij",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 1}},
+    )
+    product_naam: str = Field(
+        title="Product",
+        description="Naam van het product",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 2}},
+    )
+    productgroep_naam: str = Field(
+        title="Productgroep",
+        description="Naam van de productgroep",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 3}},
+    )
 
     # Realization dates
-    datum_oppotten_real: Optional[date] = None
-    datum_uit_cel_real: Optional[date] = None
-    datum_wdz1_real: Optional[date] = None
-    datum_wdz2_real: Optional[date] = None
+    datum_oppotten_real: Optional[date] = Field(
+        default=None,
+        title="Oppotdatum",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 4}},
+    )
+    datum_uit_cel_real: Optional[date] = Field(
+        default=None,
+        title="Uit cel",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 5}},
+    )
+    datum_wdz1_real: Optional[date] = Field(
+        default=None,
+        title="Wijderzet 1",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 6}},
+    )
+    datum_wdz2_real: Optional[date] = Field(
+        default=None,
+        title="Wijderzet 2",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
+    )
 
     # Plant amounts
-    aantal_planten_gerealiseerd: int
+    aantal_planten_gerealiseerd: int = Field(
+        title="Planten",
+        description="Aantal gerealiseerde planten",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
+    )
 
     # Table amounts
-    aantal_tafels_totaal: int
-    aantal_tafels_na_wdz1: int
-    aantal_tafels_na_wdz2: int
-    aantal_tafels_oppotten_plan: Decimal
+    aantal_tafels_totaal: int = Field(
+        title="Tafels totaal",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
+    )
+    aantal_tafels_na_wdz1: int = Field(
+        title="Tafels na WZ1",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
+    )
+    aantal_tafels_na_wdz2: int = Field(
+        title="Tafels na WZ2",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 11}},
+    )
+    aantal_tafels_oppotten_plan: Decimal = Field(
+        title="Tafels plan",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 12}},
+    )
 
     # Density information
-    dichtheid_oppotten_plan: int
-    dichtheid_wz1_plan: int
-    dichtheid_wz2_plan: Optional[float] = None
+    dichtheid_oppotten_plan: int = Field(
+        title="Dichtheid oppotten",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 13}},
+    )
+    dichtheid_wz1_plan: int = Field(
+        title="Dichtheid WZ1",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 14}},
+    )
+    dichtheid_wz2_plan: Optional[float] = Field(
+        default=None,
+        title="Dichtheid WZ2",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 15}},
+    )
 
     # Error tracking
-    wijderzet_registratie_fout: Optional[bool] = None
+    wijderzet_registratie_fout: Optional[bool] = Field(
+        default=None,
+        title="Fout",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 16}},
+    )
 
 
 class SpacingRepository:
