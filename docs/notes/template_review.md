@@ -26,8 +26,59 @@ make bootstrap should create .python-version and .env
 
 ### More
 
+1. Project Organization:
+   - Add a `work/` directory by default with:
+     - doing.md for active work tracking
+     - backlog.md for future work
+   - Add a `scripts/` directory for utility scripts
+   - Include template for system architecture documentation
+
+2. Development Setup:
+   - Add assertions in bootstrap to verify correct Python version
+   - Include .env.example with required variables
+   - Add setuptools_scm for version management from start
+   - Include basic makefile targets for common tasks
+
+3. Documentation:
+   - Include template for CHANGELOG.md following Keep a Changelog
+   - Add template for architecture/vision documentation
+   - Include AI/LLM specific contributing guidelines
+   - Add template review document from start
+
+4. CI/CD:
+   - Include GitHub Actions workflows for:
+     - CI (tests, quality checks)
+     - Package building (Docker)
+   - Add workflow monitoring utilities
+   - Include Codecov integration setup
+
 ### Keep
+
+1. Basic Structure:
+   - Python package setup with tests
+   - Docker support
+   - Quality tools (black, flake8)
+   - Make-based workflow
+
+2. Documentation:
+   - Contributing guidelines
+   - README structure
+   - License handling
 
 ### Less
 
+1. Simplify initial setup:
+   - Reduce number of manual post-template steps
+   - Automate more of the initial configuration
+
 ### Stop
+
+1. Wrong defaults:
+   - Using incorrect venv name in .gitignore
+   - Missing critical files (.python-version, .env)
+   - Missing useful directories (scripts/, work/)
+
+2. Manual steps that could be automated:
+   - Version management setup
+   - Initial documentation structure
+   - Basic CI/CD configuration
