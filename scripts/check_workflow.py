@@ -139,10 +139,10 @@ def watch_workflow(workflow_name: str, interval: int = 10) -> None:
             for step in range(steps):
                 # Calculate current runtime
                 runtime = calculate_runtime(run["createdAt"], run["updatedAt"], False)
-                
+
                 # Update display
                 display_status(workflow_name, run, runtime)
-                
+
                 # Update progress bar
                 progress.update(task, completed=interval - (step * update_interval))
                 time.sleep(update_interval)

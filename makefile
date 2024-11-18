@@ -22,7 +22,7 @@ update:
 console:
 
 format-python:
-	black src tests
+	black src tests scripts
 
 format-markdown:
 	mdformat .
