@@ -7,7 +7,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlmodel import Field, Session, SQLModel, create_engine, select
-from sqlalchemy import text
+from sqlalchemy import text, Integer, bindparam
 from sqlalchemy.dialects import registry
 from sqlalchemy_dremio.flight import DremioDialect_flight
 
@@ -127,10 +127,12 @@ def main():
 
             # Now try using our model with SQLModel select
             print("\nTrying model-based query:")
-            statement = select(WijderzetRegistratie)  # limit does not work with Dremio
-            results = session.execute(statement)
-            registraties = results.scalars().all()
-
+            statement = select(WijderzetRegistratie).limit(
+                bindparam("limit", type_=Integer, literal_execute=True)
+            )
+            results = session.exec(statement, params={"limit": 10})
+            registraties = list(results)
+            
             for reg in registraties:
                 print(f"\nBatch {reg.partij_code} - {reg.product_naam}:")
                 print(f"  Plants realized: {reg.aantal_planten_gerealiseerd}")
