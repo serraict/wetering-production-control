@@ -1,6 +1,6 @@
 """Products page implementation."""
 
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from nicegui import APIRouter, ui
 
@@ -46,20 +46,25 @@ def products_page() -> None:
                     on_change=lambda e: handle_filter(e),
                 ).classes("w-64").mark("search")
 
-            columns: List[Dict[str, Any]] = [
-                {"name": "name", "label": "Name", "field": "name", "sortable": True},
-                {
-                    "name": "product_group_name",
-                    "label": "Product Group",
-                    "field": "product_group_name",
-                    "sortable": True,
-                },
-                {"name": "actions", "label": "Actions", "field": "actions"},
-            ]
-
             @ui.refreshable
             def products_table() -> ui.table:
                 """Create a refreshable table component."""
+                columns = [
+                    {
+                        "name": "name",
+                        "label": "Naam",
+                        "field": "name",
+                        "sortable": True,
+                    },
+                    {
+                        "name": "product_group_name",
+                        "label": "Productgroep",
+                        "field": "product_group_name",
+                        "sortable": True,
+                    },
+                    {"name": "actions", "label": "Acties", "field": "actions"},
+                ]
+
                 table = ui.table(
                     columns=columns,
                     rows=table_data["rows"] if "rows" in table_data else [],

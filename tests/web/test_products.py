@@ -38,14 +38,14 @@ async def test_products_page_shows_table(user: User) -> None:
         # Then
         table = user.find(ui.table).elements.pop()
         assert table.columns == [
-            {"name": "name", "label": "Name", "field": "name", "sortable": True},
+            {"name": "name", "label": "Naam", "field": "name", "sortable": True},
             {
                 "name": "product_group_name",
-                "label": "Product Group",
+                "label": "Productgroep",
                 "field": "product_group_name",
                 "sortable": True,
             },
-            {"name": "actions", "label": "Actions", "field": "actions"},
+            {"name": "actions", "label": "Acties", "field": "actions"},
         ]
         assert table.rows == [
             {
