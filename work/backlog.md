@@ -80,6 +80,13 @@ graph TD
   - Improve home page test coverage (currently 36%)
   - Focus on critical user paths and error scenarios
 
+- Goal: Improve products list view
+
+  - Move table state to instance scope for better multi-user support
+  - Add loading states during data fetches
+  - Add error handling for failed data fetches
+  - Add clear button to search input for better UX
+
 - Goal: Wrap up project
 
   - Review the project
