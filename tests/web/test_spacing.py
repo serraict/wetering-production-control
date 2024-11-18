@@ -1,5 +1,6 @@
 """Tests for spacing web interface."""
 
+import asyncio
 from datetime import date
 from decimal import Decimal
 from unittest.mock import Mock, patch
@@ -116,3 +117,41 @@ async def test_spacing_page_loads_data(user: User) -> None:
                 "wijderzet_registratie_fout": False,
             },
         ]
+
+
+async def test_spacing_page_filtering_calls_repository(user: User) -> None:
+    """Test that entering a filter value calls the repository with the filter text."""
+    with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
+        # Given
+        mock_repo = Mock()
+        mock_repo_class.return_value = mock_repo
+        mock_repo.get_paginated.return_value = ([], 0)  # Empty initial result
+
+        # An asyncio.Event to signal when the repository is called with filter
+        done_event = asyncio.Event()
+
+        def on_get_paginated(
+            page=1, items_per_page=10, sort_by=None, descending=False, filter_text=""
+        ):
+            if filter_text == "TEST123":
+                done_event.set()  # Set the event when desired call is made
+            return [], 0
+
+        mock_repo.get_paginated.side_effect = on_get_paginated
+
+        # When
+        await user.open("/spacing")
+        search_box = user.find(marker="search", kind=ui.input)
+        search_box.type("TEST123")
+        search_box.trigger("change")
+
+        # Await until the event is set, or timeout if necessary
+        try:
+            await asyncio.wait_for(done_event.wait(), timeout=2.0)
+        except asyncio.TimeoutError:
+            raise RuntimeError("Timeout while waiting for repository call.")
+
+        # Then verify repository was called with filter
+        mock_repo.get_paginated.assert_called_with(
+            page=1, items_per_page=10, sort_by=None, descending=False, filter_text="TEST123"
+        )
