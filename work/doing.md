@@ -18,15 +18,67 @@ Implementation steps:
    - Define SQLModel based on the retrieved dataset
 1. Integrate SQLModel into web application:
    - ✓ Add model to application structure
-   - Create list view of spacing records:
+   - ✓ Create list view of spacing records:
      - ✓ Basic table structure with Dutch labels
      - ✓ Initial data loading
      - ✓ Search functionality
-     - Add table request handler for pagination and sorting
-     - Test pagination controls (next/previous, page size)
-     - Test sorting on all sortable columns
-     - Add all model fields to table with appropriate Dutch labels
-     - Add menu item for spacing page
+     - ✓ Add table request handler for pagination and sorting
+     - ✓ Test pagination controls (next/previous, page size)
+     - ✓ Test sorting on all sortable columns
+     - ✓ Add all model fields to table with appropriate Dutch labels
+     - ✓ Add menu item for spacing page
+1. Refactor table components:
+   - Enhance models with UI metadata:
+     - Add field metadata for display properties:
+       ```python
+       class Product(SQLModel, table=True):
+           id: int = Field(
+               primary_key=True,
+               ui_hidden=True  # Hide from table
+           )
+           name: str = Field(
+               title="Product Naam",  # Dutch label
+               ui_sortable=True,
+               ui_order=1  # Column order
+           )
+           product_group_name: str = Field(
+               title="Productgroep",
+               ui_sortable=True,
+               ui_order=2
+           )
+       ```
+     - Add field type hints for formatting:
+       ```python
+       class WijderzetRegistratie(SQLModel, table=True):
+           datum_oppotten_real: Optional[date] = Field(
+               title="Datum Oppotten",
+               ui_sortable=True,
+               ui_format="date"  # Use date formatter
+           )
+           aantal_tafels_oppotten_plan: Decimal = Field(
+               title="Tafels Oppotten Plan",
+               ui_sortable=True,
+               ui_format="decimal"  # Use decimal formatter
+           )
+       ```
+   - Create table column generator:
+     - Extract columns from model metadata
+     - Support field filtering (hidden fields)
+     - Handle field ordering
+     - Apply formatters based on type hints
+   - Extract common table functionality:
+     - Create base data table component
+     - Move table state management to component
+     - Add pagination and filter handling
+     - Support customizable data transformation
+   - Create table data formatter utility:
+     - Add date formatting
+     - Add decimal formatting
+     - Support custom field formatting
+   - Update existing pages:
+     - Refactor products page to use new components
+     - Refactor spacing page to use new components
+     - Add tests for shared components
 1. Integrate into command line application
    - List records with an error
    - List record with a specific error
@@ -97,23 +149,36 @@ graph TD
    - Spacing overview page (list view):
      - ✓ Basic table structure
      - ✓ Search functionality
-     - Add all model fields
-     - Fix pagination
-     - Fix sorting
+     - ✓ Add all model fields
+     - ✓ Fix pagination
+     - ✓ Fix sorting
    - Spacing detail/edit page
    - Error handling and user feedback
+
+4. `src/production_control/web/components/data_table.py` (New)
+   - Base table component with:
+     - State management
+     - Pagination handling
+     - Filter handling
+     - Event handling
+     - Column generation from model metadata
+     - Customizable data transformation
+   - Table formatter utilities:
+     - Date formatting
+     - Decimal formatting
+     - Custom field formatting
 
 #### Web Pages
 
 1. Spacing Overview Page (`/spacing`)
    - List of spacing records with:
      - ✓ Basic info (batch code, product, group)
-     - Add all dates (potting, spacing)
-     - Add all table counts and densities
+     - ✓ Add all dates (potting, spacing)
+     - ✓ Add all table counts and densities
      - ✓ Spacing error indicators
      - Links to detail/edit pages
    - ✓ Search functionality
-   - Fix pagination and sorting
+   - ✓ Fix pagination and sorting
    - Error status overview
 
 2. Spacing Detail/Edit Page (`/spacing/{batch_id}`)
