@@ -3,6 +3,45 @@
 This guide supplements CONTRIBUTING.md with specific guidelines for AI/LLM contributors.
 Follow both this guide and the main CONTRIBUTING.md when making changes.
 
+## Test-First Development
+
+1. Start with a single test:
+
+   - Choose the simplest test case first
+   - Focus on one piece of functionality
+   - Write only one test before writing code
+   - Get that test passing before writing the next
+
+2. Keep the test-code cycle small:
+
+   - Write minimal test code
+   - Write minimal production code to pass
+   - Refactor only after test passes
+   - Move to next test only after current test is stable
+
+3. Choose the first test wisely:
+
+   - Start with basic existence/structure tests
+   - Then add basic functionality tests
+   - Progress to edge cases
+   - End with error conditions
+
+4. Example test progression:
+
+   ```python
+   # First test: verify component exists
+   def test_component_exists():
+       assert Component() is not None
+
+   # Second test: verify basic functionality
+   def test_component_basic_operation():
+       assert Component().operation() == expected_result
+
+   # Later test: verify edge case
+   def test_component_handles_empty_input():
+       assert Component().operation("") == default_value
+   ```
+
 ## Workflow
 
 The currently active task is described in [doing.md](./work/doing.md).
@@ -73,11 +112,18 @@ Things we consider doing in the future are described in [backlog.md](./work/back
 
 1. Test-Driven Development:
 
-   - Write failing test first
-   - Implement minimum code to pass
-   - Refactor while keeping tests green
+   - Write one failing test
+   - Implement minimum code to pass that test
+   - Refactor while keeping test green
+   - Only then move to next test
    - Keep test code simple and readable
-   - Avoid unnecessary assertions
+
+1. When tests fail:
+
+   - Focus on one failing test at a time
+   - Make minimal changes to pass the test
+   - Verify fix doesn't break other tests
+   - Document test fixes in commits
 
 1. Documentation:
 
@@ -92,6 +138,22 @@ Things we consider doing in the future are described in [backlog.md](./work/back
    - Run `make quality` for linting and formatting
    - Ensure all tests pass
    - Verify changes meet project standards
+
+## Language and UI Guidelines
+
+1. Follow language conventions:
+
+   - Use Dutch for all user-facing text (UI labels, messages)
+   - Use English for code, comments, and documentation
+   - Follow existing patterns for terminology and phrasing
+   - Check similar components for language consistency
+
+1. UI Development:
+
+   - Match existing UI patterns and structures
+   - Follow component naming conventions
+   - Maintain consistent styling
+   - Test UI changes thoroughly
 
 ## Version Control
 
@@ -122,6 +184,15 @@ Things we consider doing in the future are described in [backlog.md](./work/back
    - Include context and reasoning
    - Reference related issues/PRs
 
+1. After pushing changes:
+
+   - Monitor CI workflow status:
+     ```shell
+     python scripts/check_workflow.py CI --watch
+     ```
+   - Address any CI failures promptly
+   - Make necessary fixes in new commits
+
 ## Environment Details
 
 1. Always consider the environment details provided:
@@ -150,3 +221,19 @@ Things we consider doing in the future are described in [backlog.md](./work/back
    - Summarize changes made
    - Document any important considerations
    - Avoid ending with questions or offers for assistance
+
+## Iterative Development
+
+1. Break down complex changes:
+
+   - Start with one test
+   - Make small, focused changes
+   - Build on successful tests
+   - Keep changes reversible
+
+1. Handle test failures:
+
+   - Fix one failure at a time
+   - Verify fixes don't introduce new failures
+   - Consider test dependencies
+   - Document test fixes in commits

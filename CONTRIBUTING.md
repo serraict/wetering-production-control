@@ -3,7 +3,10 @@
 These guidelines help us to write robust, understandable code,
 that allows for easy maintenance, refactoring, and collaborative development
 by both human and LLM contributors.
-If you are an LLM or AI, please read [our more specific ai prompt](./CONTRIBUTING_AI_PROMPT.md) too.
+
+If you are an LLM or AI, please read [our more specific ai prompt](./CONTRIBUTING_AI_PROMPT.md) too,
+especially the Test-First Development section which provides detailed guidance
+on our single-test-at-a-time approach.
 
 ## Coding guidelines
 
@@ -26,6 +29,12 @@ This helps maintain a clean git history
 and makes it easier to understand, review, and if needed, revert changes.
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages.
+
+## Language Guidelines
+
+For user-facing text (UI labels, messages, etc.), use Dutch language.
+Follow existing patterns in the codebase for terminology and phrasing.
+Code, comments, and documentation should be in English.
 
 ## Versioning
 
