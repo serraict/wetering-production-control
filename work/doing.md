@@ -2,50 +2,58 @@
 
 In this document we describe what we are working on now.
 
-## Goal
+## Goal: User can track spacing process segment
 
-Get the project started with a first minimal release to production.
+- Create functionality to record spacing operations (new and historical)
+- Enable correction of ~200 lots with incorrect spacing data from January 2023
+- Must be completed this week
+- Critical for accurate cost determination per lot
+- Impacts greenhouse space utilization tracking
 
-- [x] Start repository from cookiecutter template
+Implementation steps:
 
-- [x] Write product vision
+1. Create example script to:
+   - Connect to local test environment
+   - Retrieve first 100 rows from `Productie.Controle."registratie_controle"` view
+   - Define SQLModel based on the retrieved dataset
+1. Integrate SQLModel into web application:
+   - Add model to application structure
+   - Create list view of spacing records
+1. Implement correction functionality:
+   - Create editor interface for spacing records
+   - Integrate with OpTech API to send corrections to Technison
+   - Implement validation and error handling
 
-- [x] Setup github repository
+## Design
 
-- [x] Setup automation
+### System Architecture
 
-  - [x] CI workflow for tests and quality checks
-  - [x] Package workflow for Docker images
-  - [x] Configure Codecov token in GitHub secrets
+```mermaid
+graph TD
+    subgraph Production Control App
+        WebApp[Web Application]
+        SQLModel[SQLModel Layer]
+    end
+    
+    subgraph Data Sources
+        Dremio[Dremio Instance]
+        DremioView[registratie_controle view]
+    end
+    
+    subgraph Spacing Control
+        Technison[Technison Application]
+        OpTech[OpTech API]
+    end
 
-- [x] Setup local development environment.
+    WebApp --> SQLModel
+    SQLModel --> DremioView
+    DremioView --> Dremio
+    WebApp --> OpTech
+    OpTech --> Technison
 
-- [x] First successful CI build.
-
-- [x] First successful package release.
-
-- [x] Add the app to production.
-
-- [x] Review contributing guidelines and AI prompt
-
-- [x] Review cookiecutter template in terms of starting a project
-
-## Completed Milestones
-
-### First Production Release - \[DATE\]
-
-Successfully deployed the first version of the application to production. This marks a significant milestone in getting the project operational. Key achievements:
-
-- Repository setup with proper CI/CD pipelines
-- Automated testing and quality checks in place
-- Docker packaging workflow operational
-- First production deployment successful
-
-### Project Completion - \[DATE\]
-
-Successfully completed all initial project goals with several key achievements:
-
-- Enhanced contributing guidelines with comprehensive AI/LLM specific instructions
-- Completed thorough template review with actionable improvements
-- Documented lessons learned and best practices for future projects
-- Established solid foundation for ongoing development
+    style WebApp fill:#f9f,stroke:#333
+    style SQLModel fill:#bbf,stroke:#333
+    style Dremio fill:#bfb,stroke:#333
+    style Technison fill:#fbb,stroke:#333
+    style OpTech fill:#fbf,stroke:#333
+```
