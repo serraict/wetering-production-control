@@ -2,6 +2,38 @@
 
 This backlog describes the product increments we have to build to realize our product vision.
 
+## System Architecture
+
+```mermaid
+graph TD
+    subgraph Production Control App
+        WebApp[Web Application]
+        SQLModel[SQLModel Layer]
+    end
+    
+    subgraph Data Sources
+        Dremio[Dremio Instance]
+        DremioView[registratie_controle view]
+    end
+    
+    subgraph Spacing Control
+        Technison[Technison Application]
+        OpTech[OpTech API]
+    end
+
+    WebApp --> SQLModel
+    SQLModel --> DremioView
+    DremioView --> Dremio
+    WebApp --> OpTech
+    OpTech --> Technison
+
+    style WebApp fill:#f9f,stroke:#333
+    style SQLModel fill:#bbf,stroke:#333
+    style Dremio fill:#bfb,stroke:#333
+    style Technison fill:#fbb,stroke:#333
+    style OpTech fill:#fbf,stroke:#333
+```
+
 ## Next
 
 - Goal: User can track spacing process segment
@@ -21,7 +53,7 @@ This backlog describes the product increments we have to build to realize our pr
      - Create list view of spacing records
   3. Implement correction functionality:
      - Create editor interface for spacing records
-     - Integrate with OpTech application API for sending corrections
+     - Integrate with OpTech API to send corrections to Technison
      - Implement validation and error handling
 
 ## Later
