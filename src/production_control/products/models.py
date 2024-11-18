@@ -30,10 +30,25 @@ class Product(SQLModel, table=True):
     __tablename__ = "products"
     __table_args__ = {"schema": "Vines"}
 
-    id: int = Field(primary_key=True)
-    name: str
-    product_group_id: int
-    product_group_name: str
+    id: int = Field(
+        primary_key=True,
+        title="ID",
+        sa_column_kwargs={"info": {"ui_hidden": True}},
+    )
+    name: str = Field(
+        title="Naam",
+        description="Naam van het product",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 1}},
+    )
+    product_group_id: int = Field(
+        title="Productgroep ID",
+        sa_column_kwargs={"info": {"ui_hidden": True}},
+    )
+    product_group_name: str = Field(
+        title="Productgroep",
+        description="Naam van de productgroep",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 2}},
+    )
 
 
 class RepositoryError(Exception):
