@@ -17,12 +17,21 @@ Implementation steps:
    - Retrieve first 100 rows from `Productie.Controle."registratie_controle"` view
    - Define SQLModel based on the retrieved dataset
 1. Integrate SQLModel into web application:
-   - Add model to application structure
+   - ✓ Add model to application structure
    - Create list view of spacing records
+1. Integrate into command line application
+   - List records with an error
+   - List record with a specific error
 1. Implement correction functionality:
+   - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
    - Create editor interface for spacing records
    - Integrate with OpTech API to send corrections to Technison
    - Implement validation and error handling
+
+Next steps:
+1. Create spacing list view page using NiceGUI
+2. Add error filtering to repository
+3. Implement CLI commands for error listing
 
 ## Design
 
@@ -72,8 +81,8 @@ graph TD
 #### Python Modules
 
 1. `src/production_control/spacing/models.py`
-   - WijderzetRegistratie model (SQLModel)
-   - SpacingRepository for data access
+   - ✓ WijderzetRegistratie model (SQLModel)
+   - ✓ SpacingRepository for data access
    - Error handling classes
 
 2. `src/production_control/spacing/api.py`
