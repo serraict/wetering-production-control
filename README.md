@@ -19,13 +19,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
    .\venv\Scripts\activate  # On Windows
    ```
 
-2. Install the package in editable mode:
+1. Install the package in editable mode:
 
    ```bash
    pip install -e .
    ```
 
-3. Copy and configure environment variables:
+1. Copy and configure environment variables:
 
    ```bash
    cp .env.example .env
@@ -53,14 +53,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
        external: true
    ```
 
-2. Create `.env` file with your configuration:
+1. Create `.env` file with your configuration:
 
    ```bash
    # Copy from .env.example and adjust settings
    cp .env.example .env
    ```
 
-3. Start the service:
+1. Start the service:
 
    ```bash
    docker compose up -d

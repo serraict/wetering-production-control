@@ -36,7 +36,7 @@ The project version is determined using `setuptools_scm`.
 
 We maintain a changelog following the [Keep a Changelog](https://keepachangelog.com/) format.
 Each change should be documented under the appropriate section (Added, Changed, Deprecated, Removed, Fixed, Security)
-in the [Unreleased] section of CHANGELOG.md.
+in the \[Unreleased\] section of CHANGELOG.md.
 
 ## Testing
 
@@ -92,7 +92,7 @@ Releases are created using a Github action.
 To release:
 
 1. Commit any pending changes and push to origin
-2. Run:
+1. Run:
 
 ```shell
 make release
