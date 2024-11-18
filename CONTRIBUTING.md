@@ -30,16 +30,19 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ## Versioning
 
 We follow [Semantic Versioning](https://semver.org/) (SemVer) for version numbers.
-The project is version is determined using `setuptools_scm`.
+The project version is determined using `setuptools_scm`.
 
 ## Changelog
 
 We maintain a changelog following the [Keep a Changelog](https://keepachangelog.com/) format.
+Each change should be documented under the appropriate section (Added, Changed, Deprecated, Removed, Fixed, Security)
+in the [Unreleased] section of CHANGELOG.md.
 
 ## Testing
 
 Unit tests are placed in the `./tests/` directory.
 We record the coverage of our unit tests.
+Our test coverage should not drop between commits.
 
 ## Development Environment
 
@@ -50,19 +53,19 @@ make bootstrap
 source venv/bin/activate
 ```
 
-1. Install dependencies and development tools:
+2. Install dependencies and development tools:
 
 ```shell
 make update
 ```
 
-1. Run tests to verify setup:
+3. Run tests to verify setup:
 
 ```shell
 make test
 ```
 
-1. Start the development server:
+4. Start the development server:
 
 ```shell
 make server
@@ -76,7 +79,7 @@ make server
 make docker_compose_debug
 ```
 
-1. Build Docker image:
+2. Build Docker image:
 
 ```shell
 make docker_image
@@ -84,11 +87,12 @@ make docker_image
 
 ## Releasing
 
-Release are created using a Github action.
+Releases are created using a Github action.
 
-To release, commit any pending changes and push to origin.
+To release:
 
-Then run:
+1. Commit any pending changes and push to origin
+2. Run:
 
 ```shell
 make release

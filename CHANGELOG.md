@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - First successful production deployment
+- Enhanced AI/LLM contributing guidelines with comprehensive instructions
+- Completed template review with improvement recommendations
+
+### Changed
+
+- Updated contributing guidelines with clearer instructions
+- Expanded template review with insights from project history
 
 ### Fixed
 
