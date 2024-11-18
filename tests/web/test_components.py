@@ -88,11 +88,13 @@ async def test_menu_shows_navigation_links(user: User) -> None:
     await user.open("/test")
 
     # Then
-    await user.should_see("Products")
+    await user.should_see("Producten")
+    await user.should_see("Wijderzetten")
     await user.should_see("About")
 
     # Verify links are present
     links = user.find(ui.link).elements
-    assert len(links) == 2
+    assert len(links) == 3
     assert any(link.props.get("href") == "/products" for link in links)
+    assert any(link.props.get("href") == "/spacing" for link in links)
     assert any(link.props.get("href") == "/about" for link in links)
