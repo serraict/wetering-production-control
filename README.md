@@ -39,7 +39,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
    ```yaml
    services:
      production_control:
-       image: ghcr.io/serraict/weteting_production_control:latest
+       image: ghcr.io/serraict/wetering-production-control:latest
        ports:
          - "7903:8080"
        env_file:
