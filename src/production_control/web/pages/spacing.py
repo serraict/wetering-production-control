@@ -16,7 +16,7 @@ table_data = {
     "pagination": {
         "rowsPerPage": 10,
         "page": 1,
-        "rowsNumber": 0,
+        "rowsNumber": 0,  # This will signal the Quasar component to use server side pagination
         "sortBy": None,
         "descending": False,
     },
@@ -82,6 +82,7 @@ def spacing_page() -> None:
                     row_key="id",
                     pagination=table_data["pagination"],
                 ).classes("w-full")
+                table.on("request", handle_table_request)
                 return table
 
             async def handle_filter(e: Any) -> None:
@@ -89,10 +90,6 @@ def spacing_page() -> None:
                 table_data["filter"] = e.value if e.value else ""
                 table_data["pagination"]["page"] = 1  # Reset to first page
                 load_filtered_data()
-
-            def load_filtered_data() -> None:
-                """Load data with current filter and refresh table."""
-                handle_table_request({"pagination": table_data["pagination"]})
 
             def handle_table_request(event: Dict[str, Any]) -> None:
                 """Handle table request events (pagination and sorting)."""
@@ -130,6 +127,10 @@ def spacing_page() -> None:
                 ]
                 table_data["pagination"]["rowsNumber"] = total
                 spacing_table.refresh()
+
+            def load_filtered_data() -> None:
+                """Load data with current filter and refresh table."""
+                handle_table_request({"pagination": table_data["pagination"]})
 
             def load_initial_data() -> None:
                 """Load initial data and set total count."""
