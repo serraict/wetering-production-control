@@ -18,7 +18,14 @@ Implementation steps:
    - Define SQLModel based on the retrieved dataset
 1. Integrate SQLModel into web application:
    - ✓ Add model to application structure
-   - Create list view of spacing records
+   - Create list view of spacing records:
+     - ✓ Basic table structure with Dutch labels
+     - ✓ Initial data loading
+     - ✓ Search functionality
+     - Fix pagination controls
+     - Fix sorting functionality
+     - Add all model fields to table (dates, densities, etc.)
+     - Add menu item for spacing page
 1. Integrate into command line application
    - List records with an error
    - List record with a specific error
@@ -29,9 +36,14 @@ Implementation steps:
    - Implement validation and error handling
 
 Next steps:
-1. Create spacing list view page using NiceGUI
-2. Add error filtering to repository
-3. Implement CLI commands for error listing
+1. Fix table functionality:
+   - Add all model fields to table with appropriate Dutch labels
+   - Add table request handler for pagination and sorting
+   - Test pagination controls (next/previous, page size)
+   - Test sorting on all sortable columns
+2. Add menu item for spacing page
+3. Add error filtering to repository
+4. Implement CLI commands for error listing
 
 ## Design
 
@@ -91,7 +103,12 @@ graph TD
    - Error handling
 
 3. `src/production_control/web/pages/spacing.py`
-   - Spacing overview page (list view)
+   - Spacing overview page (list view):
+     - ✓ Basic table structure
+     - ✓ Search functionality
+     - Add all model fields
+     - Fix pagination
+     - Fix sorting
    - Spacing detail/edit page
    - Error handling and user feedback
 
@@ -99,11 +116,13 @@ graph TD
 
 1. Spacing Overview Page (`/spacing`)
    - List of spacing records with:
-     - Batch code and product info
-     - Current table counts
-     - Spacing error indicators
+     - ✓ Basic info (batch code, product, group)
+     - Add all dates (potting, spacing)
+     - Add all table counts and densities
+     - ✓ Spacing error indicators
      - Links to detail/edit pages
-   - Filtering and pagination
+   - ✓ Search functionality
+   - Fix pagination and sorting
    - Error status overview
 
 2. Spacing Detail/Edit Page (`/spacing/{batch_id}`)
