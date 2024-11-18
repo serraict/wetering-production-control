@@ -28,44 +28,13 @@ Implementation steps:
      - ✓ Add all model fields to table with appropriate Dutch labels
      - ✓ Add menu item for spacing page
 1. Refactor table components:
-   - Enhance models with UI metadata:
-     - Add field metadata for display properties:
-       ```python
-       class Product(SQLModel, table=True):
-           id: int = Field(
-               primary_key=True,
-               ui_hidden=True  # Hide from table
-           )
-           name: str = Field(
-               title="Product Naam",  # Dutch label
-               ui_sortable=True,
-               ui_order=1  # Column order
-           )
-           product_group_name: str = Field(
-               title="Productgroep",
-               ui_sortable=True,
-               ui_order=2
-           )
-       ```
-     - Add field type hints for formatting:
-       ```python
-       class WijderzetRegistratie(SQLModel, table=True):
-           datum_oppotten_real: Optional[date] = Field(
-               title="Datum Oppotten",
-               ui_sortable=True,
-               ui_format="date"  # Use date formatter
-           )
-           aantal_tafels_oppotten_plan: Decimal = Field(
-               title="Tafels Oppotten Plan",
-               ui_sortable=True,
-               ui_format="decimal"  # Use decimal formatter
-           )
-       ```
-   - Create table column generator:
-     - Extract columns from model metadata
-     - Support field filtering (hidden fields)
-     - Handle field ordering
-     - Apply formatters based on type hints
+   - ✓ Use Dutch labels for the product page
+   - ✓ Enhance models with UI metadata for label, hide in the ui, and sortable
+   - ✓ Create table column generator:
+     - ✓ Extract columns from model metadata
+     - ✓ Support field filtering (hidden fields)
+     - ✓ Handle field ordering
+     - ✓ Apply formatters based on type hints
    - Extract common table functionality:
      - Create base data table component
      - Move table state management to component
