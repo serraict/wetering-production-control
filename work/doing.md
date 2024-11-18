@@ -22,9 +22,10 @@ Implementation steps:
      - ✓ Basic table structure with Dutch labels
      - ✓ Initial data loading
      - ✓ Search functionality
-     - Fix pagination controls
-     - Fix sorting functionality
-     - Add all model fields to table (dates, densities, etc.)
+     - Add table request handler for pagination and sorting
+     - Test pagination controls (next/previous, page size)
+     - Test sorting on all sortable columns
+     - Add all model fields to table with appropriate Dutch labels
      - Add menu item for spacing page
 1. Integrate into command line application
    - List records with an error
@@ -34,16 +35,6 @@ Implementation steps:
    - Create editor interface for spacing records
    - Integrate with OpTech API to send corrections to Technison
    - Implement validation and error handling
-
-Next steps:
-1. Fix table functionality:
-   - Add all model fields to table with appropriate Dutch labels
-   - Add table request handler for pagination and sorting
-   - Test pagination controls (next/previous, page size)
-   - Test sorting on all sortable columns
-2. Add menu item for spacing page
-3. Add error filtering to repository
-4. Implement CLI commands for error listing
 
 ## Design
 
