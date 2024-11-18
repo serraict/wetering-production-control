@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
-from sqlalchemy import Engine, func, Integer, bindparam, text, distinct, desc, create_engine
+from sqlalchemy import Engine, func, Integer, bindparam, text, distinct, desc, create_engine, nulls_last
 from sqlmodel import Field, Session, SQLModel, select
 
 
@@ -25,10 +25,10 @@ class WijderzetRegistratie(SQLModel, table=True):
     productgroep_naam: str
 
     # Realization dates
-    datum_oppotten_real: date
-    datum_uit_cel_real: date
-    datum_wdz1_real: date
-    datum_wdz2_real: date
+    datum_oppotten_real: Optional[date] = None
+    datum_uit_cel_real: Optional[date] = None
+    datum_wdz1_real: Optional[date] = None
+    datum_wdz2_real: Optional[date] = None
 
     # Plant amounts
     aantal_planten_gerealiseerd: int
@@ -107,9 +107,9 @@ class SpacingRepository:
             if sort_by:
                 column = getattr(WijderzetRegistratie, sort_by)
                 if descending:
-                    base_query = base_query.order_by(desc(column))
+                    base_query = base_query.order_by(nulls_last(desc(column)))
                 else:
-                    base_query = base_query.order_by(column)
+                    base_query = base_query.order_by(nulls_last(column))
             else:
                 # Default sorting
                 base_query = base_query.order_by(
