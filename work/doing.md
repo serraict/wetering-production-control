@@ -12,7 +12,7 @@ In this document we describe what we are working on now.
 
 Implementation steps:
 
-1. Create example script to:
+1. ✓ Create example script to:
    - Connect to local test environment
    - Retrieve first 100 rows from `Productie.Controle."registratie_controle"` view
    - Define SQLModel based on the retrieved dataset
@@ -33,6 +33,9 @@ graph TD
     subgraph Production Control App
         WebApp[Web Application]
         SQLModel[SQLModel Layer]
+        SpacingPages[Spacing Pages]
+        SpacingModel[Spacing Model]
+        OpTechClient[OpTech Client]
     end
     
     subgraph Data Sources
@@ -45,15 +48,58 @@ graph TD
         OpTech[OpTech API]
     end
 
-    WebApp --> SQLModel
+    WebApp --> SpacingPages
+    SpacingPages --> SpacingModel
+    SpacingPages --> OpTechClient
+    SpacingModel --> SQLModel
+    OpTechClient --> OpTech
     SQLModel --> DremioView
     DremioView --> Dremio
-    WebApp --> OpTech
     OpTech --> Technison
 
     style WebApp fill:#f9f,stroke:#333
     style SQLModel fill:#bbf,stroke:#333
+    style SpacingPages fill:#f9f,stroke:#333
+    style SpacingModel fill:#bbf,stroke:#333
+    style OpTechClient fill:#fbf,stroke:#333
     style Dremio fill:#bfb,stroke:#333
     style Technison fill:#fbb,stroke:#333
     style OpTech fill:#fbf,stroke:#333
 ```
+
+### Implementation Details
+
+#### Python Modules
+
+1. `src/production_control/spacing/models.py`
+   - WijderzetRegistratie model (SQLModel)
+   - SpacingRepository for data access
+   - Error handling classes
+
+2. `src/production_control/spacing/api.py`
+   - OpTechClient for API integration
+   - Request/response models
+   - Error handling
+
+3. `src/production_control/web/pages/spacing.py`
+   - Spacing overview page (list view)
+   - Spacing detail/edit page
+   - Error handling and user feedback
+
+#### Web Pages
+
+1. Spacing Overview Page (`/spacing`)
+   - List of spacing records with:
+     - Batch code and product info
+     - Current table counts
+     - Spacing error indicators
+     - Links to detail/edit pages
+   - Filtering and pagination
+   - Error status overview
+
+2. Spacing Detail/Edit Page (`/spacing/{batch_id}`)
+   - Detailed view of spacing record
+   - Edit form for corrections
+   - Validation feedback
+   - Save/cancel actions
+   - Integration with OpTech API
