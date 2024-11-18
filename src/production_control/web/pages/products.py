@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 from nicegui import APIRouter, ui
 
-from ...products.models import ProductRepository
+from ...products.models import ProductRepository, Product
 from ..components import frame
 from ..components.model_card import display_model_card
 from ..components.message import show_error
@@ -13,6 +13,7 @@ from ..components.styles import (
     HEADER_CLASSES,
     LINK_CLASSES,
 )
+from ..components.table_utils import get_table_columns
 
 
 router = APIRouter(prefix="/products")
@@ -49,22 +50,7 @@ def products_page() -> None:
             @ui.refreshable
             def products_table() -> ui.table:
                 """Create a refreshable table component."""
-                columns = [
-                    {
-                        "name": "name",
-                        "label": "Naam",
-                        "field": "name",
-                        "sortable": True,
-                    },
-                    {
-                        "name": "product_group_name",
-                        "label": "Productgroep",
-                        "field": "product_group_name",
-                        "sortable": True,
-                    },
-                    {"name": "actions", "label": "Acties", "field": "actions"},
-                ]
-
+                columns = get_table_columns(Product)
                 table = ui.table(
                     columns=columns,
                     rows=table_data["rows"] if "rows" in table_data else [],
