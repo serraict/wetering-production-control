@@ -13,39 +13,12 @@ from ..components.styles import (
     HEADER_CLASSES,
     LINK_CLASSES,
 )
-from ..components.data_table import ServerSidePaginatingTable
+from ..components.data_table import server_side_paginated_table
 from ..components.table_utils import format_row
 from ..components.table_state import ClientStorageTableState
 
 
 router = APIRouter(prefix="/products")
-
-
-@ui.refreshable
-def server_side_paginated_table(
-    cls, state: ClientStorageTableState, on_request, title="Items", row_actions={}
-) -> ui.table:
-    """Create a refreshable table component."""
-    table = ServerSidePaginatingTable(
-        model_class=cls,
-        rows=state.rows,
-        title=title,
-        pagination=state.pagination,
-    )
-
-    for action_key, action in row_actions.items():
-        table.add_slot(
-            "body-cell-actions",
-            f"""
-            <q-td :props="props">
-                <q-btn @click="$parent.$emit('{action_key}', props)" icon="{action['icon']}" flat dense color='primary'/>
-            </q-td>
-        """,
-        )
-        table.on(action_key, action["handler"])
-
-    table.on("request", on_request)
-    return table
 
 
 @router.page("/")
@@ -88,7 +61,11 @@ def products_page() -> None:
             }
 
             server_side_paginated_table(
-                Product, table_state, handle_table_request, row_actions=row_actions
+                Product,
+                table_state,
+                handle_table_request,
+                title="Producten",
+                row_actions=row_actions,
             )
             handle_table_request({"pagination": table_state.pagination.to_dict()})
 
