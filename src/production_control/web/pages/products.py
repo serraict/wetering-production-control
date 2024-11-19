@@ -19,131 +19,108 @@ from ..components.data_table import ServerSidePaginatingTable
 router = APIRouter(prefix="/products")
 
 
-@router.page("/")
-def products_page() -> None:
-    """Render the products page with a table of all products."""
-    repository = ProductRepository()
+def format_product(product: Product) -> Dict[str, Any]:
+    """Format product for table display."""
+    return {
+        "id": product.id,
+        "name": product.name,
+        "product_group_name": product.product_group_name,
+    }
 
-    # Initialize table state in client storage if not exists
+
+def initialize_table_state() -> None:
+    """Initialize table state in client storage if not exists."""
     if "products_table" not in app.storage.client:
         app.storage.client["products_table"] = {
             "pagination": {
                 "rowsPerPage": 10,
                 "page": 1,
-                "rowsNumber": 0,  # This will signal the Quasar component to use server side pagination
+                "rowsNumber": 0,
                 "sortBy": None,
                 "descending": False,
             },
-            "filter": "",  # Single filter for searching all fields
+            "filter": "",
             "rows": [],
         }
 
+
+@ui.refreshable
+def server_side_paginated_table(cls, on_request, row_actions={}) -> ui.table:
+    """Create a refreshable table component."""
+    table = ServerSidePaginatingTable(
+        model_class=cls,
+        rows=app.storage.client["products_table"]["rows"],
+        title="Products Overview",
+        pagination=app.storage.client["products_table"]["pagination"],
+    )
+
+    for action_key, action in row_actions.items():
+        table.add_slot(
+            "body-cell-actions",
+            f"""
+            <q-td :props="props">
+                <q-btn @click="$parent.$emit('{action_key}', props)" icon="{action['icon']}" flat dense color='primary'/>
+            </q-td>
+        """,
+        )
+        table.on(action_key, action["handler"])
+
+    table.on("request", on_request)
+    return table
+
+
+@router.page("/")
+def products_page() -> None:
+    """Render the products page with a table of all products."""
+    repository = ProductRepository()
+    initialize_table_state()
+
     with frame("Products"):
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
-            # Header section
             with ui.row().classes("w-full justify-between items-center mb-4"):
                 ui.label("Products Overview").classes(HEADER_CLASSES)
-                # Add search input with debounce
                 ui.input(
                     placeholder="Search products...",
                     on_change=lambda e: handle_filter(e),
                 ).classes("w-64").mark("search")
 
-            @ui.refreshable
-            def products_table() -> ui.table:
-                """Create a refreshable table component."""
-                table = ServerSidePaginatingTable(
-                    model_class=Product,
-                    rows=app.storage.client["products_table"]["rows"],
-                    title="Products Overview",
-                    pagination=app.storage.client["products_table"]["pagination"],
-                )
-                table.on("request", handle_table_request)
-                table.add_slot(
-                    "body-cell-actions",
-                    """
-                    <q-td :props="props">
-                        <q-btn @click="$parent.$emit('view', props)" icon="visibility" flat dense color='primary'/>
-                    </q-td>
-                """,
-                )
-                table.on("view", handle_view_click)
-                return table
-
-            def handle_view_click(e: Any) -> None:
-                """Handle click on view button."""
-                product_id = e.args.get("key")
-                if product_id:
-                    ui.navigate.to(f"/products/{product_id}")
-
             async def handle_filter(e: Any) -> None:
-                """Handle changes to the search filter with debounce."""
+                """Handle changes to the search filter."""
                 app.storage.client["products_table"]["filter"] = e.value if e.value else ""
-                app.storage.client["products_table"]["pagination"]["page"] = 1  # Reset to first page
-                load_filtered_data()
+                app.storage.client["products_table"]["pagination"]["page"] = 1
+                handle_table_request(
+                    {"pagination": app.storage.client["products_table"]["pagination"]}
+                )
 
             def handle_table_request(event: Dict[str, Any]) -> None:
-                """Handle table request events (pagination and sorting)."""
-                # Update pagination state from request
+                """Handle table request events."""
                 new_pagination = (
                     event["pagination"] if isinstance(event, dict) else event.args["pagination"]
                 )
                 app.storage.client["products_table"]["pagination"].update(new_pagination)
 
-                # Get new page of data with sorting
-                page = new_pagination.get("page", 1)
-                rows_per_page = new_pagination.get("rowsPerPage", 10)
-                sort_by = new_pagination.get("sortBy")
-                descending = new_pagination.get("descending", False)
-
                 products, total = repository.get_paginated(
-                    page=page,
-                    items_per_page=rows_per_page,
-                    sort_by=sort_by,
-                    descending=descending,
+                    page=new_pagination.get("page", 1),
+                    items_per_page=new_pagination.get("rowsPerPage", 10),
+                    sort_by=new_pagination.get("sortBy"),
+                    descending=new_pagination.get("descending", False),
                     filter_text=app.storage.client["products_table"]["filter"],
                 )
 
-                # Update table data
-                app.storage.client["products_table"]["rows"] = [
-                    {
-                        "id": p.id,
-                        "name": p.name,
-                        "product_group_name": p.product_group_name,
-                    }
-                    for p in products
-                ]
+                app.storage.client["products_table"]["rows"] = [format_product(p) for p in products]
                 app.storage.client["products_table"]["pagination"]["rowsNumber"] = total
+                server_side_paginated_table.refresh()
 
-                # Refresh the table UI
-                products_table.refresh()
+            row_actions = {
+                "view": {
+                    "icon": "visibility",
+                    "handler": lambda e: ui.navigate.to(f"/products/{e.args.get('key')}"),
+                }
+            }
 
-            def load_filtered_data() -> None:
-                """Load data with current filter and refresh table."""
-                handle_table_request(
-                    {"pagination": app.storage.client["products_table"]["pagination"]}
-                )
-
-            # Initial data load
-            def load_initial_data() -> None:
-                """Load initial data and set total count."""
-                products, total = repository.get_paginated(page=1, items_per_page=10)
-                app.storage.client["products_table"]["rows"] = [
-                    {
-                        "id": p.id,
-                        "name": p.name,
-                        "product_group_name": p.product_group_name,
-                    }
-                    for p in products
-                ]
-                app.storage.client["products_table"]["pagination"]["rowsNumber"] = total
-                products_table.refresh()
-
-            # Create table and load data
-            table = products_table()
-            load_initial_data()
-
-            return table
+            server_side_paginated_table(Product, handle_table_request, row_actions=row_actions)
+            handle_table_request({"pagination": app.storage.client["products_table"]["pagination"]})
+            # return table
 
 
 @router.page("/{product_id:int}")
