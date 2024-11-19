@@ -1,10 +1,11 @@
 """Server-side paginating table component."""
 
-from typing import Optional, Type, Dict, Any
+from typing import Optional, Type, List, Any
 from sqlmodel import SQLModel
 from nicegui import ui
 
 from .table_utils import get_table_columns
+from .pagination import Pagination
 
 
 class ServerSidePaginatingTable(ui.table):
@@ -13,26 +14,26 @@ class ServerSidePaginatingTable(ui.table):
     def __init__(
         self,
         model_class: Type[SQLModel],
-        rows: list = None,
+        rows: List[Any],
+        pagination: Pagination,
         row_key: str = "id",
         title: Optional[str] = None,
-        pagination: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initialize table with server-side pagination.
 
         Args:
             model_class: SQLModel class that defines the table structure
-            rows: Optional list of rows
+            rows: List of row data
+            pagination: Pagination instance for state management
             row_key: Field to use as row key
             title: Optional table title
-            pagination: Optional pagination state dictionary
         """
         columns = get_table_columns(model_class)
         super().__init__(
             columns=columns,
-            rows=rows or [],
+            rows=rows,
             row_key=row_key,
             title=title,
-            pagination=pagination,
+            pagination=pagination.to_dict(),
         )
         self.classes("w-full")

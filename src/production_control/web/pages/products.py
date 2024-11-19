@@ -38,7 +38,7 @@ def server_side_paginated_table(cls, on_request, row_actions={}) -> ui.table:
         model_class=cls,
         rows=app.storage.client["products_table"]["rows"],
         title="Products Overview",
-        pagination=app.storage.client["products_table"]["pagination"].to_dict(),
+        pagination=app.storage.client["products_table"]["pagination"],
     )
 
     for action_key, action in row_actions.items():
