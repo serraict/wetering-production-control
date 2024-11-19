@@ -1,11 +1,15 @@
 """Base repository for Dremio data access."""
 
 import os
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, TypeVar, List
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, Integer, bindparam, Select
+from sqlmodel import Session
 
 from .pagination import Pagination
+
+
+T = TypeVar("T")
 
 
 class RepositoryError(Exception):
@@ -72,3 +76,43 @@ class DremioRepository:
             raise InvalidParameterError("Items per page must be greater than 0")
 
         return page, items_per_page, sort_by, descending
+
+    def _execute_paginated_query(
+        self,
+        session: Session,
+        query: Select,
+        page: int,
+        items_per_page: int,
+        total: int,
+    ) -> Tuple[List[T], int]:
+        """Execute a paginated query and return results with total count.
+
+        Args:
+            session: The database session
+            query: The base query to execute
+            page: The page number (1-based)
+            items_per_page: Number of items per page
+            total: Total count of items
+
+        Returns:
+            Tuple containing list of items for the requested page and total count
+        """
+        # Calculate offset
+        offset = (page - 1) * items_per_page
+
+        # Apply pagination
+        query = query.limit(
+            bindparam("limit", type_=Integer, literal_execute=True)
+        ).offset(bindparam("offset", type_=Integer, literal_execute=True))
+
+        # Execute with bound parameters
+        result = session.exec(
+            query,
+            params={
+                "limit": items_per_page,
+                "offset": offset,
+            },
+        )
+        items = list(result)
+
+        return items, total

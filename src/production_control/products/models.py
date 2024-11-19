@@ -1,7 +1,7 @@
 """Product data models."""
 
 from typing import List, Optional, Tuple
-from sqlalchemy import func, Integer, bindparam, desc, text, distinct
+from sqlalchemy import func, desc, text, distinct
 from sqlmodel import Field, Session, SQLModel, select
 from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
@@ -125,15 +125,6 @@ class ProductRepository(DremioRepository):
                 )
                 base_query = base_query.where(filter_expr)
 
-            # Get total count using the same filter but without the subquery
-            count_stmt = select(func.count(distinct(Product.id)))
-            if filter_text:
-                count_stmt = count_stmt.where(filter_expr)
-            total = session.exec(count_stmt).one()
-
-            # Calculate offset
-            offset = (page - 1) * items_per_page
-
             # Apply sorting
             if sort_by:
                 column = getattr(Product, sort_by)
@@ -145,19 +136,11 @@ class ProductRepository(DremioRepository):
                 # Default sorting
                 base_query = base_query.order_by(Product.product_group_name, Product.name)
 
-            # Apply pagination
-            query = base_query.limit(
-                bindparam("limit", type_=Integer, literal_execute=True)
-            ).offset(bindparam("offset", type_=Integer, literal_execute=True))
+            # Get total count using the same filter
+            count_stmt = select(func.count(distinct(Product.id)))
+            if filter_text:
+                count_stmt = count_stmt.where(filter_expr)
+            total = session.exec(count_stmt).one()
 
-            # Execute with bound parameters
-            result = session.exec(
-                query,
-                params={
-                    "limit": items_per_page,
-                    "offset": offset,
-                },
-            )
-            products = list(result)
-
-            return products, total
+            # Execute paginated query
+            return self._execute_paginated_query(session, base_query, page, items_per_page, total)
