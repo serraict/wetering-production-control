@@ -30,10 +30,7 @@ def spacing_page() -> None:
         pagination = table_state.pagination
         filter_text = table_state.filter
         items, total = repository.get_paginated(
-            page=pagination.page,
-            items_per_page=pagination.rows_per_page,
-            sort_by=pagination.sort_by,
-            descending=pagination.descending,
+            pagination=pagination,
             filter_text=filter_text,
         )
         table_state.update_rows([format_row(item) for item in items], total)

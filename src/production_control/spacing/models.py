@@ -19,6 +19,9 @@ from sqlalchemy import (
 )
 from sqlmodel import Field, Session, SQLModel, select
 
+from ..data import Pagination
+from ..data.repository import InvalidParameterError
+
 
 class WijderzetRegistratie(SQLModel, table=True):
     """Model representing a spacing record from registratie_controle view."""
@@ -138,6 +141,7 @@ class SpacingRepository:
         sort_by: Optional[str] = None,
         descending: bool = False,
         filter_text: Optional[str] = None,
+        pagination: Optional[Pagination] = None,
     ) -> Tuple[List[WijderzetRegistratie], int]:
         """Get paginated spacing records from the data source.
 
@@ -147,10 +151,26 @@ class SpacingRepository:
             sort_by: Column name to sort by
             descending: Sort in descending order if True
             filter_text: Optional text to filter records by (case-insensitive)
+            pagination: Optional Pagination object that overrides other pagination parameters
 
         Returns:
             Tuple containing list of spacing records for the requested page and total count
+
+        Raises:
+            InvalidParameterError: If pagination parameters are invalid
         """
+        if pagination is not None:
+            page = pagination.page
+            items_per_page = pagination.rows_per_page
+            sort_by = pagination.sort_by
+            descending = pagination.descending
+
+        # Validate pagination parameters
+        if page < 1:
+            raise InvalidParameterError("Page number must be greater than 0")
+        if items_per_page < 1:
+            raise InvalidParameterError("Items per page must be greater than 0")
+
         with Session(self.engine) as session:
             # Create base query
             base_query = select(WijderzetRegistratie)
