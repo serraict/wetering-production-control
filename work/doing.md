@@ -36,8 +36,8 @@ Implementation steps:
      - ✓ Handle field ordering
      - ✓ Apply formatters based on type hints
    - Create DataTable component:
-     - Create base DataTable that wraps column generation from model
-     - Add server-side pagination support
+     - ✓ Create base DataTable that wraps column generation from model
+     - Add server-side pagination support (next)
      - Add custom actions support
      - Update products page to use DataTable
      - Update spacing page to use DataTable
@@ -124,8 +124,8 @@ graph TD
 
 4. `src/production_control/web/components/data_table.py` (New)
    - Base table component with:
-     - Model-driven columns
-     - Server-side pagination
+     - ✓ Model-driven columns
+     - Server-side pagination (next)
      - Custom actions support
      - Event handling
    - Table formatter utilities:
