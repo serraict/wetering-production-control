@@ -39,17 +39,21 @@ Implementation steps:
      - ✓ Model-driven columns
      - Server-side pagination support
        - ✓ State should be stored per client connection, not globally
-       - little repeated code between pages
-       - uncluttered code in pages
-       - Pagination interface should be clean python
-     - Update products page to use table
+       - ✓ little repeated code between pages
+       - ✓ uncluttered code in pages
+       - ✓ Pagination interface should be clean python
+     - ✓ Update products page to use table
+   - Update existing pages:
+     - Update spacing page to use ServerSidePaginatingTable:
+       - Replace global table_data with ClientStorageTableState
+       - Use server_side_paginated_table component
+       - Improve code organization (setup, handlers, rendering)
+       - Clean up pagination handling
+     - Add tests for shared components
    - Create table data formatter utility:
      - Add date formatting
      - Add decimal formatting
      - Support custom field formatting
-   - Update existing pages:
-     - Update spacing page to use ServerSidePaginatingTable
-     - Add tests for shared components
 2. Integrate into command line application
    - List records with an error
    - List record with a specific error
@@ -123,6 +127,11 @@ graph TD
      - ✓ Add all model fields
      - ✓ Fix pagination
      - ✓ Fix sorting
+     - Refactor to use shared components:
+       - Replace global table_data with ClientStorageTableState
+       - Use server_side_paginated_table component
+       - Improve code organization
+       - Clean up pagination handling
    - Spacing detail/edit page
    - Error handling and user feedback
 
