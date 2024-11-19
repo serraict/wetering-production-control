@@ -13,7 +13,7 @@ from ..components.styles import (
     HEADER_CLASSES,
     LINK_CLASSES,
 )
-from ..components.data_table import DataTable
+from ..components.data_table import ServerSidePaginatingTable
 
 
 router = APIRouter(prefix="/products")
@@ -28,6 +28,7 @@ table_data = {
         "descending": False,
     },
     "filter": "",  # Single filter for searching all fields
+    "rows": [],
 }
 
 
@@ -50,10 +51,11 @@ def products_page() -> None:
             @ui.refreshable
             def products_table() -> ui.table:
                 """Create a refreshable table component."""
-                table = DataTable(
+                table = ServerSidePaginatingTable(
                     model_class=Product,
-                    rows=table_data["rows"] if "rows" in table_data else [],
+                    rows=table_data["rows"],
                     title="Products Overview",
+                    pagination=table_data["pagination"],
                 )
                 table.on("request", handle_table_request)
                 table.add_slot(
@@ -117,7 +119,9 @@ def products_page() -> None:
 
             def load_filtered_data() -> None:
                 """Load data with current filter and refresh table."""
-                handle_table_request({"pagination": table_data["pagination"]})
+                handle_table_request(
+                    {"pagination": table_data["pagination"]}
+                )
 
             # Initial data load
             def load_initial_data() -> None:
