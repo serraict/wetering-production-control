@@ -35,19 +35,17 @@ Implementation steps:
      - ✓ Support field filtering (hidden fields)
      - ✓ Handle field ordering
      - ✓ Apply formatters based on type hints
-   - Extract common table functionality:
-     - Create base data table component
-     - Move table state management to component
-     - Add pagination and filter handling
-     - Support customizable data transformation
+   - Create DataTable component:
+     - Create base DataTable that wraps column generation from model
+     - Add server-side pagination support
+     - Add custom actions support
+     - Update products page to use DataTable
+     - Update spacing page to use DataTable
+     - Add tests for DataTable component
    - Create table data formatter utility:
      - Add date formatting
      - Add decimal formatting
      - Support custom field formatting
-   - Update existing pages:
-     - Refactor products page to use new components
-     - Refactor spacing page to use new components
-     - Add tests for shared components
 1. Integrate into command line application
    - List records with an error
    - List record with a specific error
@@ -126,12 +124,10 @@ graph TD
 
 4. `src/production_control/web/components/data_table.py` (New)
    - Base table component with:
-     - State management
-     - Pagination handling
-     - Filter handling
+     - Model-driven columns
+     - Server-side pagination
+     - Custom actions support
      - Event handling
-     - Column generation from model metadata
-     - Customizable data transformation
    - Table formatter utilities:
      - Date formatting
      - Decimal formatting
