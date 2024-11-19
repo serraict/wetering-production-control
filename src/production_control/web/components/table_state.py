@@ -5,7 +5,7 @@ from typing import List, Any, Dict
 
 from nicegui import app
 
-from .pagination import Pagination
+from ...data import Pagination
 
 
 @dataclass

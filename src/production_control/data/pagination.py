@@ -1,4 +1,4 @@
-"""Pagination state management."""
+"""Database pagination and sorting configuration."""
 
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
@@ -6,7 +6,11 @@ from typing import Optional, Dict, Any
 
 @dataclass
 class Pagination:
-    """Server-side pagination state."""
+    """Database pagination and sorting configuration.
+
+    This class represents pagination and sorting parameters for database queries.
+    It also provides conversion methods for web UI integration with Quasar tables.
+    """
 
     page: int = 1
     rows_per_page: int = 10
@@ -16,7 +20,7 @@ class Pagination:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Pagination":
-        """Create pagination from dictionary (e.g. from storage)."""
+        """Create pagination from dictionary (e.g. from Quasar table state)."""
         return cls(
             page=data.get("page", 1),
             rows_per_page=data.get("rowsPerPage", 10),

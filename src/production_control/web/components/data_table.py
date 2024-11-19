@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 from nicegui import ui
 
 from .table_utils import get_table_columns
-from .pagination import Pagination
+from ...data import Pagination
 
 
 class ServerSidePaginatingTable(ui.table):
