@@ -11,33 +11,11 @@ from ..components.styles import (
     HEADER_CLASSES,
 )
 from ..components.data_table import server_side_paginated_table
+from ..components.table_utils import format_row
 from ..components.table_state import ClientStorageTableState
 
 
 router = APIRouter(prefix="/spacing")
-
-
-def format_row(registratie: WijderzetRegistratie) -> Dict[str, Any]:
-    """Format spacing record for table display."""
-    return {
-        "id": registratie.id,
-        "partij_code": registratie.partij_code,
-        "product_naam": registratie.product_naam,
-        "productgroep_naam": registratie.productgroep_naam,
-        "datum_oppotten_real": registratie.datum_oppotten_real,
-        "datum_uit_cel_real": registratie.datum_uit_cel_real,
-        "datum_wdz1_real": registratie.datum_wdz1_real,
-        "datum_wdz2_real": registratie.datum_wdz2_real,
-        "aantal_planten_gerealiseerd": registratie.aantal_planten_gerealiseerd,
-        "aantal_tafels_totaal": registratie.aantal_tafels_totaal,
-        "aantal_tafels_na_wdz1": registratie.aantal_tafels_na_wdz1,
-        "aantal_tafels_na_wdz2": registratie.aantal_tafels_na_wdz2,
-        "aantal_tafels_oppotten_plan": registratie.aantal_tafels_oppotten_plan,
-        "dichtheid_oppotten_plan": registratie.dichtheid_oppotten_plan,
-        "dichtheid_wz1_plan": registratie.dichtheid_wz1_plan,
-        "dichtheid_wz2_plan": registratie.dichtheid_wz2_plan,
-        "wijderzet_registratie_fout": registratie.wijderzet_registratie_fout,
-    }
 
 
 @router.page("/")
