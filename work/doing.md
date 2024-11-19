@@ -38,7 +38,9 @@ Implementation steps:
    - ✓ Create ServerSidePaginatingTable:
      - ✓ Model-driven columns
      - Server-side pagination support
-       - State should be stored per tab, not globally
+       - ✓ State should be stored per client connection, not globally
+       - little repeated code between pages
+       - uncluttered code in pages
        - Pagination interface should be clean python
      - Update products page to use table
    - Create table data formatter utility:
