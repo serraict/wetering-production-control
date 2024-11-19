@@ -3,8 +3,8 @@
 import os
 from typing import Optional, Union, Tuple, TypeVar, List, Sequence
 
-from sqlalchemy import Engine, create_engine, Integer, bindparam, Select, text
-from sqlmodel import Session
+from sqlalchemy import Engine, create_engine, Integer, bindparam, Select, text, desc
+from sqlmodel import Session, SQLModel
 
 from .pagination import Pagination
 
@@ -104,6 +104,46 @@ class DremioRepository:
         ]
         filter_expr = text(" OR ".join(conditions))
         return query.where(filter_expr)
+
+    def _apply_sorting(
+        self,
+        query: Select,
+        model: type[SQLModel],
+        sort_by: Optional[str],
+        descending: bool,
+    ) -> Select:
+        """Apply sorting to query.
+
+        Args:
+            query: The base query to sort
+            model: The model class to get columns from
+            sort_by: Column name to sort by
+            descending: Sort in descending order if True
+
+        Returns:
+            Query with sorting applied
+        """
+        if sort_by:
+            column = getattr(model, sort_by)
+            if descending:
+                query = query.order_by(desc(column))
+            else:
+                query = query.order_by(column)
+        else:
+            query = self._apply_default_sorting(query, model)
+        return query
+
+    def _apply_default_sorting(self, query: Select, model: type[SQLModel]) -> Select:
+        """Apply default sorting to query. Override in subclasses.
+
+        Args:
+            query: The base query to sort
+            model: The model class to get columns from
+
+        Returns:
+            Query with default sorting applied
+        """
+        return query
 
     def _execute_paginated_query(
         self,

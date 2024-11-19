@@ -1,7 +1,7 @@
 """Product data models."""
 
 from typing import List, Optional, Tuple
-from sqlalchemy import func, desc, distinct, text
+from sqlalchemy import func, distinct, text, Select
 from sqlmodel import Field, Session, SQLModel, select
 from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
@@ -61,6 +61,10 @@ class ProductRepository(DremioRepository):
     # Fields to search when filtering products
     search_fields = ["name", "product_group_name"]
 
+    def _apply_default_sorting(self, query: Select, model: type[SQLModel]) -> Select:
+        """Apply default sorting to query."""
+        return query.order_by(model.product_group_name, model.name)
+
     def get_all(self) -> List[Product]:
         """Get all products from the data source."""
         with Session(self.engine) as session:
@@ -111,15 +115,7 @@ class ProductRepository(DremioRepository):
                 base_query = self._apply_text_filter(base_query, filter_text, self.search_fields)
 
             # Apply sorting
-            if sort_by:
-                column = getattr(Product, sort_by)
-                if descending:
-                    base_query = base_query.order_by(desc(column))
-                else:
-                    base_query = base_query.order_by(column)
-            else:
-                # Default sorting
-                base_query = base_query.order_by(Product.product_group_name, Product.name)
+            base_query = self._apply_sorting(base_query, Product, sort_by, descending)
 
             # Get total count using the same filter
             count_stmt = select(func.count(distinct(Product.id)))
