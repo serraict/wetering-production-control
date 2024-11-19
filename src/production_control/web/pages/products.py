@@ -2,7 +2,7 @@
 
 from typing import Dict, Any
 
-from nicegui import APIRouter, ui, app
+from nicegui import APIRouter, ui
 
 from ...products.models import ProductRepository, Product
 from ..components import frame
@@ -15,30 +15,22 @@ from ..components.styles import (
 )
 from ..components.data_table import ServerSidePaginatingTable
 from ..components.table_utils import format_row
-from ..components.pagination import Pagination
+from ..components.table_state import ClientStorageTableState
 
 
 router = APIRouter(prefix="/products")
 
 
-def initialize_table_state() -> None:
-    """Initialize table state in client storage if not exists."""
-    if "products_table" not in app.storage.client:
-        app.storage.client["products_table"] = {
-            "pagination": Pagination(),
-            "filter": "",
-            "rows": [],
-        }
-
-
 @ui.refreshable
-def server_side_paginated_table(cls, on_request, row_actions={}) -> ui.table:
+def server_side_paginated_table(
+    cls, state: ClientStorageTableState, on_request, title="Items", row_actions={}
+) -> ui.table:
     """Create a refreshable table component."""
     table = ServerSidePaginatingTable(
         model_class=cls,
-        rows=app.storage.client["products_table"]["rows"],
-        title="Products Overview",
-        pagination=app.storage.client["products_table"]["pagination"],
+        rows=state.rows,
+        title=title,
+        pagination=state.pagination,
     )
 
     for action_key, action in row_actions.items():
@@ -60,7 +52,7 @@ def server_side_paginated_table(cls, on_request, row_actions={}) -> ui.table:
 def products_page() -> None:
     """Render the products page with a table of all products."""
     repository = ProductRepository()
-    initialize_table_state()
+    table_state = ClientStorageTableState.initialize("products_table")
 
     with frame("Products"):
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
@@ -73,29 +65,22 @@ def products_page() -> None:
 
             async def handle_filter(e: Any) -> None:
                 """Handle changes to the search filter."""
-                app.storage.client["products_table"]["filter"] = e.value if e.value else ""
-                app.storage.client["products_table"]["pagination"].page = 1
-                handle_table_request(
-                    {"pagination": app.storage.client["products_table"]["pagination"].to_dict()}
-                )
+                table_state.update_filter(e.value if e.value else "")
+                handle_table_request({"pagination": table_state.pagination.to_dict()})
 
             def handle_table_request(event: Dict[str, Any]) -> None:
                 """Handle table request events."""
-                pagination = app.storage.client["products_table"]["pagination"]
-                pagination.update(
-                    event["pagination"] if isinstance(event, dict) else event.args["pagination"]
-                )
+                table_state.update_from_request(event)
 
                 products, total = repository.get_paginated(
-                    page=pagination.page,
-                    items_per_page=pagination.rows_per_page,
-                    sort_by=pagination.sort_by,
-                    descending=pagination.descending,
-                    filter_text=app.storage.client["products_table"]["filter"],
+                    page=table_state.pagination.page,
+                    items_per_page=table_state.pagination.rows_per_page,
+                    sort_by=table_state.pagination.sort_by,
+                    descending=table_state.pagination.descending,
+                    filter_text=table_state.filter,
                 )
 
-                pagination.total_rows = total
-                app.storage.client["products_table"]["rows"] = [format_row(p) for p in products]
+                table_state.update_rows([format_row(p) for p in products], total)
                 server_side_paginated_table.refresh()
 
             row_actions = {
@@ -105,10 +90,10 @@ def products_page() -> None:
                 }
             }
 
-            server_side_paginated_table(Product, handle_table_request, row_actions=row_actions)
-            handle_table_request(
-                {"pagination": app.storage.client["products_table"]["pagination"].to_dict()}
+            server_side_paginated_table(
+                Product, table_state, handle_table_request, row_actions=row_actions
             )
+            handle_table_request({"pagination": table_state.pagination.to_dict()})
 
 
 @router.page("/{product_id:int}")
