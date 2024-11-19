@@ -10,7 +10,7 @@ from ..components.styles import (
     CARD_CLASSES,
     HEADER_CLASSES,
 )
-from ..components.table_utils import get_table_columns
+from ..components.data_table import server_side_paginated_table
 from ..components.table_state import ClientStorageTableState
 
 
@@ -33,19 +33,6 @@ def spacing_page() -> None:
                     placeholder="Search spacing records...",
                     on_change=lambda e: handle_filter(e),
                 ).classes("w-64").mark("search")
-
-            @ui.refreshable
-            def spacing_table() -> ui.table:
-                """Create a refreshable table component."""
-                columns = get_table_columns(WijderzetRegistratie)
-                table = ui.table(
-                    columns=columns,
-                    rows=table_state.rows,
-                    row_key="id",
-                    pagination=table_state.pagination.to_dict(),
-                ).classes("w-full")
-                table.on("request", handle_table_request)
-                return table
 
             async def handle_filter(e: Any) -> None:
                 """Handle changes to the search filter with debounce."""
@@ -92,7 +79,7 @@ def spacing_page() -> None:
                 ], total)
 
                 # Refresh the table UI
-                spacing_table.refresh()
+                server_side_paginated_table.refresh()
 
             def load_filtered_data() -> None:
                 """Load data with current filter and refresh table."""
@@ -124,10 +111,13 @@ def spacing_page() -> None:
                     }
                     for r in registraties
                 ], total)
-                spacing_table.refresh()
+                server_side_paginated_table.refresh()
 
             # Create table and load data
-            table = spacing_table()
+            server_side_paginated_table(
+                WijderzetRegistratie,
+                table_state,
+                handle_table_request,
+                title="Wijderzetten",
+            )
             load_initial_data()
-
-            return table
