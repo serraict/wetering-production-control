@@ -69,21 +69,9 @@ class ProductRepository(DremioRepository):
             return [row[0] for row in result]
 
     def get_by_id(self, product_id: int) -> Optional[Product]:
-        """Get a product by its ID.
-
-        Args:
-            product_id: The ID of the product to retrieve
-
-        Returns:
-            The product if found, None otherwise
-        """
+        """Get a product by its ID."""
         with Session(self.engine) as session:
-            # Note: Using string interpolation because Dremio Flight doesn't support parameters
-            base_query = select(Product)
-            filter_expr = text(f"id = {product_id}")
-            query = base_query.where(filter_expr)
-            result = session.exec(query)
-            return result.first()
+            return session.exec(select(Product).where(text(f"id = {product_id}"))).first()
 
     def get_paginated(
         self,
