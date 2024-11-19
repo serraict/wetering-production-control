@@ -54,12 +54,12 @@ def products_page() -> None:
     repository = ProductRepository()
     table_state = ClientStorageTableState.initialize("products_table")
 
-    with frame("Products"):
+    with frame("Producten"):
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
             with ui.row().classes("w-full justify-between items-center mb-4"):
-                ui.label("Products Overview").classes(HEADER_CLASSES)
+                ui.label("Producten Overzicht").classes(HEADER_CLASSES)
                 ui.input(
-                    placeholder="Search products...",
+                    placeholder="Zoek producten...",
                     on_change=lambda e: handle_filter(e),
                 ).classes("w-64").mark("search")
 
@@ -106,9 +106,9 @@ def product_detail(product_id: int) -> None:
 
         if product:
             with ui.row().classes("w-full justify-between items-center mb-6"):
-                ui.link("← Back to Products", "/products").classes(LINK_CLASSES)
+                ui.link("← Terug naar Producten", "/products").classes(LINK_CLASSES)
 
             display_model_card(product, title=product.name)
         else:
-            show_error("Product not found")
-            ui.link("← Back to Products", "/products").classes(LINK_CLASSES + " mt-4")
+            show_error("Product niet gevonden")
+            ui.link("← Terug naar Producten", "/products").classes(LINK_CLASSES + " mt-4")
