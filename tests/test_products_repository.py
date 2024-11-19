@@ -180,12 +180,7 @@ def test_get_paginated_with_pagination_object(mock_session_class, repository, mo
     session.exec.side_effect = [count_result, mock_products[1:]]
 
     # Create pagination object with page 2, 1 item per page, sorted by name descending
-    pagination = Pagination(
-        page=2,
-        rows_per_page=1,
-        sort_by="name",
-        descending=True
-    )
+    pagination = Pagination(page=2, rows_per_page=1, sort_by="name", descending=True)
 
     # Execute
     products, total = repository.get_paginated(pagination=pagination)

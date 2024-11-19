@@ -49,14 +49,14 @@ def server_side_paginated_table(
     row_actions: Dict[str, Dict[str, Any]] = {},
 ) -> ui.table:
     """Create a refreshable table component.
-    
+
     Args:
         cls: SQLModel class that defines the table structure
         state: ClientStorageTableState instance for state management
         on_request: Callback for handling table requests (pagination/sorting)
         title: Optional table title
         row_actions: Optional dict of row actions, each with 'icon' and 'handler'
-    
+
     Returns:
         A refreshable table component
     """

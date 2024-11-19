@@ -95,8 +95,7 @@ async def test_products_page_filtering_calls_repository(user) -> None:
 
         # Then verify repository was called with filter
         mock_repo.get_paginated.assert_called_with(
-            pagination=mock_repo.get_paginated.call_args.kwargs["pagination"],
-            filter_text="mix"
+            pagination=mock_repo.get_paginated.call_args.kwargs["pagination"], filter_text="mix"
         )
 
 
