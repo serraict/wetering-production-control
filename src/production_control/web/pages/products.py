@@ -24,50 +24,59 @@ router = APIRouter(prefix="/products")
 @router.page("/")
 def products_page() -> None:
     """Render the products page with a table of all products."""
+
+    # Set up table data access
     repository = ProductRepository()
     table_state = ClientStorageTableState.initialize("products_table")
 
+    def load_data():
+        pagination = table_state.pagination
+        filter_text = table_state.filter
+        items, total = repository.get_paginated(
+            pagination=pagination,
+            filter_text=filter_text,
+        )
+        table_state.update_rows([format_row(item) for item in items], total)
+        server_side_paginated_table.refresh()
+
+    # actions
+    row_actions = {
+        "view": {
+            "icon": "visibility",
+            "handler": lambda e: ui.navigate.to(f"/products/{e.args.get('key')}"),
+        }
+    }
+
+    # event handlers
+    async def handle_filter(e: Any) -> None:
+        """Handle changes to the search filter."""
+        table_state.update_filter(e.value if e.value else "")
+        load_data()
+
+    def handle_table_request(event: Dict[str, Any]) -> None:
+        """Handle table request events."""
+        table_state.update_from_request(event)
+        load_data()
+
+    # render page
     with frame("Producten"):
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
             with ui.row().classes("w-full justify-between items-center mb-4"):
-                ui.label("Producten Overzicht").classes(HEADER_CLASSES)
+                ui.label("Overzicht").classes(HEADER_CLASSES)
                 ui.input(
                     placeholder="Zoek producten...",
                     on_change=lambda e: handle_filter(e),
                 ).classes("w-64").mark("search")
 
-            async def handle_filter(e: Any) -> None:
-                """Handle changes to the search filter."""
-                table_state.update_filter(e.value if e.value else "")
-                handle_table_request({"pagination": table_state.pagination.to_dict()})
-
-            def handle_table_request(event: Dict[str, Any]) -> None:
-                """Handle table request events."""
-                table_state.update_from_request(event)
-
-                products, total = repository.get_paginated(
-                    pagination=table_state.pagination,
-                    filter_text=table_state.filter,
-                )
-
-                table_state.update_rows([format_row(p) for p in products], total)
-                server_side_paginated_table.refresh()
-
-            row_actions = {
-                "view": {
-                    "icon": "visibility",
-                    "handler": lambda e: ui.navigate.to(f"/products/{e.args.get('key')}"),
-                }
-            }
-
             server_side_paginated_table(
                 Product,
                 table_state,
                 handle_table_request,
-                title="Producten",
                 row_actions=row_actions,
             )
-            handle_table_request({"pagination": table_state.pagination.to_dict()})
+
+    # load initial data
+    load_data()
 
 
 @router.page("/{product_id:int}")
