@@ -13,7 +13,7 @@ from ..components.styles import (
     HEADER_CLASSES,
     LINK_CLASSES,
 )
-from ..components.table_utils import get_table_columns
+from ..components.data_table import DataTable
 
 
 router = APIRouter(prefix="/products")
@@ -50,13 +50,12 @@ def products_page() -> None:
             @ui.refreshable
             def products_table() -> ui.table:
                 """Create a refreshable table component."""
-                columns = get_table_columns(Product)
-                table = ui.table(
-                    columns=columns,
+                table = DataTable(
+                    model_class=Product,
                     rows=table_data["rows"] if "rows" in table_data else [],
-                    row_key="id",
-                    pagination=table_data["pagination"],
-                ).classes("w-full")
+                    title="Products Overview",
+                )
+                table.on("request", handle_table_request)
                 table.add_slot(
                     "body-cell-actions",
                     """
@@ -65,7 +64,6 @@ def products_page() -> None:
                     </q-td>
                 """,
                 )
-                table.on("request", handle_table_request)
                 table.on("view", handle_view_click)
                 return table
 
