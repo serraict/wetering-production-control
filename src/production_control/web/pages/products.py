@@ -73,10 +73,7 @@ def products_page() -> None:
                 table_state.update_from_request(event)
 
                 products, total = repository.get_paginated(
-                    page=table_state.pagination.page,
-                    items_per_page=table_state.pagination.rows_per_page,
-                    sort_by=table_state.pagination.sort_by,
-                    descending=table_state.pagination.descending,
+                    pagination=table_state.pagination,
                     filter_text=table_state.filter,
                 )
 

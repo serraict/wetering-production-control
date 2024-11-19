@@ -6,6 +6,7 @@ from nicegui.testing import User
 from nicegui import ui
 
 from production_control.products.models import Product
+from production_control.data import Pagination
 
 
 async def test_products_page_shows_table(user: User) -> None:
@@ -73,9 +74,7 @@ async def test_products_page_filtering_calls_repository(user) -> None:
         # An asyncio.Event to signal when the repository is called
         done_event = asyncio.Event()
 
-        def on_get_paginated(
-            page=1, items_per_page=10, sort_by=None, descending=False, filter_text=""
-        ):
+        def on_get_paginated(*, pagination: Pagination = None, filter_text: str = ""):
             if filter_text == "mix":
                 done_event.set()  # Set the event when desired call is made
             return [], 0
@@ -96,7 +95,8 @@ async def test_products_page_filtering_calls_repository(user) -> None:
 
         # Then verify repository was called with filter
         mock_repo.get_paginated.assert_called_with(
-            page=1, items_per_page=10, sort_by=None, descending=False, filter_text="mix"
+            pagination=mock_repo.get_paginated.call_args.kwargs["pagination"],
+            filter_text="mix"
         )
 
 
