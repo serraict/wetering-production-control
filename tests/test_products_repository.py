@@ -9,6 +9,7 @@ from production_control.products.models import (
     ProductRepository,
     InvalidParameterError,
 )
+from production_control.data import Pagination
 
 
 @pytest.fixture
@@ -166,3 +167,31 @@ def test_get_paginated_invalid_items_per_page(repository):
     """Test get_paginated raises error for invalid items_per_page."""
     with pytest.raises(InvalidParameterError):
         repository.get_paginated(items_per_page=0)
+
+
+@patch("production_control.products.models.Session")
+def test_get_paginated_with_pagination_object(mock_session_class, repository, mock_products):
+    """Test get_paginated accepts a Pagination object."""
+    # Setup mock
+    session = mock_session_class.return_value.__enter__.return_value
+    # Mock count query
+    count_result = MagicMock()
+    count_result.one.return_value = 3
+    session.exec.side_effect = [count_result, mock_products[1:]]
+
+    # Create pagination object with page 2, 1 item per page, sorted by name descending
+    pagination = Pagination(
+        page=2,
+        rows_per_page=1,
+        sort_by="name",
+        descending=True
+    )
+
+    # Execute
+    products, total = repository.get_paginated(pagination=pagination)
+
+    # Verify
+    assert len(products) == 2  # Mock returns products[1:] (2 items)
+    assert total == 3
+    assert products[0].name == "Product 2"
+    assert products[1].name == "Product 3"

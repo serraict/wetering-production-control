@@ -8,6 +8,8 @@ from sqlmodel import Field, Session, SQLModel, select
 from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
 
+from ..data import Pagination
+
 
 class CustomDremioDialect(DremioDialect_flight):
     """Custom Dremio dialect that implements import_dbapi."""
@@ -108,6 +110,7 @@ class ProductRepository:
         sort_by: Optional[str] = None,
         descending: bool = False,
         filter_text: Optional[str] = None,
+        pagination: Optional[Pagination] = None,
     ) -> Tuple[List[Product], int]:
         """Get paginated products from the data source.
 
@@ -117,6 +120,7 @@ class ProductRepository:
             sort_by: Column name to sort by
             descending: Sort in descending order if True
             filter_text: Optional text to filter products by (case-insensitive)
+            pagination: Optional Pagination object that overrides other pagination parameters
 
         Returns:
             Tuple containing list of products for the requested page and total count
@@ -124,6 +128,12 @@ class ProductRepository:
         Raises:
             InvalidParameterError: If pagination parameters are invalid
         """
+        if pagination is not None:
+            page = pagination.page
+            items_per_page = pagination.rows_per_page
+            sort_by = pagination.sort_by
+            descending = pagination.descending
+
         # Validate pagination parameters
         if page < 1:
             raise InvalidParameterError("Page number must be greater than 0")
