@@ -65,7 +65,7 @@ async def test_spacing_page_shows_table(user: User) -> None:
 
         # When
         await user.open("/spacing")
-        await user.should_see("Wijderzetten Overzicht")  # Wait for page to load
+        await user.should_see("Overzicht")  # Wait for page to load
 
         # Then
         table = user.find(ui.table).elements.pop()

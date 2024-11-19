@@ -60,22 +60,23 @@ def spacing_page() -> None:
         table_state.pagination.page = 1  # Reset to first page
         load_filtered_data()
 
-    with frame("Spacing"):
+    with frame("Wijderzetten"):
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
             # Header section
             with ui.row().classes("w-full justify-between items-center mb-4"):
-                ui.label("Wijderzetten Overzicht").classes(HEADER_CLASSES)
+                ui.label("Overzicht").classes(HEADER_CLASSES)
                 # Add search input with debounce
                 ui.input(
-                    placeholder="Search spacing records...",
+                    placeholder="Zoek ...",
                     on_change=lambda e: handle_filter(e),
-                ).classes("w-64").mark("search")
+                ).classes(
+                    "w-64"
+                ).mark("search")
 
             # Create table and load data
             server_side_paginated_table(
                 WijderzetRegistratie,
                 table_state,
                 handle_table_request,
-                title="Wijderzetten",
             )
             load_initial_data()
