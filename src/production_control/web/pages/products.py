@@ -14,18 +14,10 @@ from ..components.styles import (
     LINK_CLASSES,
 )
 from ..components.data_table import ServerSidePaginatingTable
+from ..components.table_utils import format_row
 
 
 router = APIRouter(prefix="/products")
-
-
-def format_product(product: Product) -> Dict[str, Any]:
-    """Format product for table display."""
-    return {
-        "id": product.id,
-        "name": product.name,
-        "product_group_name": product.product_group_name,
-    }
 
 
 def initialize_table_state() -> None:
@@ -107,7 +99,7 @@ def products_page() -> None:
                     filter_text=app.storage.client["products_table"]["filter"],
                 )
 
-                app.storage.client["products_table"]["rows"] = [format_product(p) for p in products]
+                app.storage.client["products_table"]["rows"] = [format_row(p) for p in products]
                 app.storage.client["products_table"]["pagination"]["rowsNumber"] = total
                 server_side_paginated_table.refresh()
 
@@ -120,7 +112,6 @@ def products_page() -> None:
 
             server_side_paginated_table(Product, handle_table_request, row_actions=row_actions)
             handle_table_request({"pagination": app.storage.client["products_table"]["pagination"]})
-            # return table
 
 
 @router.page("/{product_id:int}")

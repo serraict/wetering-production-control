@@ -61,3 +61,33 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
     columns.append({"name": "actions", "label": "Acties", "field": "actions"})
 
     return columns
+
+
+def format_row(model: SQLModel) -> Dict[str, Any]:
+    """Format a model instance as a table row.
+    
+    Uses the same field metadata as get_table_columns to determine which fields to include.
+    
+    Args:
+        model: The model instance to format
+        
+    Returns:
+        Dictionary with field values for use in ui.table rows
+    """
+    row = {"id": model.id}  # Always include id for row key
+    
+    for field_name, field in model.__class__.model_fields.items():
+        # Get UI metadata from SQLAlchemy column info
+        sa_kwargs = getattr(field, "sa_column_kwargs", None)
+        if isinstance(sa_kwargs, (PydanticUndefinedType, type(None))):
+            sa_kwargs = {}
+        field_info = sa_kwargs.get("info", {})
+        
+        # Skip hidden fields
+        if field_info.get("ui_hidden"):
+            continue
+            
+        # Add field value to row
+        row[field_name] = getattr(model, field_name)
+    
+    return row

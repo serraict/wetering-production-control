@@ -2,7 +2,7 @@
 
 from sqlmodel import SQLModel, Field
 
-from production_control.web.components.table_utils import get_table_columns
+from production_control.web.components.table_utils import get_table_columns, format_row
 from production_control.products.models import Product
 
 
@@ -141,3 +141,25 @@ def test_get_table_columns_generates_product_columns():
             "field": "actions",
         },
     ]
+
+
+def test_format_row_respects_hidden_fields():
+    """Test that format_row excludes fields marked as hidden."""
+
+    # Given
+    class ModelWithHidden(SQLModel):
+        id: int = Field()
+        visible: str = Field(title="Visible")
+        hidden: str = Field(sa_column_kwargs={"info": {"ui_hidden": True}})
+
+    model = ModelWithHidden(id=1, visible="Shown", hidden="Secret")
+
+    # When
+    row = format_row(model)
+
+    # Then
+    assert row == {
+        "id": 1,
+        "visible": "Shown",
+    }
+    assert "hidden" not in row
