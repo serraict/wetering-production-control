@@ -1,9 +1,9 @@
 """Base repository for Dremio data access."""
 
 import os
-from typing import Optional, Union, Tuple, TypeVar, List
+from typing import Optional, Union, Tuple, TypeVar, List, Sequence
 
-from sqlalchemy import Engine, create_engine, Integer, bindparam, Select
+from sqlalchemy import Engine, create_engine, Integer, bindparam, Select, text
 from sqlmodel import Session
 
 from .pagination import Pagination
@@ -76,6 +76,34 @@ class DremioRepository:
             raise InvalidParameterError("Items per page must be greater than 0")
 
         return page, items_per_page, sort_by, descending
+
+    def _apply_text_filter(
+        self,
+        query: Select,
+        filter_text: str,
+        fields: Sequence[str],
+    ) -> Select:
+        """Apply case-insensitive text filter to query.
+
+        Args:
+            query: The base query to filter
+            filter_text: Text to filter by
+            fields: List of field names to apply filter to
+
+        Returns:
+            Query with filter applied
+        """
+        if not filter_text:
+            return query
+
+        # Note: Using string interpolation because Dremio Flight doesn't support parameters
+        pattern = f"%{filter_text}%"
+        conditions = [
+            f"lower({field}) LIKE lower('{pattern}')"
+            for field in fields
+        ]
+        filter_expr = text(" OR ".join(conditions))
+        return query.where(filter_expr)
 
     def _execute_paginated_query(
         self,

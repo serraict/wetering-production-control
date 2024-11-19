@@ -1,7 +1,7 @@
 """Product data models."""
 
 from typing import List, Optional, Tuple
-from sqlalchemy import func, desc, text, distinct
+from sqlalchemy import func, desc, distinct, text
 from sqlmodel import Field, Session, SQLModel, select
 from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
@@ -57,6 +57,9 @@ class ProductRepository(DremioRepository):
 
     Currently using Dremio Flight protocol which doesn't support parameterized queries.
     """
+
+    # Fields to search when filtering products
+    search_fields = ["name", "product_group_name"]
 
     def get_all(self) -> List[Product]:
         """Get all products from the data source."""
@@ -117,13 +120,7 @@ class ProductRepository(DremioRepository):
 
             # Apply filter if provided
             if filter_text:
-                # Note: Using string interpolation because Dremio Flight doesn't support parameters
-                pattern = f"%{filter_text}%"
-                filter_expr = text(
-                    f"lower(name) LIKE lower('{pattern}') OR "
-                    f"lower(product_group_name) LIKE lower('{pattern}')"
-                )
-                base_query = base_query.where(filter_expr)
+                base_query = self._apply_text_filter(base_query, filter_text, self.search_fields)
 
             # Apply sorting
             if sort_by:
@@ -139,7 +136,7 @@ class ProductRepository(DremioRepository):
             # Get total count using the same filter
             count_stmt = select(func.count(distinct(Product.id)))
             if filter_text:
-                count_stmt = count_stmt.where(filter_expr)
+                count_stmt = self._apply_text_filter(count_stmt, filter_text, self.search_fields)
             total = session.exec(count_stmt).one()
 
             # Execute paginated query
