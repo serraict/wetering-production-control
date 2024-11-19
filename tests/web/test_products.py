@@ -120,6 +120,8 @@ async def test_product_detail_page_shows_product(user: User) -> None:
         # Then
         await user.should_see("T. Bee 13")
         await user.should_see("13 aziaat")
+        await user.should_see("Product Details")  # Frame title
+        await user.should_see("← Terug naar Producten")
 
 
 async def test_product_detail_page_handles_invalid_id(user: User) -> None:
@@ -134,4 +136,5 @@ async def test_product_detail_page_handles_invalid_id(user: User) -> None:
         await user.open("/products/999")
 
         # Then
-        await user.should_see("Product not found")
+        await user.should_see("Product niet gevonden")
+        await user.should_see("← Terug naar Producten")
