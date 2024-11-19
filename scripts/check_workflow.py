@@ -110,7 +110,7 @@ def display_status(workflow_name: str, run: Dict[str, Any], runtime: str | None 
 
 def watch_workflow(workflow_name: str, interval: int = 10) -> None:
     """Watch workflow progress with live updates."""
-    update_interval = 0.5  # Update progress every 500ms
+    update_interval = 5
 
     while True:
         run = get_workflow_run(workflow_name)
