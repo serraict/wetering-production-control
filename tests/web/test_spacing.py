@@ -3,6 +3,7 @@
 import asyncio
 from datetime import date
 from decimal import Decimal
+from typing import Optional
 from uuid import UUID
 from unittest.mock import Mock, patch
 
@@ -10,6 +11,7 @@ from nicegui.testing import User
 from nicegui import ui
 
 from production_control.spacing.models import WijderzetRegistratie
+from production_control.data import Pagination
 
 
 async def test_spacing_page_shows_table(user: User) -> None:
@@ -222,7 +224,12 @@ async def test_spacing_page_filtering_calls_repository(user: User) -> None:
         done_event = asyncio.Event()
 
         def on_get_paginated(
-            page=1, items_per_page=10, sort_by=None, descending=False, filter_text=""
+            pagination: Optional[Pagination] = None,
+            page: int = 1,
+            items_per_page: int = 10,
+            sort_by: Optional[str] = None,
+            descending: bool = False,
+            filter_text: str = "",
         ):
             if filter_text == "TEST123":
                 done_event.set()  # Set the event when desired call is made
@@ -244,5 +251,8 @@ async def test_spacing_page_filtering_calls_repository(user: User) -> None:
 
         # Then verify repository was called with filter
         mock_repo.get_paginated.assert_called_with(
-            page=1, items_per_page=10, sort_by=None, descending=False, filter_text="TEST123"
+            pagination=Pagination(
+                page=1, rows_per_page=10, total_rows=0, sort_by=None, descending=False
+            ),
+            filter_text="TEST123",
         )
