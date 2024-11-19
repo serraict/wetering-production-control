@@ -2,7 +2,7 @@
 
 from typing import Dict, Any
 
-from nicegui import APIRouter, ui
+from nicegui import APIRouter, ui, app
 
 from ...products.models import ProductRepository, Product
 from ..components import frame
@@ -18,24 +18,25 @@ from ..components.data_table import ServerSidePaginatingTable
 
 router = APIRouter(prefix="/products")
 
-# Shared table state
-table_data = {
-    "pagination": {
-        "rowsPerPage": 10,
-        "page": 1,
-        "rowsNumber": 0,  # This will signal the Quasar component to use server side pagination
-        "sortBy": None,
-        "descending": False,
-    },
-    "filter": "",  # Single filter for searching all fields
-    "rows": [],
-}
-
 
 @router.page("/")
 def products_page() -> None:
     """Render the products page with a table of all products."""
     repository = ProductRepository()
+
+    # Initialize table state in client storage if not exists
+    if "products_table" not in app.storage.client:
+        app.storage.client["products_table"] = {
+            "pagination": {
+                "rowsPerPage": 10,
+                "page": 1,
+                "rowsNumber": 0,  # This will signal the Quasar component to use server side pagination
+                "sortBy": None,
+                "descending": False,
+            },
+            "filter": "",  # Single filter for searching all fields
+            "rows": [],
+        }
 
     with frame("Products"):
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
@@ -53,9 +54,9 @@ def products_page() -> None:
                 """Create a refreshable table component."""
                 table = ServerSidePaginatingTable(
                     model_class=Product,
-                    rows=table_data["rows"],
+                    rows=app.storage.client["products_table"]["rows"],
                     title="Products Overview",
-                    pagination=table_data["pagination"],
+                    pagination=app.storage.client["products_table"]["pagination"],
                 )
                 table.on("request", handle_table_request)
                 table.add_slot(
@@ -77,8 +78,8 @@ def products_page() -> None:
 
             async def handle_filter(e: Any) -> None:
                 """Handle changes to the search filter with debounce."""
-                table_data["filter"] = e.value if e.value else ""
-                table_data["pagination"]["page"] = 1  # Reset to first page
+                app.storage.client["products_table"]["filter"] = e.value if e.value else ""
+                app.storage.client["products_table"]["pagination"]["page"] = 1  # Reset to first page
                 load_filtered_data()
 
             def handle_table_request(event: Dict[str, Any]) -> None:
@@ -87,7 +88,7 @@ def products_page() -> None:
                 new_pagination = (
                     event["pagination"] if isinstance(event, dict) else event.args["pagination"]
                 )
-                table_data["pagination"].update(new_pagination)
+                app.storage.client["products_table"]["pagination"].update(new_pagination)
 
                 # Get new page of data with sorting
                 page = new_pagination.get("page", 1)
@@ -100,11 +101,11 @@ def products_page() -> None:
                     items_per_page=rows_per_page,
                     sort_by=sort_by,
                     descending=descending,
-                    filter_text=table_data["filter"],
+                    filter_text=app.storage.client["products_table"]["filter"],
                 )
 
                 # Update table data
-                table_data["rows"] = [
+                app.storage.client["products_table"]["rows"] = [
                     {
                         "id": p.id,
                         "name": p.name,
@@ -112,7 +113,7 @@ def products_page() -> None:
                     }
                     for p in products
                 ]
-                table_data["pagination"]["rowsNumber"] = total
+                app.storage.client["products_table"]["pagination"]["rowsNumber"] = total
 
                 # Refresh the table UI
                 products_table.refresh()
@@ -120,14 +121,14 @@ def products_page() -> None:
             def load_filtered_data() -> None:
                 """Load data with current filter and refresh table."""
                 handle_table_request(
-                    {"pagination": table_data["pagination"]}
+                    {"pagination": app.storage.client["products_table"]["pagination"]}
                 )
 
             # Initial data load
             def load_initial_data() -> None:
                 """Load initial data and set total count."""
                 products, total = repository.get_paginated(page=1, items_per_page=10)
-                table_data["rows"] = [
+                app.storage.client["products_table"]["rows"] = [
                     {
                         "id": p.id,
                         "name": p.name,
@@ -135,7 +136,7 @@ def products_page() -> None:
                     }
                     for p in products
                 ]
-                table_data["pagination"]["rowsNumber"] = total
+                app.storage.client["products_table"]["pagination"]["rowsNumber"] = total
                 products_table.refresh()
 
             # Create table and load data
