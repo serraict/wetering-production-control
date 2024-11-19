@@ -1,26 +1,15 @@
 """Spacing data models."""
 
-import os
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import (
-    Engine,
-    func,
-    Integer,
-    bindparam,
-    text,
-    distinct,
-    desc,
-    create_engine,
-    nulls_last,
-)
+from sqlalchemy import func, distinct, Select
 from sqlmodel import Field, Session, SQLModel, select
 
 from ..data import Pagination
-from ..data.repository import InvalidParameterError
+from ..data.repository import DremioRepository
 
 
 class WijderzetRegistratie(SQLModel, table=True):
@@ -123,16 +112,15 @@ class WijderzetRegistratie(SQLModel, table=True):
     )
 
 
-class SpacingRepository:
+class SpacingRepository(DremioRepository):
     """Read-only repository for spacing data access."""
 
-    def __init__(self, connection: Optional[Union[str, Engine]] = None):
-        """Initialize repository with optional connection string or engine."""
-        if isinstance(connection, Engine):
-            self.engine = connection
-        else:
-            conn_str = os.getenv("VINEAPP_DB_CONNECTION", "dremio+flight://localhost:32010/dremio")
-            self.engine = create_engine(conn_str)
+    # Fields to search when filtering spacing records
+    search_fields = ["partij_code", "product_naam", "productgroep_naam"]
+
+    def _apply_default_sorting(self, query: Select, model: type[SQLModel]) -> Select:
+        """Apply default sorting to query."""
+        return query.order_by(model.productgroep_naam, model.partij_code)
 
     def get_paginated(
         self,
@@ -159,17 +147,9 @@ class SpacingRepository:
         Raises:
             InvalidParameterError: If pagination parameters are invalid
         """
-        if pagination is not None:
-            page = pagination.page
-            items_per_page = pagination.rows_per_page
-            sort_by = pagination.sort_by
-            descending = pagination.descending
-
-        # Validate pagination parameters
-        if page < 1:
-            raise InvalidParameterError("Page number must be greater than 0")
-        if items_per_page < 1:
-            raise InvalidParameterError("Items per page must be greater than 0")
+        page, items_per_page, sort_by, descending = self._validate_pagination(
+            page, items_per_page, sort_by, descending, pagination
+        )
 
         with Session(self.engine) as session:
             # Create base query
@@ -177,50 +157,16 @@ class SpacingRepository:
 
             # Apply filter if provided
             if filter_text:
-                # Note: Using string interpolation because Dremio Flight doesn't support parameters
-                pattern = f"%{filter_text}%"
-                filter_expr = text(
-                    f"lower(partij_code) LIKE lower('{pattern}') OR "
-                    f"lower(product_naam) LIKE lower('{pattern}') OR "
-                    f"lower(productgroep_naam) LIKE lower('{pattern}')"
-                )
-                base_query = base_query.where(filter_expr)
+                base_query = self._apply_text_filter(base_query, filter_text, self.search_fields)
+
+            # Apply sorting
+            base_query = self._apply_sorting(base_query, WijderzetRegistratie, sort_by, descending)
 
             # Get total count using the same filter
             count_stmt = select(func.count(distinct(WijderzetRegistratie.id)))
             if filter_text:
-                count_stmt = count_stmt.where(filter_expr)
+                count_stmt = self._apply_text_filter(count_stmt, filter_text, self.search_fields)
             total = session.exec(count_stmt).one()
 
-            # Calculate offset
-            offset = (page - 1) * items_per_page
-
-            # Apply sorting
-            if sort_by:
-                column = getattr(WijderzetRegistratie, sort_by)
-                if descending:
-                    base_query = base_query.order_by(nulls_last(desc(column)))
-                else:
-                    base_query = base_query.order_by(nulls_last(column))
-            else:
-                # Default sorting
-                base_query = base_query.order_by(
-                    WijderzetRegistratie.productgroep_naam, WijderzetRegistratie.partij_code
-                )
-
-            # Apply pagination
-            query = base_query.limit(
-                bindparam("limit", type_=Integer, literal_execute=True)
-            ).offset(bindparam("offset", type_=Integer, literal_execute=True))
-
-            # Execute with bound parameters
-            result = session.exec(
-                query,
-                params={
-                    "limit": items_per_page,
-                    "offset": offset,
-                },
-            )
-            registraties = list(result)
-
-            return registraties, total
+            # Execute paginated query
+            return self._execute_paginated_query(session, base_query, page, items_per_page, total)
