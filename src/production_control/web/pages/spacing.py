@@ -17,6 +17,29 @@ from ..components.table_state import ClientStorageTableState
 router = APIRouter(prefix="/spacing")
 
 
+def format_row(registratie: WijderzetRegistratie) -> Dict[str, Any]:
+    """Format spacing record for table display."""
+    return {
+        "id": registratie.id,
+        "partij_code": registratie.partij_code,
+        "product_naam": registratie.product_naam,
+        "productgroep_naam": registratie.productgroep_naam,
+        "datum_oppotten_real": registratie.datum_oppotten_real,
+        "datum_uit_cel_real": registratie.datum_uit_cel_real,
+        "datum_wdz1_real": registratie.datum_wdz1_real,
+        "datum_wdz2_real": registratie.datum_wdz2_real,
+        "aantal_planten_gerealiseerd": registratie.aantal_planten_gerealiseerd,
+        "aantal_tafels_totaal": registratie.aantal_tafels_totaal,
+        "aantal_tafels_na_wdz1": registratie.aantal_tafels_na_wdz1,
+        "aantal_tafels_na_wdz2": registratie.aantal_tafels_na_wdz2,
+        "aantal_tafels_oppotten_plan": registratie.aantal_tafels_oppotten_plan,
+        "dichtheid_oppotten_plan": registratie.dichtheid_oppotten_plan,
+        "dichtheid_wz1_plan": registratie.dichtheid_wz1_plan,
+        "dichtheid_wz2_plan": registratie.dichtheid_wz2_plan,
+        "wijderzet_registratie_fout": registratie.wijderzet_registratie_fout,
+    }
+
+
 @router.page("/")
 def spacing_page() -> None:
     """Render the spacing page with a table of all spacing records."""
@@ -55,28 +78,7 @@ def spacing_page() -> None:
                 )
 
                 # Update table data
-                table_state.update_rows([
-                    {
-                        "id": r.id,
-                        "partij_code": r.partij_code,
-                        "product_naam": r.product_naam,
-                        "productgroep_naam": r.productgroep_naam,
-                        "datum_oppotten_real": r.datum_oppotten_real,
-                        "datum_uit_cel_real": r.datum_uit_cel_real,
-                        "datum_wdz1_real": r.datum_wdz1_real,
-                        "datum_wdz2_real": r.datum_wdz2_real,
-                        "aantal_planten_gerealiseerd": r.aantal_planten_gerealiseerd,
-                        "aantal_tafels_totaal": r.aantal_tafels_totaal,
-                        "aantal_tafels_na_wdz1": r.aantal_tafels_na_wdz1,
-                        "aantal_tafels_na_wdz2": r.aantal_tafels_na_wdz2,
-                        "aantal_tafels_oppotten_plan": r.aantal_tafels_oppotten_plan,
-                        "dichtheid_oppotten_plan": r.dichtheid_oppotten_plan,
-                        "dichtheid_wz1_plan": r.dichtheid_wz1_plan,
-                        "dichtheid_wz2_plan": r.dichtheid_wz2_plan,
-                        "wijderzet_registratie_fout": r.wijderzet_registratie_fout,
-                    }
-                    for r in registraties
-                ], total)
+                table_state.update_rows([format_row(r) for r in registraties], total)
 
                 # Refresh the table UI
                 server_side_paginated_table.refresh()
@@ -89,28 +91,7 @@ def spacing_page() -> None:
             def load_initial_data() -> None:
                 """Load initial data and set total count."""
                 registraties, total = repository.get_paginated(page=1, items_per_page=10)
-                table_state.update_rows([
-                    {
-                        "id": r.id,
-                        "partij_code": r.partij_code,
-                        "product_naam": r.product_naam,
-                        "productgroep_naam": r.productgroep_naam,
-                        "datum_oppotten_real": r.datum_oppotten_real,
-                        "datum_uit_cel_real": r.datum_uit_cel_real,
-                        "datum_wdz1_real": r.datum_wdz1_real,
-                        "datum_wdz2_real": r.datum_wdz2_real,
-                        "aantal_planten_gerealiseerd": r.aantal_planten_gerealiseerd,
-                        "aantal_tafels_totaal": r.aantal_tafels_totaal,
-                        "aantal_tafels_na_wdz1": r.aantal_tafels_na_wdz1,
-                        "aantal_tafels_na_wdz2": r.aantal_tafels_na_wdz2,
-                        "aantal_tafels_oppotten_plan": r.aantal_tafels_oppotten_plan,
-                        "dichtheid_oppotten_plan": r.dichtheid_oppotten_plan,
-                        "dichtheid_wz1_plan": r.dichtheid_wz1_plan,
-                        "dichtheid_wz2_plan": r.dichtheid_wz2_plan,
-                        "wijderzet_registratie_fout": r.wijderzet_registratie_fout,
-                    }
-                    for r in registraties
-                ], total)
+                table_state.update_rows([format_row(r) for r in registraties], total)
                 server_side_paginated_table.refresh()
 
             # Create table and load data
