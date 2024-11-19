@@ -35,21 +35,23 @@ Implementation steps:
      - ✓ Support field filtering (hidden fields)
      - ✓ Handle field ordering
      - ✓ Apply formatters based on type hints
-   - Create DataTable component:
-     - ✓ Create base DataTable that wraps column generation from model
-     - Add server-side pagination support (next)
-     - Add custom actions support
-     - Update products page to use DataTable
-     - Update spacing page to use DataTable
-     - Add tests for DataTable component
+   - ✓ Create ServerSidePaginatingTable:
+     - ✓ Model-driven columns
+     - Server-side pagination support
+       - State should be stored per tab, not globally
+       - Pagination interface should be clean python
+     - Update products page to use table
    - Create table data formatter utility:
      - Add date formatting
      - Add decimal formatting
      - Support custom field formatting
-1. Integrate into command line application
+   - Update existing pages:
+     - Update spacing page to use ServerSidePaginatingTable
+     - Add tests for shared components
+2. Integrate into command line application
    - List records with an error
    - List record with a specific error
-1. Implement correction functionality:
+3. Implement correction functionality:
    - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
    - Create editor interface for spacing records
    - Integrate with OpTech API to send corrections to Technison
@@ -123,11 +125,10 @@ graph TD
    - Error handling and user feedback
 
 4. `src/production_control/web/components/data_table.py` (New)
-   - Base table component with:
+   - ✓ Base table component with:
      - ✓ Model-driven columns
-     - Server-side pagination (next)
-     - Custom actions support
-     - Event handling
+     - ✓ Server-side pagination
+     - ✓ Event handling
    - Table formatter utilities:
      - Date formatting
      - Decimal formatting
