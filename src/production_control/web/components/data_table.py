@@ -32,3 +32,4 @@ class DataTable(ui.table):
             row_key=row_key,
             title=title,
         )
+        self.classes("w-full")
