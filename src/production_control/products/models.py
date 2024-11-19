@@ -1,14 +1,13 @@
 """Product data models."""
 
-import os
-from typing import List, Optional, Union, Tuple
-from sqlalchemy import create_engine, func, Integer, bindparam, desc, text, distinct
-from sqlalchemy.engine import Engine
+from typing import List, Optional, Tuple
+from sqlalchemy import func, Integer, bindparam, desc, text, distinct
 from sqlmodel import Field, Session, SQLModel, select
 from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
 
 from ..data import Pagination
+from ..data.repository import DremioRepository, InvalidParameterError
 
 
 class CustomDremioDialect(DremioDialect_flight):
@@ -53,31 +52,11 @@ class Product(SQLModel, table=True):
     )
 
 
-class RepositoryError(Exception):
-    """Base exception for repository errors."""
-
-    pass
-
-
-class InvalidParameterError(RepositoryError):
-    """Exception raised for invalid parameter values."""
-
-    pass
-
-
-class ProductRepository:
+class ProductRepository(DremioRepository):
     """Read-only repository for product data access.
 
     Currently using Dremio Flight protocol which doesn't support parameterized queries.
     """
-
-    def __init__(self, connection: Optional[Union[str, Engine]] = None):
-        """Initialize repository with optional connection string or engine."""
-        if isinstance(connection, Engine):
-            self.engine = connection
-        else:
-            conn_str = os.getenv("VINEAPP_DB_CONNECTION", "dremio+flight://localhost:32010/dremio")
-            self.engine = create_engine(conn_str)
 
     def get_all(self) -> List[Product]:
         """Get all products from the data source."""

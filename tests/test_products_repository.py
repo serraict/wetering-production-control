@@ -7,9 +7,9 @@ from sqlmodel import create_engine, Session
 from production_control.products.models import (
     Product,
     ProductRepository,
-    InvalidParameterError,
 )
 from production_control.data import Pagination
+from production_control.data.repository import InvalidParameterError
 
 
 @pytest.fixture
