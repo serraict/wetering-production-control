@@ -7,7 +7,7 @@ from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
 
 from ..data import Pagination
-from ..data.repository import DremioRepository, InvalidParameterError
+from ..data.repository import DremioRepository
 
 
 class CustomDremioDialect(DremioDialect_flight):
@@ -107,17 +107,9 @@ class ProductRepository(DremioRepository):
         Raises:
             InvalidParameterError: If pagination parameters are invalid
         """
-        if pagination is not None:
-            page = pagination.page
-            items_per_page = pagination.rows_per_page
-            sort_by = pagination.sort_by
-            descending = pagination.descending
-
-        # Validate pagination parameters
-        if page < 1:
-            raise InvalidParameterError("Page number must be greater than 0")
-        if items_per_page < 1:
-            raise InvalidParameterError("Items per page must be greater than 0")
+        page, items_per_page, sort_by, descending = self._validate_pagination(
+            page, items_per_page, sort_by, descending, pagination
+        )
 
         with Session(self.engine) as session:
             # Create base query
