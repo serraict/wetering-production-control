@@ -1,5 +1,6 @@
-"""Products package for Production Control."""
+"""Product models and data access."""
 
-from .models import Product, ProductRepository, RepositoryError, InvalidParameterError
+from .models import Product, ProductRepository
+from ..data.repository import RepositoryError, InvalidParameterError
 
 __all__ = ["Product", "ProductRepository", "RepositoryError", "InvalidParameterError"]
