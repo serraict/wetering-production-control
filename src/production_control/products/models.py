@@ -68,8 +68,8 @@ class ProductRepository(DremioRepository):
     def get_all(self) -> List[Product]:
         """Get all products from the data source."""
         with Session(self.engine) as session:
-            statement = select(Product).order_by(Product.product_group_name, Product.name)
-            result = session.execute(statement)
+            query = self._apply_sorting(select(Product), Product, None, False)
+            result = session.execute(query)
             return [row[0] for row in result]
 
     def get_by_id(self, product_id: int) -> Optional[Product]:
