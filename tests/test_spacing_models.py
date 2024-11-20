@@ -3,7 +3,6 @@
 from datetime import date
 from decimal import Decimal
 from unittest.mock import patch, MagicMock
-from uuid import UUID
 
 import pytest
 from sqlmodel import create_engine
@@ -20,12 +19,10 @@ def mock_engine():
 def test_wijderzet_registratie_model():
     """Test creating a WijderzetRegistratie model."""
     # Arrange
-    test_id = UUID("12345678-1234-5678-1234-567812345678")
     test_date = date(2023, 1, 1)
 
     # Act
     registratie = WijderzetRegistratie(
-        id=test_id,
         partij_code="TEST123",
         product_naam="Test Plant",
         productgroep_naam="Test Group",
@@ -45,7 +42,6 @@ def test_wijderzet_registratie_model():
     )
 
     # Assert
-    assert registratie.id == test_id
     assert registratie.partij_code == "TEST123"
     assert registratie.product_naam == "Test Plant"
     assert registratie.productgroep_naam == "Test Group"
@@ -78,7 +74,6 @@ def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
     # Mock data query
     test_date = date(2023, 1, 1)
     test_record = WijderzetRegistratie(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
         partij_code="TEST123",
         product_naam="Test Plant",
         productgroep_naam="Test Group",

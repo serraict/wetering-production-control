@@ -3,9 +3,8 @@
 from datetime import date
 from decimal import Decimal
 from typing import List, Optional, Tuple
-from uuid import UUID
 
-from sqlalchemy import func, distinct, Select, Engine
+from sqlalchemy import func, distinct, text, Select, Engine
 from sqlmodel import Field, Session, SQLModel, select
 
 from ..data import Pagination
@@ -19,18 +18,13 @@ class WijderzetRegistratie(SQLModel, table=True):
     __table_args__ = {"schema": "Productie.Controle"}
 
     # Primary key
-    id: UUID = Field(
-        primary_key=True,
-        title="ID",
-        sa_column_kwargs={"info": {"ui_hidden": True}},
-    )
-
-    # Batch information
     partij_code: str = Field(
+        primary_key=True,
         title="Partij",
         description="Code van de partij",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 1}},
     )
+
     product_naam: str = Field(
         title="Product",
         description="Naam van het product",
@@ -55,24 +49,35 @@ class WijderzetRegistratie(SQLModel, table=True):
         title="Tafels na WZ2",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 6}},
     )
+    aantal_tafels_oppotten_plan: Decimal = Field(
+        title="Tafels plan",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
+    )
+
+    # Plant amounts
+    aantal_planten_gerealiseerd: int = Field(
+        title="Planten",
+        description="Aantal gerealiseerde planten",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
+    )
 
     # Important dates
     datum_wdz1_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
     )
     datum_wdz2_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
     )
 
-    # Error tracking
+    # Error tracking (hidden but used for row styling)
     wijderzet_registratie_fout: Optional[str] = Field(
         default=None,
         title="Fout",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 99, "ui_hidden": True}},
     )
 
     # Hidden fields
@@ -85,15 +90,6 @@ class WijderzetRegistratie(SQLModel, table=True):
         default=None,
         title="Uit cel",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 41, "ui_hidden": True}},
-    )
-    aantal_planten_gerealiseerd: int = Field(
-        title="Planten",
-        description="Aantal gerealiseerde planten",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 80, "ui_hidden": True}},
-    )
-    aantal_tafels_oppotten_plan: Decimal = Field(
-        title="Tafels plan",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 81, "ui_hidden": True}},
     )
     dichtheid_oppotten_plan: int = Field(
         title="Dichtheid oppotten",
@@ -148,7 +144,7 @@ class SpacingRepository(DremioRepository[WijderzetRegistratie]):
         with Session(self.engine) as session:
             # Create base queries
             base_query = select(WijderzetRegistratie)
-            count_stmt = select(func.count(distinct(WijderzetRegistratie.id)))
+            count_stmt = select(func.count(distinct(WijderzetRegistratie.partij_code)))
 
             # Execute paginated query
             return self._execute_paginated_query(
@@ -169,6 +165,14 @@ class SpacingRepository(DremioRepository[WijderzetRegistratie]):
             query = (
                 select(WijderzetRegistratie)
                 .where(WijderzetRegistratie.wijderzet_registratie_fout.is_not(None))
-                .order_by(WijderzetRegistratie.productgroep_naam, WijderzetRegistratie.partij_code)
+                .order_by(WijderzetRegistratie.productgroep_naam, self.model.partij_code)
             )
             return list(session.exec(query))
+
+    def get_by_id(self, partij_code: str) -> Optional[WijderzetRegistratie]:
+        """Get a spacing record by its partij_code."""
+        with Session(self.engine) as session:
+            # Using text() since Dremio Flight doesn't support parameterized queries
+            return session.exec(
+                select(WijderzetRegistratie).where(text(f"partij_code = '{partij_code}'"))
+            ).first()

@@ -6,9 +6,12 @@ from nicegui import APIRouter, ui
 
 from ...spacing.models import SpacingRepository, WijderzetRegistratie
 from ..components import frame
+from ..components.model_card import display_model_card
+from ..components.message import show_error
 from ..components.styles import (
     CARD_CLASSES,
     HEADER_CLASSES,
+    LINK_CLASSES,
 )
 from ..components.data_table import server_side_paginated_table
 from ..components.table_utils import format_row
@@ -36,6 +39,14 @@ def spacing_page() -> None:
         table_state.update_rows([format_row(item) for item in items], total)
         server_side_paginated_table.refresh()
 
+    # actions
+    row_actions = {
+        "view": {
+            "icon": "visibility",
+            "handler": lambda e: ui.navigate.to(f"/spacing/{e.args.get('key')}"),
+        }
+    }
+
     # event handlers
     async def handle_filter(e: Any) -> None:
         """Handle changes to the search filter."""
@@ -59,11 +70,47 @@ def spacing_page() -> None:
                     "w-64"
                 ).mark("search")
 
-            server_side_paginated_table(
-                WijderzetRegistratie,
-                table_state,
-                handle_table_request,
+            table = server_side_paginated_table(
+                cls=WijderzetRegistratie,
+                state=table_state,
+                on_request=handle_table_request,
+                row_actions=row_actions,
+            )
+            # Add styling for error rows
+            table.add_slot(
+                "body",
+                """
+                <tr :props="props" :class="{'bg-warning bg-opacity-10': props.row.wijderzet_registratie_fout}">
+                    <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                        {{ col.value }}
+                    </q-td>
+                </tr>
+            """,
             )
 
     # load initial data
     load_data()
+
+
+@router.page("/{partij_code}")
+def spacing_detail(partij_code: str) -> None:
+    """Render the spacing record detail page."""
+    repository = SpacingRepository()
+
+    with frame("Wijderzet Details"):
+        record = repository.get_by_id(partij_code)
+
+        if record:
+            with ui.row().classes("w-full justify-between items-center mb-6"):
+                ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
+
+            display_model_card(record, title=str(record))
+
+            # Show error message if present
+            if record.wijderzet_registratie_fout:
+                with ui.card().classes("mt-4 bg-warning bg-opacity-10"):
+                    ui.label("Fout").classes("text-lg font-bold")
+                    ui.label(record.wijderzet_registratie_fout)
+        else:
+            show_error("Record niet gevonden")
+            ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES + " mt-4")

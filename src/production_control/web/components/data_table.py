@@ -46,6 +46,7 @@ def server_side_paginated_table(
     state: ClientStorageTableState,
     on_request: Callable,
     title: str = "Items",
+    row_key: str = "id",
     row_actions: Dict[str, Dict[str, Any]] = {},
 ) -> ui.table:
     """Create a refreshable table component.
@@ -63,6 +64,7 @@ def server_side_paginated_table(
     table = ServerSidePaginatingTable(
         model_class=cls,
         rows=state.rows,
+        row_key=row_key,
         title=title,
         pagination=state.pagination,
     )

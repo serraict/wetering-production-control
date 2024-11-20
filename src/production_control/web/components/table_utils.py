@@ -96,7 +96,19 @@ def format_row(model: SQLModel) -> Dict[str, Any]:
     Returns:
         Dictionary with field values for use in ui.table rows
     """
-    row = {"id": model.id}  # Always include id for row key
+    # Find primary key field
+    primary_key_field = next(
+        (
+            name
+            for name, field in model.__class__.model_fields.items()
+            if getattr(field, "primary_key", False)
+        ),
+        None,
+    )
+    if not primary_key_field:
+        raise ValueError(f"No primary key field found in model {model.__class__.__name__}")
+
+    row = {"id": getattr(model, primary_key_field)}  # Use primary key for row key
 
     for field_name, field in model.__class__.model_fields.items():
         # Get UI metadata from SQLAlchemy column info
