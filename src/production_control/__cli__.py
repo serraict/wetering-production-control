@@ -45,14 +45,18 @@ def products():
 
 
 @app.command(name="spacing-errors")
-def spacing_errors(error: Optional[str] = typer.Option(None, "--error", "-e", help="Filter by error message")):
+def spacing_errors(
+    error: Optional[str] = typer.Option(None, "--error", "-e", help="Filter by error message")
+):
     """Display a table of spacing records with errors."""
     repository = SpacingRepository()
     error_records = repository.get_error_records()
 
     # Filter records if error pattern provided
     if error:
-        error_records = [r for r in error_records if error.lower() in r.wijderzet_registratie_fout.lower()]
+        error_records = [
+            r for r in error_records if error.lower() in r.wijderzet_registratie_fout.lower()
+        ]
         if not error_records:
             console.print(f"No records found with error matching: {error}")
             return
@@ -66,9 +70,7 @@ def spacing_errors(error: Optional[str] = typer.Option(None, "--error", "-e", he
 
     for record in error_records:
         oppotdatum = (
-            record.datum_oppotten_real.strftime("%Y-%m-%d")
-            if record.datum_oppotten_real
-            else ""
+            record.datum_oppotten_real.strftime("%Y-%m-%d") if record.datum_oppotten_real else ""
         )
         table.add_row(
             record.partij_code,
