@@ -55,7 +55,9 @@ def spacing_page() -> None:
                 ui.input(
                     placeholder="Zoek ...",
                     on_change=lambda e: handle_filter(e),
-                ).classes("w-64").mark("search")
+                ).classes(
+                    "w-64"
+                ).mark("search")
 
             server_side_paginated_table(
                 WijderzetRegistratie,

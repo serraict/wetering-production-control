@@ -178,10 +178,12 @@ def test_get_table_columns_formats_dates():
         )
         custom_date: date = Field(
             title="Custom Format",
-            sa_column_kwargs={"info": {
-                "ui_order": 2,
-                "format": "YYYY-MM-DD",
-            }},
+            sa_column_kwargs={
+                "info": {
+                    "ui_order": 2,
+                    "format": "YYYY-MM-DD",
+                }
+            },
         )
 
     # When
@@ -191,5 +193,9 @@ def test_get_table_columns_formats_dates():
     default_col = next(col for col in columns if col["name"] == "default_date")
     custom_col = next(col for col in columns if col["name"] == "custom_date")
 
-    assert default_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''"
-    assert custom_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YYYY-MM-DD') : ''"
+    assert (
+        default_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''"
+    )
+    assert (
+        custom_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YYYY-MM-DD') : ''"
+    )
