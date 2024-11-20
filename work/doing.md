@@ -59,12 +59,15 @@ Implementation steps:
      - ✓ Add date formatting
      - ✓ Add decimal formatting
      - ✓ Support custom field formatting
-1. Integrate into command line application
-   - List wdz records with an error
-   - List record with a specific error
+1. ✓  Integrate into command line application
+   - ✓ List wdz records with an error
+   - ✓  List record with a specific error
 1. Implement correction functionality:
-   - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
+   - show `aantal_tafels_oppotten_plan` and `aantal_planten_gerealiseerd` in the table
+   - hide the `Fout` column, but make the row color-warn if there is an error
+   - add an action that does an ui.notify with the error if clicked
    - Create editor interface for spacing records
+   - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
    - Integrate with OpTech API to send corrections to Technison
    - Implement validation and error handling
 
