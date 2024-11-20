@@ -49,7 +49,7 @@ def spacing_page() -> None:
 
     # render page
     with frame("Wijderzetten"):
-        with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-5xl")):
+        with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-7xl")):
             with ui.row().classes("w-full justify-between items-center mb-4"):
                 ui.label("Overzicht").classes(HEADER_CLASSES)
                 ui.input(

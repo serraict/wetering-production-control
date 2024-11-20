@@ -42,73 +42,71 @@ class WijderzetRegistratie(SQLModel, table=True):
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 3}},
     )
 
-    # Realization dates
-    datum_oppotten_real: Optional[date] = Field(
-        default=None,
-        title="Oppotdatum",
+    # Table amounts
+    aantal_tafels_totaal: int = Field(
+        title="Tafels totaal",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 4}},
     )
-    datum_uit_cel_real: Optional[date] = Field(
-        default=None,
-        title="Uit cel",
+    aantal_tafels_na_wdz1: int = Field(
+        title="Tafels na WZ1",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 5}},
     )
+    aantal_tafels_na_wdz2: int = Field(
+        title="Tafels na WZ2",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 6}},
+    )
+
+    # Important dates
     datum_wdz1_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 6}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
     )
     datum_wdz2_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
-    )
-
-    # Plant amounts
-    aantal_planten_gerealiseerd: int = Field(
-        title="Planten",
-        description="Aantal gerealiseerde planten",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
-    )
-
-    # Table amounts
-    aantal_tafels_totaal: int = Field(
-        title="Tafels totaal",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
-    )
-    aantal_tafels_na_wdz1: int = Field(
-        title="Tafels na WZ1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
-    )
-    aantal_tafels_na_wdz2: int = Field(
-        title="Tafels na WZ2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 11}},
-    )
-    aantal_tafels_oppotten_plan: Decimal = Field(
-        title="Tafels plan",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 12}},
-    )
-
-    # Density information
-    dichtheid_oppotten_plan: int = Field(
-        title="Dichtheid oppotten",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 13}},
-    )
-    dichtheid_wz1_plan: int = Field(
-        title="Dichtheid WZ1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 14}},
-    )
-    dichtheid_wz2_plan: Optional[float] = Field(
-        default=None,
-        title="Dichtheid WZ2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 15}},
     )
 
     # Error tracking
     wijderzet_registratie_fout: Optional[str] = Field(
         default=None,
         title="Fout",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 16}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
+    )
+
+    # Hidden fields
+    datum_oppotten_real: Optional[date] = Field(
+        default=None,
+        title="Oppotdatum",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 40, "ui_hidden": True}},
+    )
+    datum_uit_cel_real: Optional[date] = Field(
+        default=None,
+        title="Uit cel",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 41, "ui_hidden": True}},
+    )
+    aantal_planten_gerealiseerd: int = Field(
+        title="Planten",
+        description="Aantal gerealiseerde planten",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 80, "ui_hidden": True}},
+    )
+    aantal_tafels_oppotten_plan: Decimal = Field(
+        title="Tafels plan",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 81, "ui_hidden": True}},
+    )
+    dichtheid_oppotten_plan: int = Field(
+        title="Dichtheid oppotten",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 82, "ui_hidden": True}},
+    )
+    dichtheid_wz1_plan: int = Field(
+        title="Dichtheid WZ1",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 83, "ui_hidden": True}},
+    )
+    dichtheid_wz2_plan: Optional[float] = Field(
+        default=None,
+        title="Dichtheid WZ2",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 84, "ui_hidden": True}},
     )
 
     def __str__(self) -> str:
