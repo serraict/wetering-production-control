@@ -105,7 +105,7 @@ class WijderzetRegistratie(SQLModel, table=True):
     )
 
     # Error tracking
-    wijderzet_registratie_fout: Optional[bool] = Field(
+    wijderzet_registratie_fout: Optional[str] = Field(
         default=None,
         title="Fout",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 16}},
@@ -164,3 +164,13 @@ class SpacingRepository(DremioRepository[WijderzetRegistratie]):
                 sort_by,
                 descending,
             )
+
+    def get_error_records(self) -> List[WijderzetRegistratie]:
+        """Get all spacing records that have errors."""
+        with Session(self.engine) as session:
+            query = (
+                select(WijderzetRegistratie)
+                .where(WijderzetRegistratie.wijderzet_registratie_fout.is_not(None))
+                .order_by(WijderzetRegistratie.productgroep_naam, WijderzetRegistratie.partij_code)
+            )
+            return list(session.exec(query))

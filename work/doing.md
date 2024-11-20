@@ -43,21 +43,26 @@ Implementation steps:
        - ✓ uncluttered code in pages
        - ✓ Pagination interface should be clean python
      - ✓ Update products page to use table
-   - Update existing pages:
-     - Update spacing page to use ServerSidePaginatingTable:
-       - Replace global table_data with ClientStorageTableState
-       - Use server_side_paginated_table component
-       - Improve code organization (setup, handlers, rendering)
-       - Clean up pagination handling
-     - Add tests for shared components
-   - Create table data formatter utility:
-     - Add date formatting
-     - Add decimal formatting
-     - Support custom field formatting
-2. Integrate into command line application
-   - List records with an error
+   - ✓ Refactor repositories:
+     - ✓ Make DremioRepository generic with model type T
+     - ✓ Move common functionality to base class
+     - ✓ Keep session handling in repositories
+     - ✓ Update both repositories to use generic base class
+   - ✓ Update existing pages:
+     - ✓ Update spacing page to use ServerSidePaginatingTable:
+       - ✓ Replace global table_data with ClientStorageTableState
+       - ✓ Use server_side_paginated_table component
+       - ✓ Improve code organization (setup, handlers, rendering)
+       - ✓ Clean up pagination handling
+     - ✓ Add tests for shared components
+   - ✓ Create table data formatter utility:
+     - ✓ Add date formatting
+     - ✓ Add decimal formatting
+     - ✓ Support custom field formatting
+1. Integrate into command line application
+   - List wdz records with an error
    - List record with a specific error
-3. Implement correction functionality:
+1. Implement correction functionality:
    - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
    - Create editor interface for spacing records
    - Integrate with OpTech API to send corrections to Technison
@@ -140,10 +145,10 @@ graph TD
      - ✓ Model-driven columns
      - ✓ Server-side pagination
      - ✓ Event handling
-   - Table formatter utilities:
-     - Date formatting
-     - Decimal formatting
-     - Custom field formatting
+   - ✓ Table formatter utilities:
+     - ✓ Date formatting
+     - ✓ Decimal formatting
+     - ✓ Custom field formatting
 
 #### Web Pages
 
