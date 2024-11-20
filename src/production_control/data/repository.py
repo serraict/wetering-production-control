@@ -149,6 +149,8 @@ class DremioRepository:
         count_stmt: Select,
         page: int,
         items_per_page: int,
+        search_text: Optional[str] = None,
+        search_fields: Optional[Sequence[str]] = [],
     ) -> Tuple[List[T], int]:
         """Execute a paginated query and return results with total count.
 
@@ -162,6 +164,10 @@ class DremioRepository:
         Returns:
             Tuple containing list of items for the requested page and total count
         """
+        if search_text:
+            query = self._apply_text_filter(query, search_text, search_fields)
+            count_stmt = self._apply_text_filter(count_stmt, search_text, search_fields)
+
         # Get total count
         total = session.exec(count_stmt).one()
 
