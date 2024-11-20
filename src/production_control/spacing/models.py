@@ -162,11 +162,10 @@ class SpacingRepository(DremioRepository):
             # Apply sorting
             base_query = self._apply_sorting(base_query, WijderzetRegistratie, sort_by, descending)
 
-            # Get total count using the same filter
+            # Create count query with same filter
             count_stmt = select(func.count(distinct(WijderzetRegistratie.id)))
             if filter_text:
                 count_stmt = self._apply_text_filter(count_stmt, filter_text, self.search_fields)
-            total = session.exec(count_stmt).one()
 
             # Execute paginated query
-            return self._execute_paginated_query(session, base_query, page, items_per_page, total)
+            return self._execute_paginated_query(session, base_query, count_stmt, page, items_per_page)

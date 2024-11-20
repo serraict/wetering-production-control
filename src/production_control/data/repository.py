@@ -98,10 +98,7 @@ class DremioRepository:
 
         # Note: Using string interpolation because Dremio Flight doesn't support parameters
         pattern = f"%{filter_text}%"
-        conditions = [
-            f"lower({field}) LIKE lower('{pattern}')"
-            for field in fields
-        ]
+        conditions = [f"lower({field}) LIKE lower('{pattern}')" for field in fields]
         filter_expr = text(" OR ".join(conditions))
         return query.where(filter_expr)
 
@@ -149,29 +146,32 @@ class DremioRepository:
         self,
         session: Session,
         query: Select,
+        count_stmt: Select,
         page: int,
         items_per_page: int,
-        total: int,
     ) -> Tuple[List[T], int]:
         """Execute a paginated query and return results with total count.
 
         Args:
             session: The database session
             query: The base query to execute
+            count_stmt: The count query to get total records
             page: The page number (1-based)
             items_per_page: Number of items per page
-            total: Total count of items
 
         Returns:
             Tuple containing list of items for the requested page and total count
         """
+        # Get total count
+        total = session.exec(count_stmt).one()
+
         # Calculate offset
         offset = (page - 1) * items_per_page
 
         # Apply pagination
-        query = query.limit(
-            bindparam("limit", type_=Integer, literal_execute=True)
-        ).offset(bindparam("offset", type_=Integer, literal_execute=True))
+        query = query.limit(bindparam("limit", type_=Integer, literal_execute=True)).offset(
+            bindparam("offset", type_=Integer, literal_execute=True)
+        )
 
         # Execute with bound parameters
         result = session.exec(
