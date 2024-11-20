@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import func, distinct, Select
+from sqlalchemy import func, distinct, Select, Engine
 from sqlmodel import Field, Session, SQLModel, select
 
 from ..data import Pagination
@@ -112,15 +112,19 @@ class WijderzetRegistratie(SQLModel, table=True):
     )
 
 
-class SpacingRepository(DremioRepository):
+class SpacingRepository(DremioRepository[WijderzetRegistratie]):
     """Read-only repository for spacing data access."""
 
     # Fields to search when filtering spacing records
     search_fields = ["partij_code", "product_naam", "productgroep_naam"]
 
-    def _apply_default_sorting(self, query: Select, model: type[SQLModel]) -> Select:
+    def __init__(self, connection: Optional[Engine] = None):
+        """Initialize repository with optional connection."""
+        super().__init__(WijderzetRegistratie, connection)
+
+    def _apply_default_sorting(self, query: Select) -> Select:
         """Apply default sorting to query."""
-        return query.order_by(model.productgroep_naam, model.partij_code)
+        return query.order_by(self.model.productgroep_naam, self.model.partij_code)
 
     def get_paginated(
         self,
@@ -131,33 +135,15 @@ class SpacingRepository(DremioRepository):
         filter_text: Optional[str] = None,
         pagination: Optional[Pagination] = None,
     ) -> Tuple[List[WijderzetRegistratie], int]:
-        """Get paginated spacing records from the data source.
-
-        Args:
-            page: The page number (1-based)
-            items_per_page: Number of items per page
-            sort_by: Column name to sort by
-            descending: Sort in descending order if True
-            filter_text: Optional text to filter records by (case-insensitive)
-            pagination: Optional Pagination object that overrides other pagination parameters
-
-        Returns:
-            Tuple containing list of spacing records for the requested page and total count
-
-        Raises:
-            InvalidParameterError: If pagination parameters are invalid
-        """
+        """Get paginated spacing records from the data source."""
         page, items_per_page, sort_by, descending = self._validate_pagination(
             page, items_per_page, sort_by, descending, pagination
         )
 
         with Session(self.engine) as session:
-            # Create base query
+            # Create base queries
             base_query = select(WijderzetRegistratie)
             count_stmt = select(func.count(distinct(WijderzetRegistratie.id)))
-
-            # Apply sorting
-            base_query = self._apply_sorting(base_query, WijderzetRegistratie, sort_by, descending)
 
             # Execute paginated query
             return self._execute_paginated_query(
@@ -168,4 +154,6 @@ class SpacingRepository(DremioRepository):
                 items_per_page,
                 filter_text,
                 self.search_fields,
+                sort_by,
+                descending,
             )

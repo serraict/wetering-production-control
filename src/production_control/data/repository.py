@@ -1,7 +1,7 @@
 """Base repository for Dremio data access."""
 
 import os
-from typing import Optional, Union, Tuple, TypeVar, List, Sequence
+from typing import Optional, Union, Tuple, TypeVar, List, Sequence, Generic, Type
 
 from sqlalchemy import Engine, create_engine, Integer, bindparam, Select, text, desc
 from sqlmodel import Session, SQLModel
@@ -9,7 +9,7 @@ from sqlmodel import Session, SQLModel
 from .pagination import Pagination
 
 
-T = TypeVar("T")
+T = TypeVar("T", bound=SQLModel)
 
 
 class RepositoryError(Exception):
@@ -24,14 +24,24 @@ class InvalidParameterError(RepositoryError):
     pass
 
 
-class DremioRepository:
+class DremioRepository(Generic[T]):
     """Base repository for Dremio data access.
 
     Currently using Dremio Flight protocol which doesn't support parameterized queries.
     """
 
-    def __init__(self, connection: Optional[Union[str, Engine]] = None):
-        """Initialize repository with optional connection string or engine."""
+    def __init__(
+        self,
+        model: Type[T],
+        connection: Optional[Union[str, Engine]] = None,
+    ):
+        """Initialize repository with model type and optional connection.
+
+        Args:
+            model: The model class this repository handles
+            connection: Optional connection string or engine
+        """
+        self.model = model
         if isinstance(connection, Engine):
             self.engine = connection
         else:
@@ -105,7 +115,6 @@ class DremioRepository:
     def _apply_sorting(
         self,
         query: Select,
-        model: type[SQLModel],
         sort_by: Optional[str],
         descending: bool,
     ) -> Select:
@@ -113,7 +122,6 @@ class DremioRepository:
 
         Args:
             query: The base query to sort
-            model: The model class to get columns from
             sort_by: Column name to sort by
             descending: Sort in descending order if True
 
@@ -121,21 +129,20 @@ class DremioRepository:
             Query with sorting applied
         """
         if sort_by:
-            column = getattr(model, sort_by)
+            column = getattr(self.model, sort_by)
             if descending:
                 query = query.order_by(desc(column))
             else:
                 query = query.order_by(column)
         else:
-            query = self._apply_default_sorting(query, model)
+            query = self._apply_default_sorting(query)
         return query
 
-    def _apply_default_sorting(self, query: Select, model: type[SQLModel]) -> Select:
+    def _apply_default_sorting(self, query: Select) -> Select:
         """Apply default sorting to query. Override in subclasses.
 
         Args:
             query: The base query to sort
-            model: The model class to get columns from
 
         Returns:
             Query with default sorting applied
@@ -150,7 +157,9 @@ class DremioRepository:
         page: int,
         items_per_page: int,
         search_text: Optional[str] = None,
-        search_fields: Optional[Sequence[str]] = [],
+        search_fields: Optional[Sequence[str]] = None,
+        sort_by: Optional[str] = None,
+        descending: bool = False,
     ) -> Tuple[List[T], int]:
         """Execute a paginated query and return results with total count.
 
@@ -160,13 +169,21 @@ class DremioRepository:
             count_stmt: The count query to get total records
             page: The page number (1-based)
             items_per_page: Number of items per page
+            search_text: Optional text to filter by
+            search_fields: Optional list of fields to search in
+            sort_by: Optional column name to sort by
+            descending: Sort in descending order if True
 
         Returns:
             Tuple containing list of items for the requested page and total count
         """
-        if search_text:
+        # Apply filtering if provided
+        if search_text and search_fields:
             query = self._apply_text_filter(query, search_text, search_fields)
             count_stmt = self._apply_text_filter(count_stmt, search_text, search_fields)
+
+        # Apply sorting
+        query = self._apply_sorting(query, sort_by, descending)
 
         # Get total count
         total = session.exec(count_stmt).one()

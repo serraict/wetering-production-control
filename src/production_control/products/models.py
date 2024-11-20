@@ -1,7 +1,7 @@
 """Product data models."""
 
 from typing import List, Optional, Tuple
-from sqlalchemy import func, distinct, text, Select
+from sqlalchemy import func, distinct, text, Select, Engine
 from sqlmodel import Field, Session, SQLModel, select
 from sqlalchemy_dremio.flight import DremioDialect_flight
 from sqlalchemy.dialects import registry
@@ -52,7 +52,7 @@ class Product(SQLModel, table=True):
     )
 
 
-class ProductRepository(DremioRepository):
+class ProductRepository(DremioRepository[Product]):
     """Read-only repository for product data access.
 
     Currently using Dremio Flight protocol which doesn't support parameterized queries.
@@ -61,14 +61,18 @@ class ProductRepository(DremioRepository):
     # Fields to search when filtering products
     search_fields = ["name", "product_group_name"]
 
-    def _apply_default_sorting(self, query: Select, model: type[SQLModel]) -> Select:
+    def __init__(self, connection: Optional[Engine] = None):
+        """Initialize repository with optional connection."""
+        super().__init__(Product, connection)
+
+    def _apply_default_sorting(self, query: Select) -> Select:
         """Apply default sorting to query."""
-        return query.order_by(model.product_group_name, model.name)
+        return query.order_by(self.model.product_group_name, self.model.name)
 
     def get_all(self) -> List[Product]:
         """Get all products from the data source."""
         with Session(self.engine) as session:
-            query = self._apply_sorting(select(Product), Product, None, False)
+            query = self._apply_sorting(select(Product), None, False)
             result = session.execute(query)
             return [row[0] for row in result]
 
@@ -86,33 +90,15 @@ class ProductRepository(DremioRepository):
         filter_text: Optional[str] = None,
         pagination: Optional[Pagination] = None,
     ) -> Tuple[List[Product], int]:
-        """Get paginated products from the data source.
-
-        Args:
-            page: The page number (1-based)
-            items_per_page: Number of items per page
-            sort_by: Column name to sort by
-            descending: Sort in descending order if True
-            filter_text: Optional text to filter products by (case-insensitive)
-            pagination: Optional Pagination object that overrides other pagination parameters
-
-        Returns:
-            Tuple containing list of products for the requested page and total count
-
-        Raises:
-            InvalidParameterError: If pagination parameters are invalid
-        """
+        """Get paginated products from the data source."""
         page, items_per_page, sort_by, descending = self._validate_pagination(
             page, items_per_page, sort_by, descending, pagination
         )
 
         with Session(self.engine) as session:
-            # Create base query
+            # Create base queries
             base_query = select(Product)
             count_stmt = select(func.count(distinct(Product.id)))
-
-            # Apply sorting
-            base_query = self._apply_sorting(base_query, Product, sort_by, descending)
 
             # Execute paginated query
             return self._execute_paginated_query(
@@ -123,4 +109,6 @@ class ProductRepository(DremioRepository):
                 items_per_page,
                 filter_text,
                 self.search_fields,
+                sort_by,
+                descending,
             )
