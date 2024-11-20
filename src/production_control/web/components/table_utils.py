@@ -1,8 +1,23 @@
 """Utilities for working with tables."""
 
-from typing import Dict, List, Any, Type
+from datetime import date
+from typing import Dict, List, Any, Type, get_args, get_origin
 from sqlmodel import SQLModel
 from pydantic_core._pydantic_core import PydanticUndefinedType
+
+
+def is_date_field(field_type: Any) -> bool:
+    """Check if a field type is a date or Optional[date]."""
+    if field_type == date:
+        return True
+
+    # Handle Optional[date]
+    origin = get_origin(field_type)
+    if origin is not None and origin.__name__ == "Union":
+        args = get_args(field_type)
+        return date in args
+
+    return False
 
 
 def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
@@ -44,6 +59,13 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
         # Add sortable if specified
         if field_info.get("ui_sortable"):
             column["sortable"] = True
+
+        # Add formatter for date fields
+        if is_date_field(field.annotation):
+            format_str = field_info.get("format", "YY[w]ww-E")
+            column[":format"] = (
+                f"value => value ? Quasar.date.formatDate(value, '{format_str}') : ''"
+            )
 
         columns.append(column)
 

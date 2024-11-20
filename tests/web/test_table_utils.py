@@ -1,5 +1,6 @@
 """Tests for table utilities."""
 
+from datetime import date
 from sqlmodel import SQLModel, Field
 
 from production_control.web.components.table_utils import get_table_columns, format_row
@@ -163,3 +164,32 @@ def test_format_row_respects_hidden_fields():
         "visible": "Shown",
     }
     assert "hidden" not in row
+
+
+def test_get_table_columns_formats_dates():
+    """Test that get_table_columns adds date formatting."""
+
+    # Given
+    class ModelWithDates(SQLModel):
+        id: int = Field()
+        default_date: date = Field(
+            title="Default Format",
+            sa_column_kwargs={"info": {"ui_order": 1}},
+        )
+        custom_date: date = Field(
+            title="Custom Format",
+            sa_column_kwargs={"info": {
+                "ui_order": 2,
+                "format": "YYYY-MM-DD",
+            }},
+        )
+
+    # When
+    columns = get_table_columns(ModelWithDates)
+
+    # Then
+    default_col = next(col for col in columns if col["name"] == "default_date")
+    custom_col = next(col for col in columns if col["name"] == "custom_date")
+
+    assert default_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''"
+    assert custom_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YYYY-MM-DD') : ''"

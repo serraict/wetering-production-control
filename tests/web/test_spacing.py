@@ -1,17 +1,17 @@
-"""Tests for spacing web interface."""
+"""Tests for spacing page."""
 
 import asyncio
 from datetime import date
 from decimal import Decimal
 from typing import Optional
+from unittest.mock import patch, Mock
 from uuid import UUID
-from unittest.mock import Mock, patch
 
-from nicegui.testing import User
 from nicegui import ui
+from nicegui.testing import User
 
-from production_control.spacing.models import WijderzetRegistratie
 from production_control.data import Pagination
+from production_control.spacing.models import WijderzetRegistratie
 
 
 async def test_spacing_page_shows_table(user: User) -> None:
@@ -95,24 +95,28 @@ async def test_spacing_page_shows_table(user: User) -> None:
                 "label": "Oppotdatum",
                 "field": "datum_oppotten_real",
                 "sortable": True,
+                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {
                 "name": "datum_uit_cel_real",
                 "label": "Uit cel",
                 "field": "datum_uit_cel_real",
                 "sortable": True,
+                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {
                 "name": "datum_wdz1_real",
                 "label": "Wijderzet 1",
                 "field": "datum_wdz1_real",
                 "sortable": True,
+                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {
                 "name": "datum_wdz2_real",
                 "label": "Wijderzet 2",
                 "field": "datum_wdz2_real",
                 "sortable": True,
+                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {
                 "name": "aantal_planten_gerealiseerd",
