@@ -16,7 +16,7 @@ Implementation steps:
    - Connect to local test environment
    - Retrieve first 100 rows from `Productie.Controle."registratie_controle"` view
    - Define SQLModel based on the retrieved dataset
-1. Integrate SQLModel into web application:
+1. ✓ Integrate SQLModel into web application:
    - ✓ Add model to application structure
    - ✓ Create list view of spacing records:
      - ✓ Basic table structure with Dutch labels
@@ -27,7 +27,7 @@ Implementation steps:
      - ✓ Test sorting on all sortable columns
      - ✓ Add all model fields to table with appropriate Dutch labels
      - ✓ Add menu item for spacing page
-1. Refactor table components:
+1. ✓ Refactor table components:
    - ✓ Use Dutch labels for the product page
    - ✓ Enhance models with UI metadata for label, hide in the ui, and sortable
    - ✓ Create table column generator:
@@ -59,49 +59,19 @@ Implementation steps:
      - ✓ Add date formatting
      - ✓ Add decimal formatting
      - ✓ Support custom field formatting
-1. ✓  Integrate into command line application
+1. ✓ Integrate into command line application
    - ✓ List wdz records with an error
-   - ✓  List record with a specific error
-1. Implement correction functionality:
-   - ✓ show `aantal_tafels_oppotten_plan` and `aantal_planten_gerealiseerd` in the table
-   - ✓ hide the `Fout` column
-   - View details action, like in product.py. Now gives error: Error: 'SpacingRepository' object has no attribute 'get_by_id'
-   - but make the row color-warn if there is an error
+   - ✓ List record with a specific error
+1. ✓ Add error visualization:
+   - ✓ show aantal_tafels_oppotten_plan and aantal_planten_gerealiseerd in the table
+   - ✓ hide the Fout column
+   - ✓ add view button to show record details
+   - make the row color-warn if there is an error
+1. Create correction functionality:
    - Create editor interface for spacing records
    - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
    - Integrate with OpTech API to send corrections to Technison
    - Implement validation and error handling
-
-## Notes
-
-You can use scoped slots to conditionally format the content of a cell. See the Quasar documentation for more information about body-cell slots.
-
-In this demo we use a q-badge to display the age in red if the person is under 21 years old. We use the body-cell-age slot to insert the q-badge into the age column. The ":color" attribute of the q-badge is set to "red" if the age is under 21, otherwise it is set to "green". The colon in front of the "color" attribute indicates that the value is a JavaScript expression.
-
-```python
-main.py
-from nicegui import ui
-
-columns = [
-    {'name': 'name', 'label': 'Name', 'field': 'name'},
-    {'name': 'age', 'label': 'Age', 'field': 'age'},
-]
-rows = [
-    {'name': 'Alice', 'age': 18},
-    {'name': 'Bob', 'age': 21},
-    {'name': 'Carol', 'age': 42},
-]
-table = ui.table(columns=columns, rows=rows, row_key='name')
-table.add_slot('body-cell-age', '''
-    <q-td key="age" :props="props">
-        <q-badge :color="props.value < 21 ? 'red' : 'green'">
-            {{ props.value }}
-        </q-badge>
-    </q-td>
-''')
-
-ui.run()
-```
 
 ## Design
 
@@ -161,17 +131,17 @@ graph TD
    - Error handling
 
 3. `src/production_control/web/pages/spacing.py`
-   - Spacing overview page (list view):
+   - ✓ Spacing overview page (list view):
      - ✓ Basic table structure
      - ✓ Search functionality
      - ✓ Add all model fields
      - ✓ Fix pagination
      - ✓ Fix sorting
-     - Refactor to use shared components:
-       - Replace global table_data with ClientStorageTableState
-       - Use server_side_paginated_table component
-       - Improve code organization
-       - Clean up pagination handling
+     - ✓ Refactor to use shared components:
+       - ✓ Replace global table_data with ClientStorageTableState
+       - ✓ Use server_side_paginated_table component
+       - ✓ Improve code organization
+       - ✓ Clean up pagination handling
    - Spacing detail/edit page
    - Error handling and user feedback
 
@@ -181,22 +151,22 @@ graph TD
      - ✓ Server-side pagination
      - ✓ Event handling
    - ✓ Table formatter utilities:
-     - ✓ Date formatting
-     - ✓ Decimal formatting
-     - ✓ Custom field formatting
+     - ✓ Add date formatting
+     - ✓ Add decimal formatting
+     - ✓ Support custom field formatting
 
 #### Web Pages
 
-1. Spacing Overview Page (`/spacing`)
-   - List of spacing records with:
+1. ✓ Spacing Overview Page (`/spacing`)
+   - ✓ List of spacing records with:
      - ✓ Basic info (batch code, product, group)
      - ✓ Add all dates (potting, spacing)
      - ✓ Add all table counts and densities
      - ✓ Spacing error indicators
-     - Links to detail/edit pages
+     - ✓ Links to detail/edit pages
    - ✓ Search functionality
    - ✓ Fix pagination and sorting
-   - Error status overview
+   - ✓ Error status overview
 
 2. Spacing Detail/Edit Page (`/spacing/{batch_id}`)
    - Detailed view of spacing record
