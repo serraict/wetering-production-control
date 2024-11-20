@@ -111,6 +111,13 @@ class WijderzetRegistratie(SQLModel, table=True):
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 16}},
     )
 
+    def __str__(self) -> str:
+        """Format record as string with batch code and potting date."""
+        if self.datum_oppotten_real:
+            date_str = self.datum_oppotten_real.strftime("%yw%V-%u").replace("y", "")
+            return f"{self.partij_code} ({date_str})"
+        return self.partij_code
+
 
 class SpacingRepository(DremioRepository[WijderzetRegistratie]):
     """Read-only repository for spacing data access."""
