@@ -1,6 +1,6 @@
 """Spacing page implementation."""
 
-from typing import Dict, Any
+from typing import Dict, Any, Callable
 
 from nicegui import APIRouter, ui
 from pydantic import ValidationError
@@ -24,8 +24,13 @@ from ..components.table_state import ClientStorageTableState
 router = APIRouter(prefix="/spacing")
 
 
-def create_correction_form(record: WijderzetRegistratie) -> None:
-    """Create the correction form for a spacing record."""
+def create_correction_form(record: WijderzetRegistratie, on_close: Callable[[], None]) -> None:
+    """Create the correction form for a spacing record.
+
+    Args:
+        record: The record to correct
+        on_close: Callback to handle closing the form (e.g. close dialog or navigate back)
+    """
     client = OpTechClient()
 
     # Title
@@ -74,7 +79,7 @@ def create_correction_form(record: WijderzetRegistratie) -> None:
     with ui.row().classes("w-full justify-end gap-4 mt-4"):
         ui.button(
             "Annuleren",
-            on_click=lambda: ui.navigate.to("/spacing"),
+            on_click=on_close,
         ).classes("bg-gray-500")
 
         def handle_save() -> None:
@@ -87,7 +92,7 @@ def create_correction_form(record: WijderzetRegistratie) -> None:
                 )
                 client.send_correction(command)
                 ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
-                ui.navigate.to("/spacing")
+                on_close()
             except ValidationError as e:
                 # Show first error message
                 error = e.errors()[0]
@@ -124,7 +129,7 @@ def spacing_page() -> None:
         record = repository.get_by_id(partij_code)
         if record:
             with ui.dialog() as dialog, ui.card():
-                create_correction_form(record)
+                create_correction_form(record, dialog.close)
                 dialog.open()
         else:
             show_error("Record niet gevonden")
@@ -211,7 +216,7 @@ def spacing_correct(partij_code: str) -> None:
                 ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
 
             with ui.card().classes(CARD_CLASSES):
-                create_correction_form(record)
+                create_correction_form(record, lambda: ui.navigate.to("/spacing"))
         else:
             show_error("Record niet gevonden")
             ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES + " mt-4")
