@@ -5,6 +5,8 @@ from typing import Dict, Any
 from nicegui import APIRouter, ui
 
 from ...spacing.models import SpacingRepository, WijderzetRegistratie
+from ...spacing.commands import CorrectSpacingRecord
+from ...spacing.optech import OpTechClient
 from ..components import frame
 from ..components.model_card import display_model_card
 from ..components.message import show_error
@@ -113,6 +115,7 @@ def spacing_detail(partij_code: str) -> None:
 def spacing_correct(partij_code: str) -> None:
     """Render the spacing record correction page."""
     repository = SpacingRepository()
+    client = OpTechClient()
 
     with frame("Wijderzet Correctie"):
         record = repository.get_by_id(partij_code)
@@ -122,6 +125,11 @@ def spacing_correct(partij_code: str) -> None:
                 ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
 
             with ui.card().classes(CARD_CLASSES):
+                # Title
+                ui.label(f"{record.partij_code} - {record.product_naam}").classes(
+                    "text-lg font-bold mb-4"
+                )
+
                 # Show error message if present
                 if record.wijderzet_registratie_fout:
                     with ui.card().classes("mb-4 bg-warning bg-opacity-10"):
@@ -129,8 +137,11 @@ def spacing_correct(partij_code: str) -> None:
                         ui.label(record.wijderzet_registratie_fout)
 
                 # Record info
-                ui.label(f"Partij: {record.partij_code}")
-                ui.label(f"Product: {record.product_naam}")
+                with ui.column().classes("gap-2 mb-4"):
+                    ui.label(f"Productgroep: {record.productgroep_naam}")
+                    ui.label(f"Oppot datum: {format_date(record.datum_oppotten_real)}")
+                    ui.label(f"Planten: {record.aantal_planten_gerealiseerd}")
+                    ui.label(f"Tafels na oppotten (plan): {record.aantal_tafels_oppotten_plan}")
 
                 # Input fields with dates
                 with ui.column().classes("w-full gap-4"):
@@ -164,12 +175,21 @@ def spacing_correct(partij_code: str) -> None:
                         "Annuleren",
                         on_click=lambda: ui.navigate.to("/spacing"),
                     ).classes("bg-gray-500")
+
+                    def handle_save() -> None:
+                        """Handle save button click."""
+                        command = CorrectSpacingRecord(
+                            partij_code=record.partij_code,
+                            aantal_tafels_na_wdz1=wz1.value,
+                            aantal_tafels_na_wdz2=wz2.value,
+                        )
+                        client.send_correction(command)
+                        ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
+                        ui.navigate.to("/spacing")
+
                     ui.button(
                         "Opslaan",
-                        on_click=lambda: (
-                            ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}"),
-                            ui.navigate.to("/spacing"),
-                        ),
+                        on_click=handle_save,
                     ).classes("bg-primary")
         else:
             show_error("Record niet gevonden")
