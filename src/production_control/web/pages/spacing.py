@@ -11,13 +11,14 @@ from ...spacing.optech import OpTechClient
 from ..components import frame
 from ..components.model_card import display_model_card
 from ..components.message import show_error
+from ..components.command_form import create_command_form
 from ..components.styles import (
     CARD_CLASSES,
     HEADER_CLASSES,
     LINK_CLASSES,
 )
 from ..components.data_table import server_side_paginated_table
-from ..components.table_utils import format_row, format_date
+from ..components.table_utils import format_row
 from ..components.table_state import ClientStorageTableState
 
 
@@ -31,8 +32,6 @@ def create_correction_form(record: WijderzetRegistratie, on_close: Callable[[], 
         record: The record to correct
         on_close: Callback to handle closing the form (e.g. close dialog or navigate back)
     """
-    client = OpTechClient()
-
     # Title
     ui.label(f"{record.partij_code} - {record.product_naam}").classes(HEADER_CLASSES)
 
@@ -42,66 +41,22 @@ def create_correction_form(record: WijderzetRegistratie, on_close: Callable[[], 
             ui.label("Fout").classes("text-lg font-bold")
             ui.label(record.wijderzet_registratie_fout)
 
-    # Record info
-    with ui.column().classes("gap-2 mb-4"):
-        ui.label(f"Productgroep: {record.productgroep_naam}")
-        ui.label(f"Oppot datum: {format_date(record.datum_oppotten_real)}")
-        ui.label(f"Planten: {record.aantal_planten_gerealiseerd}")
-        ui.label(f"Tafels na oppotten (plan): {record.aantal_tafels_oppotten_plan:.1f}")
+    # Create command and form
+    client = OpTechClient()
+    command = CorrectSpacingRecord.from_record(record)
 
-    # Input fields with dates
-    with ui.column().classes("w-full gap-4"):
-        with ui.row().classes("items-center gap-4"):
-            wz1 = (
-                ui.number(
-                    label="Tafels na WZ1",
-                    value=record.aantal_tafels_na_wdz1,
-                    min=0,
-                )
-                .classes("w-32")
-                .mark("aantal_tafels_na_wdz1")
-            )
-            ui.label(f"Datum: {format_date(record.datum_wdz1_real)}")
+    def handle_save(updated: CorrectSpacingRecord) -> None:
+        """Handle save button click."""
+        try:
+            client.send_correction(updated)
+            ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
+            on_close()
+        except ValidationError as e:
+            # Show first error message
+            error = e.errors()[0]
+            ui.notify(error["msg"], type="negative", timeout=5000)
 
-        with ui.row().classes("items-center gap-4"):
-            wz2 = (
-                ui.number(
-                    label="Tafels na WZ2",
-                    value=record.aantal_tafels_na_wdz2,
-                    min=0,
-                )
-                .classes("w-32")
-                .mark("aantal_tafels_na_wdz2")
-            )
-            ui.label(f"Datum: {format_date(record.datum_wdz2_real)}")
-
-    # Buttons
-    with ui.row().classes("w-full justify-end gap-4 mt-4"):
-        ui.button(
-            "Annuleren",
-            on_click=on_close,
-        ).classes("bg-gray-500")
-
-        def handle_save() -> None:
-            """Handle save button click."""
-            try:
-                command = CorrectSpacingRecord(
-                    partij_code=record.partij_code,
-                    aantal_tafels_na_wdz1=wz1.value,
-                    aantal_tafels_na_wdz2=wz2.value,
-                )
-                client.send_correction(command)
-                ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
-                on_close()
-            except ValidationError as e:
-                # Show first error message
-                error = e.errors()[0]
-                ui.notify(error["msg"], type="negative", timeout=5000)
-
-        ui.button(
-            "Opslaan",
-            on_click=handle_save,
-        ).classes("bg-primary")
+    create_command_form(command, handle_save, on_close)
 
 
 @router.page("/")

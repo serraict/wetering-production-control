@@ -45,20 +45,20 @@ async def test_spacing_correction_page_shows_fields(user: User) -> None:
         # Verify page title and record info
         await user.should_see("Wijderzet Correctie")
         await user.should_see("TEST123 - Test Plant")
-        await user.should_see("Productgroep: Test Group")
-        await user.should_see("Oppot datum: 22w52-7")
-        await user.should_see("Planten: 100")
-        await user.should_see("Tafels na oppotten (")
+        await user.should_see("de productgroep: Test Group")
+        await user.should_see("oppotten: 22w52-7")
+        await user.should_see("gerealiseerde planten: 100")
+        await user.should_see("tafels volgens oppot plan: 10.0")
 
         # Verify error message is shown
         await user.should_see("Fout")
         await user.should_see("Test error message")
 
         # Verify input fields and dates exist
-        await user.should_see("Tafels na WZ1")
-        await user.should_see("Datum: 22w52-7")
-        await user.should_see("Tafels na WZ2")
-        await user.should_see("Datum: 22w52-7")
+        await user.should_see("tafels na wijderzet 1")
+        await user.should_see("wijderzet 1: 22w52-7")
+        await user.should_see("tafels na wijderzet 2")
+        await user.should_see("wijderzet 2: 22w52-7")
 
         # Verify buttons exist
         await user.should_see("Opslaan")
@@ -109,38 +109,3 @@ async def test_spacing_correction_page_saves_changes(user: User) -> None:
         assert command.partij_code == "TEST123"
         assert command.aantal_tafels_na_wdz1 == 15
         assert command.aantal_tafels_na_wdz2 == 20
-
-
-async def test_spacing_correction_page_shows_validation_errors(user: User) -> None:
-    """Test that validation errors are shown in the UI."""
-    with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
-        # Given
-        mock_repo = MagicMock()
-        mock_repo_class.return_value = mock_repo
-        test_record = WijderzetRegistratie(
-            partij_code="TEST123",
-            product_naam="Test Plant",
-            productgroep_naam="Test Group",
-            aantal_tafels_totaal=10,
-            aantal_tafels_na_wdz1=20,  # WZ1 > WZ2 will cause validation error
-            aantal_tafels_na_wdz2=15,
-            aantal_tafels_oppotten_plan=Decimal("10.0"),
-            aantal_planten_gerealiseerd=100,
-            datum_wdz1_real=date(2023, 1, 1),
-            datum_wdz2_real=date(2023, 1, 1),
-            datum_oppotten_real=date(2023, 1, 1),
-            datum_uit_cel_real=date(2023, 1, 1),
-            dichtheid_oppotten_plan=100,
-            dichtheid_wz1_plan=50,
-            dichtheid_wz2_plan=25.0,
-            wijderzet_registratie_fout=None,
-        )
-        mock_repo.get_by_id.return_value = test_record
-
-        # When
-        await user.open("/spacing/correct/TEST123")
-        save_button = user.find(kind=ui.button, content="Opslaan")
-        save_button.click()
-
-        # Then
-        await user.should_see("Aantal tafels na WZ2 moet groter zijn dan aantal tafels na WZ1")

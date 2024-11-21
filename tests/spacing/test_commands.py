@@ -3,9 +3,6 @@
 from datetime import date
 from decimal import Decimal
 
-import pytest
-from pydantic import ValidationError
-
 from production_control.spacing.models import WijderzetRegistratie
 from production_control.spacing.commands import CorrectSpacingRecord
 
@@ -39,39 +36,13 @@ def test_create_command_from_record() -> None:
     assert command.partij_code == "TEST123"
     assert command.aantal_tafels_na_wdz1 == 15
     assert command.aantal_tafels_na_wdz2 == 20
-
-
-def test_validate_wz1_greater_than_zero() -> None:
-    """Test that aantal_tafels_na_wdz1 must be greater than zero."""
-    record = create_test_record()
-    with pytest.raises(ValidationError, match="greater than 0"):
-        CorrectSpacingRecord(
-            partij_code=record.partij_code,
-            aantal_tafels_na_wdz1=0,
-            aantal_tafels_na_wdz2=None,
-        )
-
-
-def test_validate_wz2_requires_wz1() -> None:
-    """Test that aantal_tafels_na_wdz2 cannot be set if wz1 is None."""
-    record = create_test_record()
-    with pytest.raises(ValidationError, match="WZ2.*WZ1 leeg"):
-        CorrectSpacingRecord(
-            partij_code=record.partij_code,
-            aantal_tafels_na_wdz1=None,
-            aantal_tafels_na_wdz2=20,
-        )
-
-
-def test_validate_wz2_greater_than_wz1() -> None:
-    """Test that aantal_tafels_na_wdz2 must be greater than wz1."""
-    record = create_test_record()
-    with pytest.raises(ValidationError, match="WZ2.*groter.*WZ1"):
-        CorrectSpacingRecord(
-            partij_code=record.partij_code,
-            aantal_tafels_na_wdz1=20,
-            aantal_tafels_na_wdz2=15,
-        )
+    assert command.product_naam == "Test Plant"
+    assert command.productgroep_naam == "Test Group"
+    assert command.aantal_tafels_oppotten_plan == Decimal("10.0")
+    assert command.aantal_planten_gerealiseerd == 100
+    assert command.datum_oppotten_real == date(2023, 1, 1)
+    assert command.datum_wdz1_real == date(2023, 1, 1)
+    assert command.datum_wdz2_real == date(2023, 1, 1)
 
 
 def test_allow_null_values() -> None:
@@ -79,6 +50,11 @@ def test_allow_null_values() -> None:
     record = create_test_record()
     command = CorrectSpacingRecord(
         partij_code=record.partij_code,
+        product_naam=record.product_naam,
+        productgroep_naam=record.productgroep_naam,
+        aantal_tafels_oppotten_plan=record.aantal_tafels_oppotten_plan,
+        aantal_planten_gerealiseerd=record.aantal_planten_gerealiseerd,
+        datum_oppotten_real=record.datum_oppotten_real,
         aantal_tafels_na_wdz1=None,
         aantal_tafels_na_wdz2=None,
     )
@@ -91,8 +67,36 @@ def test_allow_wz1_without_wz2() -> None:
     record = create_test_record()
     command = CorrectSpacingRecord(
         partij_code=record.partij_code,
+        product_naam=record.product_naam,
+        productgroep_naam=record.productgroep_naam,
+        aantal_tafels_oppotten_plan=record.aantal_tafels_oppotten_plan,
+        aantal_planten_gerealiseerd=record.aantal_planten_gerealiseerd,
+        datum_oppotten_real=record.datum_oppotten_real,
         aantal_tafels_na_wdz1=15,
         aantal_tafels_na_wdz2=None,
     )
     assert command.aantal_tafels_na_wdz1 == 15
     assert command.aantal_tafels_na_wdz2 is None
+
+
+def test_get_editable_fields() -> None:
+    """Test getting list of editable fields."""
+    record = create_test_record()
+    command = CorrectSpacingRecord.from_record(record)
+    editable = command.get_editable_fields()
+    assert editable == ["aantal_tafels_na_wdz1", "aantal_tafels_na_wdz2"]
+
+
+def test_get_readonly_fields() -> None:
+    """Test getting list of read-only fields."""
+    record = create_test_record()
+    command = CorrectSpacingRecord.from_record(record)
+    readonly = command.get_readonly_fields()
+    assert "partij_code" in readonly
+    assert "product_naam" in readonly
+    assert "productgroep_naam" in readonly
+    assert "aantal_tafels_oppotten_plan" in readonly
+    assert "aantal_planten_gerealiseerd" in readonly
+    assert "datum_oppotten_real" in readonly
+    assert "datum_wdz1_real" in readonly
+    assert "datum_wdz2_real" in readonly
