@@ -44,7 +44,11 @@ def spacing_page() -> None:
         "view": {
             "icon": "visibility",
             "handler": lambda e: ui.navigate.to(f"/spacing/{e.args.get('key')}"),
-        }
+        },
+        "edit": {
+            "icon": "edit",
+            "handler": lambda e: ui.navigate.to(f"/spacing/correct/{e.args.get('key')}"),
+        },
     }
 
     # event handlers
@@ -100,6 +104,61 @@ def spacing_detail(partij_code: str) -> None:
                 with ui.card().classes("mt-4 bg-warning bg-opacity-10"):
                     ui.label("Fout").classes("text-lg font-bold")
                     ui.label(record.wijderzet_registratie_fout)
+        else:
+            show_error("Record niet gevonden")
+            ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES + " mt-4")
+
+
+@router.page("/correct/{partij_code}")
+def spacing_correct(partij_code: str) -> None:
+    """Render the spacing record correction page."""
+    repository = SpacingRepository()
+
+    with frame("Wijderzet Correctie"):
+        record = repository.get_by_id(partij_code)
+
+        if record:
+            with ui.row().classes("w-full justify-between items-center mb-6"):
+                ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
+
+            with ui.card().classes(CARD_CLASSES):
+                ui.label(f"Partij: {record.partij_code}").classes("mb-4")
+                ui.label(f"Product: {record.product_naam}").classes("mb-4")
+
+                # Input fields
+                wz1 = (
+                    ui.number(
+                        label="Tafels na WZ1",
+                        value=record.aantal_tafels_na_wdz1,
+                        min=0,
+                    )
+                    .classes("w-full")
+                    .mark("aantal_tafels_na_wdz1")
+                )
+
+                wz2 = (
+                    ui.number(
+                        label="Tafels na WZ2",
+                        value=record.aantal_tafels_na_wdz2,
+                        min=0,
+                    )
+                    .classes("w-full")
+                    .mark("aantal_tafels_na_wdz2")
+                )
+
+                # Buttons
+                with ui.row().classes("w-full justify-end gap-4 mt-4"):
+                    ui.button(
+                        "Annuleren",
+                        on_click=lambda: ui.navigate.to("/spacing"),
+                    ).classes("bg-gray-500")
+                    ui.button(
+                        "Opslaan",
+                        on_click=lambda: (
+                            ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}"),
+                            ui.navigate.to("/spacing"),
+                        ),
+                    ).classes("bg-primary")
         else:
             show_error("Record niet gevonden")
             ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES + " mt-4")
