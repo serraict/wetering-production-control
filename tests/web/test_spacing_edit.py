@@ -15,7 +15,7 @@ async def test_spacing_correction_page_shows_fields(user: User) -> None:
         # Given
         mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
-        test_date = date(2023, 1, 1)
+        test_date = date(2023, 1, 1)  # This is week 52 of 2022, day 7 (Sunday)
         test_record = WijderzetRegistratie(
             partij_code="TEST123",
             product_naam="Test Plant",
@@ -32,7 +32,7 @@ async def test_spacing_correction_page_shows_fields(user: User) -> None:
             dichtheid_oppotten_plan=100,
             dichtheid_wz1_plan=50,
             dichtheid_wz2_plan=25.0,
-            wijderzet_registratie_fout=False,
+            wijderzet_registratie_fout="Test error message",
         )
         mock_repo.get_by_id.return_value = test_record
 
@@ -45,9 +45,15 @@ async def test_spacing_correction_page_shows_fields(user: User) -> None:
         await user.should_see("Partij: TEST123")
         await user.should_see("Product: Test Plant")
 
-        # Verify labels for input fields
+        # Verify error message is shown
+        await user.should_see("Fout")
+        await user.should_see("Test error message")
+
+        # Verify input fields and dates exist
         await user.should_see("Tafels na WZ1")
+        await user.should_see("22w52-7")  # 2023-01-01 is week 52 of 2022, day 7
         await user.should_see("Tafels na WZ2")
+        await user.should_see("22w52-7")  # 2023-01-01 is week 52 of 2022, day 7
 
         # Verify buttons exist
         await user.should_see("Opslaan")

@@ -14,7 +14,7 @@ from ..components.styles import (
     LINK_CLASSES,
 )
 from ..components.data_table import server_side_paginated_table
-from ..components.table_utils import format_row
+from ..components.table_utils import format_row, format_date
 from ..components.table_state import ClientStorageTableState
 
 
@@ -122,29 +122,41 @@ def spacing_correct(partij_code: str) -> None:
                 ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
 
             with ui.card().classes(CARD_CLASSES):
-                ui.label(f"Partij: {record.partij_code}").classes("mb-4")
-                ui.label(f"Product: {record.product_naam}").classes("mb-4")
+                # Show error message if present
+                if record.wijderzet_registratie_fout:
+                    with ui.card().classes("mb-4 bg-warning bg-opacity-10"):
+                        ui.label("Fout").classes("text-lg font-bold")
+                        ui.label(record.wijderzet_registratie_fout)
 
-                # Input fields
-                wz1 = (
-                    ui.number(
-                        label="Tafels na WZ1",
-                        value=record.aantal_tafels_na_wdz1,
-                        min=0,
-                    )
-                    .classes("w-full")
-                    .mark("aantal_tafels_na_wdz1")
-                )
+                # Record info
+                ui.label(f"Partij: {record.partij_code}")
+                ui.label(f"Product: {record.product_naam}")
 
-                wz2 = (
-                    ui.number(
-                        label="Tafels na WZ2",
-                        value=record.aantal_tafels_na_wdz2,
-                        min=0,
-                    )
-                    .classes("w-full")
-                    .mark("aantal_tafels_na_wdz2")
-                )
+                # Input fields with dates
+                with ui.column().classes("w-full gap-4"):
+                    with ui.row().classes("items-center gap-4"):
+                        wz1 = (
+                            ui.number(
+                                label="Tafels na WZ1",
+                                value=record.aantal_tafels_na_wdz1,
+                                min=0,
+                            )
+                            .classes("w-32")
+                            .mark("aantal_tafels_na_wdz1")
+                        )
+                        ui.label(f"Datum: {format_date(record.datum_wdz1_real)}")
+
+                    with ui.row().classes("items-center gap-4"):
+                        wz2 = (
+                            ui.number(
+                                label="Tafels na WZ2",
+                                value=record.aantal_tafels_na_wdz2,
+                                min=0,
+                            )
+                            .classes("w-32")
+                            .mark("aantal_tafels_na_wdz2")
+                        )
+                        ui.label(f"Datum: {format_date(record.datum_wdz2_real)}")
 
                 # Buttons
                 with ui.row().classes("w-full justify-end gap-4 mt-4"):

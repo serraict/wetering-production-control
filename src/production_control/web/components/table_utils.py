@@ -6,6 +6,25 @@ from sqlmodel import SQLModel
 from pydantic_core._pydantic_core import PydanticUndefinedType
 
 
+DATE_FORMAT = "%gw%V-%u"
+
+
+def format_date(value: date, format_str: str = "YY[w]ww-E") -> str:
+    """Format a date value using Quasar date format strings.
+
+    Args:
+        value: The date to format
+        format_str: The format string to use (default: YY[w]ww-E)
+
+    Returns:
+        The formatted date string
+    """
+    if not value:
+        return ""
+
+    return value.strftime(DATE_FORMAT)  # ISO week number
+
+
 def is_date_field(field_type: Any) -> bool:
     """Check if a field type is a date or Optional[date]."""
     if field_type == date:
