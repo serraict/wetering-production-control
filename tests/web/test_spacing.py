@@ -196,3 +196,20 @@ async def test_spacing_page_filtering_calls_repository(user: User) -> None:
             ),
             filter_text="TEST123",
         )
+
+
+async def test_spacing_page_shows_date_range(user: User) -> None:
+    """Test that spacing page shows date range inputs."""
+    with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
+        # Given
+        mock_repo = MagicMock()
+        mock_repo_class.return_value = mock_repo
+        mock_repo.get_paginated.return_value = ([], 0)
+
+        # When
+        await user.open("/spacing")
+        await user.should_see("Overzicht")  # Wait for page to load
+
+        # Then
+        await user.should_see("Van ...")
+        await user.should_see("Tot ...")

@@ -1,5 +1,6 @@
 """Spacing page implementation."""
 
+from datetime import date, timedelta
 from typing import Dict, Any, Callable
 
 from nicegui import APIRouter, ui
@@ -116,12 +117,43 @@ def spacing_page() -> None:
         with ui.card().classes(CARD_CLASSES.replace("max-w-3xl", "max-w-7xl")):
             with ui.row().classes("w-full justify-between items-center mb-4"):
                 ui.label("Overzicht").classes(HEADER_CLASSES)
-                ui.input(
-                    placeholder="Zoek ...",
-                    on_change=lambda e: handle_filter(e),
-                ).classes(
-                    "w-64"
-                ).mark("search")
+                with ui.row().classes("gap-4"):
+                    # Date range inputs
+                    with ui.row().classes("items-center gap-2"):
+                        with ui.input("Van ...").classes("w-32").mark("date_from") as date_from:
+                            with ui.menu().props("no-parent-event") as menu_from:
+                                with ui.date(value=date.today() - timedelta(days=14)).bind_value(
+                                    date_from
+                                ):
+                                    with ui.row().classes("justify-end"):
+                                        ui.button("Sluiten", on_click=menu_from.close).props("flat")
+                            with date_from.add_slot("append"):
+                                ui.icon("edit_calendar").on("click", menu_from.open).classes(
+                                    "cursor-pointer"
+                                )
+
+                    with ui.row().classes("items-center gap-2"):
+                        with ui.input("Tot ...").classes("w-32").mark("date_to") as date_to:
+                            with ui.menu().props("no-parent-event") as menu_to:
+                                with ui.date(value=date.today()).bind_value(date_to):
+                                    with ui.row().classes("justify-end"):
+                                        ui.button("Sluiten", on_click=menu_to.close).props("flat")
+                            with date_to.add_slot("append"):
+                                ui.icon("edit_calendar").on("click", menu_to.open).classes(
+                                    "cursor-pointer"
+                                )
+
+                    # Search input
+                    with (
+                        ui.input(
+                            "Zoek ...",
+                            on_change=lambda e: handle_filter(e),
+                        )
+                        .classes("w-64")
+                        .mark("search") as search
+                    ):
+                        with search.add_slot("append"):
+                            ui.icon("search")
 
             server_side_paginated_table(
                 cls=WijderzetRegistratie,

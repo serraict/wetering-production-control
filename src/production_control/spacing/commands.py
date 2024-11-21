@@ -16,21 +16,21 @@ class CorrectSpacingRecord(BaseModel):
     aantal_tafels_na_wdz1: Optional[int] = Field(
         None,
         description="Aantal tafels na wijderzet 1",
-        gte=0,
-        json_schema_extra={"ui_editable": True},
+        json_schema_extra={"ui_editable": True, "minimum": 0},
     )
     aantal_tafels_na_wdz2: Optional[int] = Field(
         None,
         description="Aantal tafels na wijderzet 2",
-        gte=0,
-        json_schema_extra={"ui_editable": True},
+        json_schema_extra={"ui_editable": True, "minimum": 0},
     )
 
     # Read-only fields
     partij_code: str = Field(..., description="Code van de partij")
     product_naam: str = Field(..., description="Naam van het product")
     productgroep_naam: str = Field(..., description="Naam van de productgroep")
-    aantal_tafels_oppotten_plan: Decimal = Field(..., description="Aantal tafels volgens oppot plan")
+    aantal_tafels_oppotten_plan: Decimal = Field(
+        ..., description="Aantal tafels volgens oppot plan"
+    )
     aantal_planten_gerealiseerd: int = Field(..., description="Aantal gerealiseerde planten")
     datum_oppotten_real: date = Field(..., description="Datum van oppotten")
     datum_wdz1_real: Optional[date] = Field(None, description="Datum van wijderzet 1")
