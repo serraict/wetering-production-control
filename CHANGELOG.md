@@ -9,7 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Spacing module (add details when the feature is complete)
+- Spacing module with comprehensive features:
+  - Table view of spacing records with Dutch labels
+  - Search, pagination, and sorting functionality
+  - Error visualization for problematic records
+  - Record correction interface with OpTech integration
+  - Command-line interface for spacing operations
+
+### Changed
+
+- Refactored table components:
+  - Enhanced models with UI metadata
+  - Created model-driven table column generator
+  - Implemented ServerSidePaginatingTable component
+  - Added Dutch labels throughout the interface
+  - Improved table state management per client connection
+- Refactored repositories:
+  - Made DremioRepository generic with model type T
+  - Moved common functionality to base class
+  - Improved session handling
+
+### Added
+
+- Data formatting utilities:
+  - Date formatting
+  - Decimal formatting
+  - Support for custom field formatting
 
 ## [0.1.2] - 2024-11-18
 
