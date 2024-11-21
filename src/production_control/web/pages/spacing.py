@@ -70,22 +70,11 @@ def spacing_page() -> None:
                     "w-64"
                 ).mark("search")
 
-            table = server_side_paginated_table(
+            server_side_paginated_table(
                 cls=WijderzetRegistratie,
                 state=table_state,
                 on_request=handle_table_request,
                 row_actions=row_actions,
-            )
-            # Add styling for error rows
-            table.add_slot(
-                "body",
-                """
-                <tr :props="props" :class="{'bg-warning bg-opacity-10': props.row.wijderzet_registratie_fout}">
-                    <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                        {{ col.value }}
-                    </q-td>
-                </tr>
-            """,
             )
 
     # load initial data

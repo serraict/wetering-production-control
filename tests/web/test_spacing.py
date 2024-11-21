@@ -4,7 +4,7 @@ import asyncio
 from datetime import date
 from decimal import Decimal
 from typing import Optional
-from unittest.mock import patch, Mock
+from unittest.mock import patch, MagicMock
 
 from nicegui import ui
 from nicegui.testing import User
@@ -17,7 +17,7 @@ async def test_spacing_page_shows_table(user: User) -> None:
     """Test that spacing page shows a table with spacing data."""
     with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
         # Given
-        mock_repo = Mock()
+        mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
         test_date = date(2023, 1, 1)
         mock_repo.get_paginated.return_value = (
@@ -69,6 +69,11 @@ async def test_spacing_page_shows_table(user: User) -> None:
         # Then
         table = user.find(ui.table).elements.pop()
         assert table.columns == [
+            {
+                "name": "warning_emoji",
+                "label": "",
+                "field": "warning_emoji",
+            },
             {
                 "name": "partij_code",
                 "label": "Partij",
@@ -139,17 +144,19 @@ async def test_spacing_page_shows_table(user: User) -> None:
         assert table.rows[0]["partij_code"] == "TEST123"
         assert table.rows[0]["product_naam"] == "Test Plant"
         assert table.rows[0]["aantal_tafels_totaal"] == 10
+        assert table.rows[0]["warning_emoji"] == ""
 
         assert table.rows[1]["partij_code"] == "TEST456"
         assert table.rows[1]["product_naam"] == "Other Plant"
         assert table.rows[1]["aantal_tafels_totaal"] == 20
+        assert table.rows[1]["warning_emoji"] == "⚠️"
 
 
 async def test_spacing_page_filtering_calls_repository(user: User) -> None:
     """Test that entering a filter value calls the repository with the filter text."""
     with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
         # Given
-        mock_repo = Mock()
+        mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.get_paginated.return_value = ([], 0)  # Empty initial result
 

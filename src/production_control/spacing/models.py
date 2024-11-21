@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
+from pydantic import computed_field
 from sqlalchemy import func, distinct, text, Select, Engine
 from sqlmodel import Field, Session, SQLModel, select
 
@@ -22,55 +23,55 @@ class WijderzetRegistratie(SQLModel, table=True):
         primary_key=True,
         title="Partij",
         description="Code van de partij",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 1}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 2}},
     )
 
     product_naam: str = Field(
         title="Product",
         description="Naam van het product",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 2}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 3}},
     )
     productgroep_naam: str = Field(
         title="Productgroep",
         description="Naam van de productgroep",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 3}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 4}},
     )
 
     # Table amounts
     aantal_tafels_totaal: int = Field(
         title="Tafels totaal",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 4}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 5}},
     )
     aantal_tafels_na_wdz1: int = Field(
         title="Tafels na WZ1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 5}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 6}},
     )
     aantal_tafels_na_wdz2: int = Field(
         title="Tafels na WZ2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 6}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
     )
     aantal_tafels_oppotten_plan: Decimal = Field(
         title="Tafels plan",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 7}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
     )
 
     # Plant amounts
     aantal_planten_gerealiseerd: int = Field(
         title="Planten",
         description="Aantal gerealiseerde planten",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
     )
 
     # Important dates
     datum_wdz1_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
     )
     datum_wdz2_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 11}},
     )
 
     # Error tracking (hidden but used for row styling)
@@ -104,6 +105,13 @@ class WijderzetRegistratie(SQLModel, table=True):
         title="Dichtheid WZ2",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 84, "ui_hidden": True}},
     )
+
+    # Calculated fields
+    @computed_field(return_type=Optional[str])
+    @property
+    def warning_emoji(self) -> str:
+        """Return a warning emoji if there's an error, empty string otherwise."""
+        return "⚠️" if self.wijderzet_registratie_fout else ""
 
     def __str__(self) -> str:
         """Format record as string with batch code and potting date."""

@@ -79,6 +79,14 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
 
     columns.sort(key=lambda col: get_order(col["name"]))
 
+    # Add warning emoji column first if model has warning_emoji property
+    if hasattr(model_class, "warning_emoji"):
+        columns.insert(0, {
+            "name": "warning_emoji",
+            "label": "",
+            "field": "warning_emoji",
+        })
+
     # Add actions column at the end
     columns.append({"name": "actions", "label": "Acties", "field": "actions"})
 
@@ -109,6 +117,10 @@ def format_row(model: SQLModel) -> Dict[str, Any]:
         raise ValueError(f"No primary key field found in model {model.__class__.__name__}")
 
     row = {"id": getattr(model, primary_key_field)}  # Use primary key for row key
+
+    # Add warning emoji if model has it
+    if hasattr(model, "warning_emoji"):
+        row["warning_emoji"] = model.warning_emoji
 
     for field_name, field in model.__class__.model_fields.items():
         # Get UI metadata from SQLAlchemy column info

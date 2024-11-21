@@ -26,15 +26,15 @@ def test_wijderzet_registratie_model():
         partij_code="TEST123",
         product_naam="Test Plant",
         productgroep_naam="Test Group",
-        datum_oppotten_real=test_date,
-        datum_uit_cel_real=test_date,
-        datum_wdz1_real=test_date,
-        datum_wdz2_real=test_date,
-        aantal_planten_gerealiseerd=100,
         aantal_tafels_totaal=10,
         aantal_tafels_na_wdz1=15,
         aantal_tafels_na_wdz2=20,
         aantal_tafels_oppotten_plan=Decimal("10.0"),
+        aantal_planten_gerealiseerd=100,
+        datum_wdz1_real=test_date,
+        datum_wdz2_real=test_date,
+        datum_oppotten_real=test_date,
+        datum_uit_cel_real=test_date,
         dichtheid_oppotten_plan=100,
         dichtheid_wz1_plan=50,
         dichtheid_wz2_plan=25.0,
@@ -58,6 +58,23 @@ def test_wijderzet_registratie_model():
     assert registratie.dichtheid_wz1_plan == 50
     assert registratie.dichtheid_wz2_plan == 25.0
     assert registratie.wijderzet_registratie_fout is False
+
+
+def test_wijderzet_registratie_warning_emoji():
+    """Test the warning emoji property."""
+    # Test with error
+    registratie_with_error = WijderzetRegistratie(
+        partij_code="TEST123",
+        wijderzet_registratie_fout="Some error",
+    )
+    assert registratie_with_error.warning_emoji == "⚠️"
+
+    # Test without error
+    registratie_without_error = WijderzetRegistratie(
+        partij_code="TEST123",
+        wijderzet_registratie_fout=None,
+    )
+    assert registratie_without_error.warning_emoji == ""
 
 
 @patch("production_control.spacing.models.Session")
