@@ -24,6 +24,81 @@ from ..components.table_state import ClientStorageTableState
 router = APIRouter(prefix="/spacing")
 
 
+def create_correction_form(record: WijderzetRegistratie) -> None:
+    """Create the correction form for a spacing record."""
+    client = OpTechClient()
+
+    # Title
+    ui.label(f"{record.partij_code} - {record.product_naam}").classes(HEADER_CLASSES)
+
+    # Show error message if present
+    if record.wijderzet_registratie_fout:
+        with ui.card().classes("mb-4 bg-warning bg-opacity-10"):
+            ui.label("Fout").classes("text-lg font-bold")
+            ui.label(record.wijderzet_registratie_fout)
+
+    # Record info
+    with ui.column().classes("gap-2 mb-4"):
+        ui.label(f"Productgroep: {record.productgroep_naam}")
+        ui.label(f"Oppot datum: {format_date(record.datum_oppotten_real)}")
+        ui.label(f"Planten: {record.aantal_planten_gerealiseerd}")
+        ui.label(f"Tafels na oppotten (plan): {record.aantal_tafels_oppotten_plan:.1f}")
+
+    # Input fields with dates
+    with ui.column().classes("w-full gap-4"):
+        with ui.row().classes("items-center gap-4"):
+            wz1 = (
+                ui.number(
+                    label="Tafels na WZ1",
+                    value=record.aantal_tafels_na_wdz1,
+                    min=0,
+                )
+                .classes("w-32")
+                .mark("aantal_tafels_na_wdz1")
+            )
+            ui.label(f"Datum: {format_date(record.datum_wdz1_real)}")
+
+        with ui.row().classes("items-center gap-4"):
+            wz2 = (
+                ui.number(
+                    label="Tafels na WZ2",
+                    value=record.aantal_tafels_na_wdz2,
+                    min=0,
+                )
+                .classes("w-32")
+                .mark("aantal_tafels_na_wdz2")
+            )
+            ui.label(f"Datum: {format_date(record.datum_wdz2_real)}")
+
+    # Buttons
+    with ui.row().classes("w-full justify-end gap-4 mt-4"):
+        ui.button(
+            "Annuleren",
+            on_click=lambda: ui.navigate.to("/spacing"),
+        ).classes("bg-gray-500")
+
+        def handle_save() -> None:
+            """Handle save button click."""
+            try:
+                command = CorrectSpacingRecord(
+                    partij_code=record.partij_code,
+                    aantal_tafels_na_wdz1=wz1.value,
+                    aantal_tafels_na_wdz2=wz2.value,
+                )
+                client.send_correction(command)
+                ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
+                ui.navigate.to("/spacing")
+            except ValidationError as e:
+                # Show first error message
+                error = e.errors()[0]
+                ui.notify(error["msg"], type="negative", timeout=5000)
+
+        ui.button(
+            "Opslaan",
+            on_click=handle_save,
+        ).classes("bg-primary")
+
+
 @router.page("/")
 def spacing_page() -> None:
     """Render the spacing page with a table of all spacing records."""
@@ -43,6 +118,17 @@ def spacing_page() -> None:
         server_side_paginated_table.refresh()
 
     # actions
+    def handle_edit(e: Dict[str, Any]) -> None:
+        """Handle edit button click."""
+        partij_code = e.args.get("key")
+        record = repository.get_by_id(partij_code)
+        if record:
+            with ui.dialog() as dialog, ui.card():
+                create_correction_form(record)
+                dialog.open()
+        else:
+            show_error("Record niet gevonden")
+
     row_actions = {
         "view": {
             "icon": "visibility",
@@ -50,7 +136,7 @@ def spacing_page() -> None:
         },
         "edit": {
             "icon": "edit",
-            "handler": lambda e: ui.navigate.to(f"/spacing/correct/{e.args.get('key')}"),
+            "handler": handle_edit,
         },
     }
 
@@ -116,7 +202,6 @@ def spacing_detail(partij_code: str) -> None:
 def spacing_correct(partij_code: str) -> None:
     """Render the spacing record correction page."""
     repository = SpacingRepository()
-    client = OpTechClient()
 
     with frame("Wijderzet Correctie"):
         record = repository.get_by_id(partij_code)
@@ -126,75 +211,7 @@ def spacing_correct(partij_code: str) -> None:
                 ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
 
             with ui.card().classes(CARD_CLASSES):
-                # Title
-                ui.label(f"{record.partij_code} - {record.product_naam}").classes(HEADER_CLASSES)
-
-                # Show error message if present
-                if record.wijderzet_registratie_fout:
-                    with ui.card().classes("mb-4 bg-warning bg-opacity-10"):
-                        ui.label("Fout").classes("text-lg font-bold")
-                        ui.label(record.wijderzet_registratie_fout)
-
-                # Record info
-                with ui.column().classes("gap-2 mb-4"):
-                    ui.label(f"Productgroep: {record.productgroep_naam}")
-                    ui.label(f"Oppot datum: {format_date(record.datum_oppotten_real)}")
-                    ui.label(f"Planten: {record.aantal_planten_gerealiseerd}")
-                    ui.label(f"Tafels na oppotten (plan): {record.aantal_tafels_oppotten_plan:.1f}")
-
-                # Input fields with dates
-                with ui.column().classes("w-full gap-4"):
-                    with ui.row().classes("items-center gap-4"):
-                        wz1 = (
-                            ui.number(
-                                label="Tafels na WZ1",
-                                value=record.aantal_tafels_na_wdz1,
-                                min=0,
-                            )
-                            .classes("w-32")
-                            .mark("aantal_tafels_na_wdz1")
-                        )
-                        ui.label(f"Datum: {format_date(record.datum_wdz1_real)}")
-
-                    with ui.row().classes("items-center gap-4"):
-                        wz2 = (
-                            ui.number(
-                                label="Tafels na WZ2",
-                                value=record.aantal_tafels_na_wdz2,
-                                min=0,
-                            )
-                            .classes("w-32")
-                            .mark("aantal_tafels_na_wdz2")
-                        )
-                        ui.label(f"Datum: {format_date(record.datum_wdz2_real)}")
-
-                # Buttons
-                with ui.row().classes("w-full justify-end gap-4 mt-4"):
-                    ui.button(
-                        "Annuleren",
-                        on_click=lambda: ui.navigate.to("/spacing"),
-                    ).classes("bg-gray-500")
-
-                    def handle_save() -> None:
-                        """Handle save button click."""
-                        try:
-                            command = CorrectSpacingRecord(
-                                partij_code=record.partij_code,
-                                aantal_tafels_na_wdz1=wz1.value,
-                                aantal_tafels_na_wdz2=wz2.value,
-                            )
-                            client.send_correction(command)
-                            ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
-                            ui.navigate.to("/spacing")
-                        except ValidationError as e:
-                            # Show first error message
-                            error = e.errors()[0]
-                            ui.notify(error["msg"], type="negative", timeout=5000)
-
-                    ui.button(
-                        "Opslaan",
-                        on_click=handle_save,
-                    ).classes("bg-primary")
+                create_correction_form(record)
         else:
             show_error("Record niet gevonden")
             ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES + " mt-4")
