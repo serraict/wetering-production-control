@@ -81,11 +81,14 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
 
     # Add warning emoji column first if model has warning_emoji property
     if hasattr(model_class, "warning_emoji"):
-        columns.insert(0, {
-            "name": "warning_emoji",
-            "label": "",
-            "field": "warning_emoji",
-        })
+        columns.insert(
+            0,
+            {
+                "name": "warning_emoji",
+                "label": "",
+                "field": "warning_emoji",
+            },
+        )
 
     # Add actions column at the end
     columns.append({"name": "actions", "label": "Acties", "field": "actions"})

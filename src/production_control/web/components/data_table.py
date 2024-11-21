@@ -69,15 +69,24 @@ def server_side_paginated_table(
         pagination=state.pagination,
     )
 
-    for action_key, action in row_actions.items():
+    btns = [
+        f"""
+            <q-btn @click="$parent.$emit('{action_key}', props)" icon="{action['icon']}" flat dense color='primary'/>
+            """
+        for action_key, action in row_actions.items()
+    ]
+
+    if btns:
         table.add_slot(
             "body-cell-actions",
             f"""
             <q-td :props="props">
-                <q-btn @click="$parent.$emit('{action_key}', props)" icon="{action['icon']}" flat dense color='primary'/>
+                {''.join(btns)}
             </q-td>
         """,
         )
+
+    for action_key, action in row_actions.items():
         table.on(action_key, action["handler"])
 
     table.on("request", on_request)
