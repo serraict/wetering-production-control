@@ -66,7 +66,7 @@ Implementation steps:
    - ✓ show aantal_tafels_oppotten_plan and aantal_planten_gerealiseerd in the table
    - ✓ hide the Fout column
    - ✓ add view button to show record details
-   - make the row color-warn if there is an error
+   - ✓ add warning emoji column to indicate errors
 1. Create correction functionality:
    - Create editor interface for spacing records
    - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
