@@ -68,10 +68,22 @@ Implementation steps:
    - ✓ add view button to show record details
    - ✓ add warning emoji column to indicate errors
 1. Create correction functionality:
-   - Create editor interface for spacing records
-   - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
+   - ✓ Create editor interface for spacing records
+     - ✓ Fields that are editable are `aantal wz1` and `aantal wz2`.
+     - ✓ If those fields are changed, a message needs to be sent to the optech application to register the correction.
+   - Filter the list to show only record where wdz datum 1 or w is within the date filter range
+     - Use a from and to datetime picker for this
+     - Default values for filter: from now - 2 weeks to now
+   - Design save functionality:
+     1. ✓ Create a CorrectSpacingRecord command as a Pydantic model.
+     2. ✓ Create OpTechClient class in spacing/optech.py:
+        - ✓ Handles CorrectSpacingRecord command.
+        - Method to send correction: `send_correction(partij_code: str, aantal_wz1: Optional[int], aantal_wz2: Optional[int])`
+        - Handle API errors and return success/failure status
+        - Refresh table data on success
    - Integrate with OpTech API to send corrections to Technison
    - Implement validation and error handling
+   - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
 
 ## Design
 
@@ -120,57 +132,34 @@ graph TD
 
 #### Python Modules
 
-1. `src/production_control/spacing/models.py`
-   - ✓ WijderzetRegistratie model (SQLModel)
-   - ✓ SpacingRepository for data access
-   - Error handling classes
+1. `src/production_control/spacing/optech.py` (New)
+   - OpTechClient class for API integration
+   - Error handling and response types
+   - API endpoint configuration
 
-2. `src/production_control/spacing/api.py`
-   - OpTechClient for API integration
-   - Request/response models
-   - Error handling
+2. `src/production_control/spacing/models.py` (Update)
+   - Add update method to SpacingRepository
+   - Add validation for spacing values
 
-3. `src/production_control/web/pages/spacing.py`
-   - ✓ Spacing overview page (list view):
-     - ✓ Basic table structure
-     - ✓ Search functionality
-     - ✓ Add all model fields
-     - ✓ Fix pagination
-     - ✓ Fix sorting
-     - ✓ Refactor to use shared components:
-       - ✓ Replace global table_data with ClientStorageTableState
-       - ✓ Use server_side_paginated_table component
-       - ✓ Improve code organization
-       - ✓ Clean up pagination handling
-   - Spacing detail/edit page
-   - Error handling and user feedback
+3. `src/production_control/web/pages/spacing.py` (Update)
+   - Add save handler to correction page
+   - Add success/error notifications
+   - Add validation feedback
 
-4. `src/production_control/web/components/data_table.py` (New)
-   - ✓ Base table component with:
-     - ✓ Model-driven columns
-     - ✓ Server-side pagination
-     - ✓ Event handling
-   - ✓ Table formatter utilities:
-     - ✓ Add date formatting
-     - ✓ Add decimal formatting
-     - ✓ Support custom field formatting
+#### Tests
 
-#### Web Pages
+1. `tests/spacing/test_optech.py` (New)
+   - Test OpTechClient with mocked API
+   - Test error handling
+   - Test response parsing
 
-1. ✓ Spacing Overview Page (`/spacing`)
-   - ✓ List of spacing records with:
-     - ✓ Basic info (batch code, product, group)
-     - ✓ Add all dates (potting, spacing)
-     - ✓ Add all table counts and densities
-     - ✓ Spacing error indicators
-     - ✓ Links to detail/edit pages
-   - ✓ Search functionality
-   - ✓ Fix pagination and sorting
-   - ✓ Error status overview
+2. `tests/test_spacing_models.py` (Update)
+   - Test SpacingRepository update method
+   - Test validation rules
 
-2. Spacing Detail/Edit Page (`/spacing/{batch_id}`)
-   - Detailed view of spacing record
-   - Edit form for corrections
-   - Validation feedback
-   - Save/cancel actions
-   - Integration with OpTech API
+3. `tests/web/test_spacing_edit.py` (Update)
+   - Test save functionality
+   - Test validation feedback
+   - Test error handling
+
+Would you like me to proceed with implementing this design?
