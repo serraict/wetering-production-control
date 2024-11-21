@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from .menu import menu
 from .message import message
 from nicegui import ui
+import os
 
 
 @contextmanager
@@ -49,3 +50,5 @@ def frame(navigation_title: str):
                 yield
             except Exception as e:
                 message(f"Error: {str(e)}")
+                if "PYTEST_CURRENT_TEST" in os.environ:
+                    raise  # Re-raise the exception if in a testing run
