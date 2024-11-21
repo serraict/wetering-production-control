@@ -3,6 +3,7 @@
 from typing import Dict, Any
 
 from nicegui import APIRouter, ui
+from pydantic import ValidationError
 
 from ...spacing.models import SpacingRepository, WijderzetRegistratie
 from ...spacing.commands import CorrectSpacingRecord
@@ -126,9 +127,7 @@ def spacing_correct(partij_code: str) -> None:
 
             with ui.card().classes(CARD_CLASSES):
                 # Title
-                ui.label(f"{record.partij_code} - {record.product_naam}").classes(
-                    "text-lg font-bold mb-4"
-                )
+                ui.label(f"{record.partij_code} - {record.product_naam}").classes(HEADER_CLASSES)
 
                 # Show error message if present
                 if record.wijderzet_registratie_fout:
@@ -141,7 +140,7 @@ def spacing_correct(partij_code: str) -> None:
                     ui.label(f"Productgroep: {record.productgroep_naam}")
                     ui.label(f"Oppot datum: {format_date(record.datum_oppotten_real)}")
                     ui.label(f"Planten: {record.aantal_planten_gerealiseerd}")
-                    ui.label(f"Tafels na oppotten (plan): {record.aantal_tafels_oppotten_plan}")
+                    ui.label(f"Tafels na oppotten (plan): {record.aantal_tafels_oppotten_plan:.1f}")
 
                 # Input fields with dates
                 with ui.column().classes("w-full gap-4"):
@@ -178,14 +177,19 @@ def spacing_correct(partij_code: str) -> None:
 
                     def handle_save() -> None:
                         """Handle save button click."""
-                        command = CorrectSpacingRecord(
-                            partij_code=record.partij_code,
-                            aantal_tafels_na_wdz1=wz1.value,
-                            aantal_tafels_na_wdz2=wz2.value,
-                        )
-                        client.send_correction(command)
-                        ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
-                        ui.navigate.to("/spacing")
+                        try:
+                            command = CorrectSpacingRecord(
+                                partij_code=record.partij_code,
+                                aantal_tafels_na_wdz1=wz1.value,
+                                aantal_tafels_na_wdz2=wz2.value,
+                            )
+                            client.send_correction(command)
+                            ui.notify(f"Wijzigingen opgeslagen voor {record.partij_code}")
+                            ui.navigate.to("/spacing")
+                        except ValidationError as e:
+                            # Show first error message
+                            error = e.errors()[0]
+                            ui.notify(error["msg"], type="negative", timeout=5000)
 
                     ui.button(
                         "Opslaan",
