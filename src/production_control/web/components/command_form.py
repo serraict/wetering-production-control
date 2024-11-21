@@ -94,10 +94,7 @@ def create_command_form(
         def handle_save() -> None:
             """Handle save button click."""
             # Update command with edited values
-            updates = {
-                name: editor.value
-                for name, editor in editors.items()
-            }
+            updates = {name: editor.value for name, editor in editors.items()}
             updated_command = command.model_copy(update=updates)
             on_save(updated_command)
 
