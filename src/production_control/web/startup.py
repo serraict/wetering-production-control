@@ -1,12 +1,19 @@
 """Web application startup configuration."""
 
+import logging
 from nicegui import app, ui
 
 from .pages import home, products, spacing
 
 
 def startup() -> None:
-    """Initialize the web application."""
+    """Configure and start the web application."""
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
 
     # Define root page which for some reason cannot be done in the router.
     @ui.page("/")
