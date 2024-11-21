@@ -20,9 +20,9 @@ def format_date(value: date, format_str: str = "YY[w]ww-E") -> str:
         The formatted date string
     """
     if not value:
-        return ""
+        return "--"
 
-    return value.strftime(DATE_FORMAT)  # ISO week number
+    return value.strftime(DATE_FORMAT)
 
 
 def is_date_field(field_type: Any) -> bool:

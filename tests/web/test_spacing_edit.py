@@ -42,8 +42,11 @@ async def test_spacing_correction_page_shows_fields(user: User) -> None:
         # Then
         # Verify page title and record info
         await user.should_see("Wijderzet Correctie")
-        await user.should_see("Partij: TEST123")
-        await user.should_see("Product: Test Plant")
+        await user.should_see("TEST123 - Test Plant")
+        await user.should_see("Productgroep: Test Group")
+        await user.should_see("Oppot datum: 22w52-7")
+        await user.should_see("Planten: 100")
+        await user.should_see("Tafels na oppotten (")
 
         # Verify error message is shown
         await user.should_see("Fout")
@@ -51,9 +54,9 @@ async def test_spacing_correction_page_shows_fields(user: User) -> None:
 
         # Verify input fields and dates exist
         await user.should_see("Tafels na WZ1")
-        await user.should_see("22w52-7")  # 2023-01-01 is week 52 of 2022, day 7
+        await user.should_see("Datum: 22w52-7")
         await user.should_see("Tafels na WZ2")
-        await user.should_see("22w52-7")  # 2023-01-01 is week 52 of 2022, day 7
+        await user.should_see("Datum: 22w52-7")
 
         # Verify buttons exist
         await user.should_see("Opslaan")
