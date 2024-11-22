@@ -31,9 +31,11 @@ class WijderzetRegistratie(SQLModel, table=True):
         description="Naam van het product",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 3}},
     )
-    productgroep_naam: str = Field(
-        title="Productgroep",
-        description="Naam van de productgroep",
+
+    # Plant amounts
+    aantal_planten_gerealiseerd: int = Field(
+        title="Planten",
+        description="Aantal gerealiseerde planten",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 4}},
     )
 
@@ -54,60 +56,57 @@ class WijderzetRegistratie(SQLModel, table=True):
         title="#Nu",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 8}},
     )
-    # Plant amounts
-    aantal_planten_gerealiseerd: int = Field(
-        title="Planten",
-        description="Aantal gerealiseerde planten",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
-    )
 
     # Important dates
     datum_wdz1_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 9}},
     )
     datum_wdz2_real: Optional[date] = Field(
         default=None,
         title="Wijderzet 2",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 10}},
+    )
+    datum_oppotten_real: Optional[date] = Field(
+        default=None,
+        title="Oppotdatum",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 11}},
+    )
+
+    # Hidden fields
+    productgroep_naam: str = Field(
+        title="Productgroep",
+        description="Naam van de productgroep",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 20, "ui_hidden": True}},
     )
     datum_laatste_wdz: Optional[date] = Field(
         default=None,
         title="Laatste wijderzet",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 12, "ui_hidden": True}},
-    )
-
-    # Error tracking (hidden but used for row styling)
-    wijderzet_registratie_fout: Optional[str] = Field(
-        default=None,
-        title="Fout",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 99, "ui_hidden": True}},
-    )
-
-    # Hidden fields
-    datum_oppotten_real: Optional[date] = Field(
-        default=None,
-        title="Oppotdatum",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 40, "ui_hidden": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 21, "ui_hidden": True}},
     )
     datum_uit_cel_real: Optional[date] = Field(
         default=None,
         title="Uit cel",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 41, "ui_hidden": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 22, "ui_hidden": True}},
     )
     dichtheid_oppotten_plan: int = Field(
         title="Dichtheid oppotten",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 82, "ui_hidden": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 23, "ui_hidden": True}},
     )
     dichtheid_wz1_plan: int = Field(
         title="Dichtheid WZ1",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 83, "ui_hidden": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 24, "ui_hidden": True}},
     )
     dichtheid_wz2_plan: Optional[float] = Field(
         default=None,
         title="Dichtheid WZ2",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 84, "ui_hidden": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 25, "ui_hidden": True}},
+    )
+    wijderzet_registratie_fout: Optional[str] = Field(
+        default=None,
+        title="Fout",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 26, "ui_hidden": True}},
     )
 
     # Calculated fields
