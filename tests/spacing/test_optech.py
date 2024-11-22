@@ -39,8 +39,9 @@ def test_command() -> CorrectSpacingRecord:
     )
 
 
-def test_client_requires_base_url() -> None:
+def test_client_requires_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that client requires VINEAPP_OPTECH_API_URL to be set."""
+    monkeypatch.delenv("VINEAPP_OPTECH_API_URL", raising=False)
     with pytest.raises(ValueError, match="VINEAPP_OPTECH_API_URL.*not set"):
         OpTechClient()
 
