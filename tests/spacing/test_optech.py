@@ -45,6 +45,13 @@ def test_client_requires_base_url() -> None:
         OpTechClient()
 
 
+def test_client_validates_url_format(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that client validates URL format."""
+    monkeypatch.setenv("VINEAPP_OPTECH_API_URL", "invalid-url")
+    with pytest.raises(ValueError, match="Invalid VINEAPP_OPTECH_API_URL"):
+        OpTechClient()
+
+
 def test_send_correction_success(
     mock_env: None,
     test_command: CorrectSpacingRecord,
@@ -121,5 +128,10 @@ def test_send_correction_connection_error(
 
     with patch("httpx.Client", return_value=mock_client_class.return_value):
         client = OpTechClient()
-        with pytest.raises(OpTechConnectionError, match="Failed to connect.*Connection failed"):
+        with pytest.raises(OpTechConnectionError) as exc_info:
             client.send_correction(test_command)
+
+        assert "Failed to connect to OpTech API" in str(exc_info.value)
+        assert "Connection failed" in str(exc_info.value)
+        assert "Please verify the VINEAPP_OPTECH_API_URL configuration" in str(exc_info.value)
+        assert "http://optech.test/api/partij/TEST123/wijderzet" in str(exc_info.value)

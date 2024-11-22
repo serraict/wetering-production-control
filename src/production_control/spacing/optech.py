@@ -2,6 +2,7 @@
 
 import logging
 import os
+from urllib.parse import urlparse
 
 import httpx
 from pydantic import BaseModel
@@ -20,7 +21,12 @@ class OpTechError(Exception):
 class OpTechConnectionError(OpTechError):
     """Raised when connection to OpTech API fails."""
 
-    pass
+    def __init__(self, message: str, url: str):
+        self.url = url
+        super().__init__(
+            f"Failed to connect to OpTech API at {url}. "
+            f"Please verify the VINEAPP_OPTECH_API_URL configuration. Error: {message}"
+        )
 
 
 class OpTechResponseError(OpTechError):
@@ -47,10 +53,19 @@ class OpTechClient:
 
         Raises:
             ValueError: If VINEAPP_OPTECH_API_URL environment variable is not set
+                      or if the URL is malformed
         """
         self.base_url = os.getenv("VINEAPP_OPTECH_API_URL")
         if not self.base_url:
             raise ValueError("VINEAPP_OPTECH_API_URL environment variable not set")
+
+        # Validate URL format
+        try:
+            parsed = urlparse(self.base_url)
+            if not all([parsed.scheme, parsed.netloc]):
+                raise ValueError("Invalid URL format")
+        except Exception as e:
+            raise ValueError(f"Invalid VINEAPP_OPTECH_API_URL: {str(e)}")
 
     def send_correction(self, command: CorrectSpacingRecord) -> CorrectionResponse:
         """Send a correction command to the OpTech API.
@@ -95,4 +110,4 @@ class OpTechClient:
                 )
 
         except httpx.RequestError as e:
-            raise OpTechConnectionError(f"Failed to connect to OpTech API: {str(e)}")
+            raise OpTechConnectionError(str(e), url)
