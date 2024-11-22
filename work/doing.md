@@ -83,10 +83,10 @@ Implementation steps:
      - ✓ Show error messages in UI
      - ✓ Increase timeout to 25 seconds
      - ✓ Refresh table data on success
-   - add field to spacing record, `datum_laatste_wdz`
-     - only show records where this field <> null
-     - map to the db field of the same name
-     - order descending on this field
+   - ✓ add field to spacing record, `datum_laatste_wdz`
+     - ✓ only show records where this field <> null
+     - ✓ map to the db field of the same name
+     - ✓ order descending on this field
    - Review validation and error handling
    - Integrate into the CLI applications.
      Retrieve specific errors and for each record with that error, issue a correcting command.
