@@ -13,10 +13,16 @@ from production_control.spacing.commands import CorrectSpacingRecord
 
 async def test_spacing_correction_page_shows_fields(user: User) -> None:
     """Test that correction page shows correct fields and values."""
-    with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
+    with (
+        patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class,
+        patch("production_control.web.pages.spacing.OpTechClient") as mock_client_class,
+    ):
         # Given
         mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+
         test_date = date(2023, 1, 1)  # This is week 52 of 2022, day 7 (Sunday)
         test_record = WijderzetRegistratie(
             partij_code="TEST123",
