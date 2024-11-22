@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from ...spacing.models import SpacingRepository, WijderzetRegistratie
 from ...spacing.commands import CorrectSpacingRecord
-from ...spacing.optech import OpTechClient
+from ...spacing.optech import OpTechClient, OpTechError
 from ..components import frame
 from ..components.model_card import display_model_card
 from ..components.message import show_error
@@ -56,6 +56,8 @@ def create_correction_form(record: WijderzetRegistratie, on_close: Callable[[], 
             # Show first error message
             error = e.errors()[0]
             ui.notify(error["msg"], type="negative", timeout=5000)
+        except OpTechError as e:
+            ui.notify(str(e), type="negative", timeout=5000)
 
     create_command_form(command, handle_save, on_close)
 

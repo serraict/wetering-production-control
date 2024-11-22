@@ -9,6 +9,7 @@ from nicegui.testing import User
 
 from production_control.spacing.models import WijderzetRegistratie
 from production_control.spacing.commands import CorrectSpacingRecord
+from production_control.spacing.optech import OpTechConnectionError
 
 
 async def test_spacing_correction_page_shows_fields(user: User) -> None:
@@ -115,3 +116,48 @@ async def test_spacing_correction_page_saves_changes(user: User) -> None:
         assert command.partij_code == "TEST123"
         assert command.aantal_tafels_na_wdz1 == 15
         assert command.aantal_tafels_na_wdz2 == 20
+
+
+async def test_spacing_correction_page_shows_connection_error(user: User) -> None:
+    """Test that correction page shows connection errors."""
+    with (
+        patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class,
+        patch("production_control.web.pages.spacing.OpTechClient") as mock_client_class,
+    ):
+        # Given
+        mock_repo = MagicMock()
+        mock_repo_class.return_value = mock_repo
+        mock_client = MagicMock()
+        mock_client.send_correction.side_effect = OpTechConnectionError(
+            "Request timed out", "http://optech.test/api/partij/TEST123/wijderzet"
+        )
+        mock_client_class.return_value = mock_client
+
+        test_record = WijderzetRegistratie(
+            partij_code="TEST123",
+            product_naam="Test Plant",
+            productgroep_naam="Test Group",
+            aantal_tafels_totaal=10,
+            aantal_tafels_na_wdz1=15,
+            aantal_tafels_na_wdz2=20,
+            aantal_tafels_oppotten_plan=Decimal("10.0"),
+            aantal_planten_gerealiseerd=100,
+            datum_wdz1_real=date(2023, 1, 1),
+            datum_wdz2_real=date(2023, 1, 1),
+            datum_oppotten_real=date(2023, 1, 1),
+            datum_uit_cel_real=date(2023, 1, 1),
+            dichtheid_oppotten_plan=100,
+            dichtheid_wz1_plan=50,
+            dichtheid_wz2_plan=25.0,
+            wijderzet_registratie_fout=None,
+        )
+        mock_repo.get_by_id.return_value = test_record
+
+        # When
+        await user.open("/spacing/correct/TEST123")
+        save_button = user.find(kind=ui.button, content="Opslaan")
+        save_button.click()
+
+        # Then
+        await user.should_see("Failed to connect to OpTech API")
+        await user.should_see("Request timed out")
