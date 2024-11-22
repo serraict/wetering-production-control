@@ -1,6 +1,7 @@
 """Utilities for working with tables."""
 
 from datetime import date
+from decimal import Decimal
 from typing import Dict, List, Any, Type, get_args, get_origin
 from sqlmodel import SQLModel
 from pydantic_core._pydantic_core import PydanticUndefinedType
@@ -35,6 +36,20 @@ def is_date_field(field_type: Any) -> bool:
     if origin is not None and origin.__name__ == "Union":
         args = get_args(field_type)
         return date in args
+
+    return False
+
+
+def is_decimal_field(field_type: Any) -> bool:
+    """Check if a field type is a Decimal or Optional[Decimal]."""
+    if field_type == Decimal:
+        return True
+
+    # Handle Optional[Decimal]
+    origin = get_origin(field_type)
+    if origin is not None and origin.__name__ == "Union":
+        args = get_args(field_type)
+        return Decimal in args
 
     return False
 
@@ -85,6 +100,11 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
             column[":format"] = (
                 f"value => value ? Quasar.date.formatDate(value, '{format_str}') : ''"
             )
+
+        # Add formatter for decimal fields
+        if is_decimal_field(field.annotation):
+            decimals = field_info.get("decimals", 1)  # Default to 1 decimal place
+            column[":format"] = f"value => Number(value).toFixed({decimals})"
 
         columns.append(column)
 

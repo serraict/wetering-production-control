@@ -1,6 +1,7 @@
 """Tests for table utilities."""
 
 from datetime import date
+from decimal import Decimal
 from sqlmodel import SQLModel, Field
 
 from production_control.web.components.table_utils import get_table_columns, format_row
@@ -199,3 +200,34 @@ def test_get_table_columns_formats_dates():
     assert (
         custom_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YYYY-MM-DD') : ''"
     )
+
+
+def test_get_table_columns_formats_decimals():
+    """Test that get_table_columns adds decimal formatting."""
+
+    # Given
+    class ModelWithDecimals(SQLModel):
+        id: int = Field()
+        default_decimal: Decimal = Field(
+            title="Default Format",
+            sa_column_kwargs={"info": {"ui_order": 1}},
+        )
+        custom_decimal: Decimal = Field(
+            title="Custom Format",
+            sa_column_kwargs={
+                "info": {
+                    "ui_order": 2,
+                    "decimals": 2,
+                }
+            },
+        )
+
+    # When
+    columns = get_table_columns(ModelWithDecimals)
+
+    # Then
+    default_col = next(col for col in columns if col["name"] == "default_decimal")
+    custom_col = next(col for col in columns if col["name"] == "custom_decimal")
+
+    assert default_col[":format"] == "value => Number(value).toFixed(1)"  # Default 1 decimal
+    assert custom_col[":format"] == "value => Number(value).toFixed(2)"  # Custom 2 decimals

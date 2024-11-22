@@ -76,16 +76,19 @@ Implementation steps:
      2. ✓ Create OpTechClient class in spacing/optech.py:
         - ✓ Handles CorrectSpacingRecord command.
         - ✓ Method to send correction: `send_correction(partij_code: str, aantal_wz1: Optional[int], aantal_wz2: Optional[int])`
-   - Integrate with OpTech API to send corrections to Technison
-     - See docs at: http://optech.localhost/docs#/Partij/update_wijderzet_api_partij__partij_code__wijderzet_put
-     - Base url for api should be set as env var.
-     - Handle API errors and return success/failure status
-     - Refresh table data on success
-   - Filter the list to show only record where wdz datum 1 or w is within the date filter range
-     - Use a from and to datetime picker for this
-     - Default values for filter: from now - 2 weeks to now
+   - ✓ Integrate with OpTech API to send corrections to Technison
+     - ✓ See docs at: http://optech.localhost/docs#/Partij/update_wijderzet_api_partij__partij_code__wijderzet_put
+     - ✓ Base url for api should be set as env var.
+     - ✓ Handle API errors and return success/failure status
+     - ✓ Show error messages in UI
+     - ✓ Increase timeout to 25 seconds
+     - ✓ Refresh table data on success
+   - add field to spacing record, `datum_laatste_wdz`
+     - only show records where this field <> null
+     - map to the db field of the same name
+     - order descending on this field
    - Review validation and error handling
-   - Integrate into the CLI applications. 
+   - Integrate into the CLI applications.
      Retrieve specific errors and for each record with that error, issue a correcting command.
      Reuse optech client logic
 
@@ -165,5 +168,3 @@ graph TD
    - Test save functionality
    - Test validation feedback
    - Test error handling
-
-Would you like me to proceed with implementing this design?
