@@ -71,19 +71,23 @@ Implementation steps:
    - ✓ Create editor interface for spacing records
      - ✓ Fields that are editable are `aantal wz1` and `aantal wz2`.
      - ✓ If those fields are changed, a message needs to be sent to the optech application to register the correction.
-   - Filter the list to show only record where wdz datum 1 or w is within the date filter range
-     - Use a from and to datetime picker for this
-     - Default values for filter: from now - 2 weeks to now
    - Design save functionality:
      1. ✓ Create a CorrectSpacingRecord command as a Pydantic model.
      2. ✓ Create OpTechClient class in spacing/optech.py:
         - ✓ Handles CorrectSpacingRecord command.
-        - Method to send correction: `send_correction(partij_code: str, aantal_wz1: Optional[int], aantal_wz2: Optional[int])`
-        - Handle API errors and return success/failure status
-        - Refresh table data on success
+        - ✓ Method to send correction: `send_correction(partij_code: str, aantal_wz1: Optional[int], aantal_wz2: Optional[int])`
    - Integrate with OpTech API to send corrections to Technison
-   - Implement validation and error handling
-   - Integrate into the CLI applications. Retrieve specific errors and for each record with that error, issue a correcting command.
+     - See docs at: http://optech.localhost/docs#/Partij/update_wijderzet_api_partij__partij_code__wijderzet_put
+     - Base url for api should be set as env var.
+     - Handle API errors and return success/failure status
+     - Refresh table data on success
+   - Filter the list to show only record where wdz datum 1 or w is within the date filter range
+     - Use a from and to datetime picker for this
+     - Default values for filter: from now - 2 weeks to now
+   - Review validation and error handling
+   - Integrate into the CLI applications. 
+     Retrieve specific errors and for each record with that error, issue a correcting command.
+     Reuse optech client logic
 
 ## Design
 

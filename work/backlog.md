@@ -44,20 +44,6 @@ graph TD
   - Critical for accurate cost determination per lot
   - Impacts greenhouse space utilization tracking
 
-  Implementation steps:
-
-  1. Create example script to:
-     - Connect to local test environment
-     - Retrieve first 100 rows from `Productie.Controle."registratie_controle"` view
-     - Define SQLModel based on the retrieved dataset
-  1. Integrate SQLModel into web application:
-     - Add model to application structure
-     - Create list view of spacing records
-  1. Implement correction functionality:
-     - Create editor interface for spacing records
-     - Integrate with OpTech API to send corrections to Technison
-     - Implement validation and error handling
-
 ## Later
 
 - Goal: User can see greenhouse utilization
@@ -89,5 +75,6 @@ graph TD
 
 - Goal: Wrap up project
 
+  - Improve error message whn not connected to Dremio.
   - Review the project
   - Review the cookiecutter-vine-app template that we used to start this repository with.
