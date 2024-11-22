@@ -77,7 +77,7 @@ class OpTechClient:
             CorrectionResponse with success status and message
 
         Raises:
-            OpTechConnectionError: If connection to API fails
+            OpTechConnectionError: If connection to API fails or times out
             OpTechResponseError: If API returns an error response
         """
         logger.info(
@@ -95,7 +95,7 @@ class OpTechClient:
 
         try:
             with httpx.Client() as client:
-                response = client.put(url, json=payload)
+                response = client.put(url, json=payload, timeout=25.0)
 
                 if response.status_code != 200:
                     try:
@@ -109,5 +109,5 @@ class OpTechClient:
                     message=f"Successfully updated spacing data for partij {command.partij_code}",
                 )
 
-        except httpx.RequestError as e:
+        except (httpx.RequestError, httpx.ReadTimeout) as e:
             raise OpTechConnectionError(str(e), url)

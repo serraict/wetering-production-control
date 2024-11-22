@@ -85,6 +85,7 @@ def test_send_correction_success(
                 "aantal_wijderzet_1": test_command.aantal_tafels_na_wdz1,
                 "aantal_wijderzet_2": test_command.aantal_tafels_na_wdz2,
             },
+            timeout=25.0,
         )
 
 
@@ -133,5 +134,28 @@ def test_send_correction_connection_error(
 
         assert "Failed to connect to OpTech API" in str(exc_info.value)
         assert "Connection failed" in str(exc_info.value)
+        assert "Please verify the VINEAPP_OPTECH_API_URL configuration" in str(exc_info.value)
+        assert "http://optech.test/api/partij/TEST123/wijderzet" in str(exc_info.value)
+
+
+def test_send_correction_timeout(
+    mock_env: None,
+    test_command: CorrectSpacingRecord,
+) -> None:
+    """Test handling of timeout errors."""
+    mock_http_client = MagicMock()
+    mock_http_client.put.side_effect = httpx.ReadTimeout("Request timed out")
+
+    mock_client_class = MagicMock()
+    mock_client_class.return_value.__enter__.return_value = mock_http_client
+    mock_client_class.return_value.__exit__.return_value = None
+
+    with patch("httpx.Client", return_value=mock_client_class.return_value):
+        client = OpTechClient()
+        with pytest.raises(OpTechConnectionError) as exc_info:
+            client.send_correction(test_command)
+
+        assert "Failed to connect to OpTech API" in str(exc_info.value)
+        assert "Request timed out" in str(exc_info.value)
         assert "Please verify the VINEAPP_OPTECH_API_URL configuration" in str(exc_info.value)
         assert "http://optech.test/api/partij/TEST123/wijderzet" in str(exc_info.value)
