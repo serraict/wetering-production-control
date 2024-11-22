@@ -89,8 +89,8 @@ class OpTechClient:
 
         url = f"{self.base_url}/api/partij/{command.partij_code}/wijderzet"
         payload = {
-            "aantal_wz1": command.aantal_tafels_na_wdz1,
-            "aantal_wz2": command.aantal_tafels_na_wdz2,
+            "aantal_wijderzet_1": command.aantal_tafels_na_wdz1,
+            "aantal_wijderzet_2": command.aantal_tafels_na_wdz2,
         }
 
         try:

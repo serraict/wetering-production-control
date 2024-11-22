@@ -78,12 +78,12 @@ def test_send_correction_success(
         assert "Successfully updated" in result.message
         assert test_command.partij_code in result.message
 
-        # Verify API call
+        # Verify API call uses the correct field names
         mock_http_client.put.assert_called_once_with(
             "http://optech.test/api/partij/TEST123/wijderzet",
             json={
-                "aantal_wz1": test_command.aantal_tafels_na_wdz1,
-                "aantal_wz2": test_command.aantal_tafels_na_wdz2,
+                "aantal_wijderzet_1": test_command.aantal_tafels_na_wdz1,
+                "aantal_wijderzet_2": test_command.aantal_tafels_na_wdz2,
             },
         )
 
