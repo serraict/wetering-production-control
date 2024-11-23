@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Enhanced CLI functionality for spacing corrections:
+  - Added `correct-spacing` command with dry-run support
+  - Added validation for table counts and wdz1/wdz2 relationship
+  - Added comprehensive error handling and user feedback
+  - Added logging configuration for CLI operations
+
+### Changed
+
+- Enhanced SpacingRepository:
+  - Added `get_by_partij_code` method while maintaining backward compatibility
+  - Improved error handling for record lookups
+
 ## [0.1.4] - 2024-11-22
 
 ### Added
