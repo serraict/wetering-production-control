@@ -1,7 +1,7 @@
 """Example script to demonstrate retrieving spacing data from Dremio."""
 
 import os
-from production_control.spacing.repository import SpacingRepository
+from production_control.spacing.repositories import SpacingRepository
 
 
 def main():

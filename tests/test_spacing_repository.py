@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 from sqlmodel import create_engine, Session
 
-from production_control.spacing.repository import SpacingRepository
+from production_control.spacing.repositories import SpacingRepository
 from production_control.spacing.models import WijderzetRegistratie
 
 
@@ -68,7 +68,7 @@ def repository(mock_engine):
     return SpacingRepository(mock_engine)
 
 
-@patch("production_control.spacing.repository.Session")
+@patch("production_control.spacing.repositories.Session")
 def test_get_error_records(mock_session_class, repository, mock_records):
     """Verify get_error_records returns only records with errors."""
     # Setup mock

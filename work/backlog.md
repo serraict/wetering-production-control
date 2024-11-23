@@ -46,6 +46,11 @@ graph TD
 
 ## Later
 
+- Goal: Technical excellence
+
+  - How to do dependency injection properly (e.g. to avoid patch difficulties in the test)
+  - Read how fastapi does this.
+
 - Goal: User can see greenhouse utilization
 
   - Leverage spacing data to calculate actual space usage

@@ -6,7 +6,7 @@ from rich.table import Table
 from typing import Optional
 from . import __version__
 from .products.models import ProductRepository
-from .spacing.repository import SpacingRepository
+from .spacing.repositories import SpacingRepository
 
 app = typer.Typer()
 console = Console()

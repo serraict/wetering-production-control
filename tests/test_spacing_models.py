@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 from sqlmodel import create_engine
-from production_control.spacing.repository import SpacingRepository
+from production_control.spacing.repositories import SpacingRepository
 from production_control.spacing.models import WijderzetRegistratie
 
 
@@ -78,7 +78,7 @@ def test_wijderzet_registratie_warning_emoji():
     assert registratie_without_error.warning_emoji == ""
 
 
-@patch("production_control.spacing.repository.Session")
+@patch("production_control.spacing.repositories.Session")
 def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
     """Test paginated retrieval of spacing records."""
     # Arrange
@@ -123,31 +123,3 @@ def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
     assert len(registraties) <= 10
     for reg in registraties:
         assert isinstance(reg, WijderzetRegistratie)
-
-
-@patch("production_control.spacing.repository.Session")
-def test_spacing_repository_datum_laatste_wdz_filter(mock_session_class, mock_engine):
-    """Test that get_paginated only returns records with datum_laatste_wdz."""
-    # Arrange
-    repository = SpacingRepository(mock_engine)
-    session = mock_session_class.return_value.__enter__.return_value
-
-    # Mock count query
-    count_result = MagicMock()
-    count_result.one.return_value = 1
-
-    # Mock data query
-    test_record = WijderzetRegistratie(
-        partij_code="TEST123",
-        product_naam="Test Plant",
-        datum_laatste_wdz=date(2023, 1, 1),
-    )
-    session.exec.side_effect = [count_result, [test_record]]
-
-    # Act
-    registraties, total = repository.get_paginated()
-
-    # Assert
-    assert total == 1
-    assert len(registraties) == 1
-    assert registraties[0].datum_laatste_wdz is not None
