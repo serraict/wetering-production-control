@@ -61,7 +61,8 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
     - title: Used as column label
     - sa_column_kwargs.info.ui_hidden: Skip field if True
     - sa_column_kwargs.info.ui_sortable: Make column sortable if True
-    - sa_column_kwargs.info.ui_order: Order columns by this value
+
+    The columns will appear in the order they are defined in the model class.
 
     Args:
         model_class: The SQLModel class to generate columns for
@@ -71,7 +72,7 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
     """
     columns = []
 
-    # Get all model fields
+    # Get all model fields - Python 3.7+ dicts maintain insertion order
     for field_name, field in model_class.model_fields.items():
         # Get UI metadata from SQLAlchemy column info
         sa_kwargs = getattr(field, "sa_column_kwargs", None)
@@ -107,16 +108,6 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
             column[":format"] = f"value => Number(value).toFixed({decimals})"
 
         columns.append(column)
-
-    # Sort columns by ui_order if specified
-    def get_order(col_name: str) -> int:
-        field = model_class.model_fields[col_name]
-        sa_kwargs = getattr(field, "sa_column_kwargs", None)
-        if isinstance(sa_kwargs, (PydanticUndefinedType, type(None))):
-            return 999
-        return sa_kwargs.get("info", {}).get("ui_order", 999)
-
-    columns.sort(key=lambda col: get_order(col["name"]))
 
     # Add warning emoji column first if model has warning_emoji property
     if hasattr(model_class, "warning_emoji"):
