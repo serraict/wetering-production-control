@@ -39,7 +39,7 @@ class Product(SQLModel, table=True):
     name: str = Field(
         title="Naam",
         description="Naam van het product",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 1}},
+        sa_column_kwargs={"info": {"ui_sortable": True}},
     )
     product_group_id: int = Field(
         title="Productgroep ID",
@@ -48,7 +48,7 @@ class Product(SQLModel, table=True):
     product_group_name: str = Field(
         title="Productgroep",
         description="Naam van de productgroep",
-        sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 2}},
+        sa_column_kwargs={"info": {"ui_sortable": True}},
     )
 
 
