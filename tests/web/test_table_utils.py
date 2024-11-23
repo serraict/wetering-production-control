@@ -21,19 +21,19 @@ def test_get_table_columns_generates_columns_from_model():
         name: str = Field(
             title="Naam",
             description="Test name",
-            sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 1}},
+            sa_column_kwargs={"info": {"ui_sortable": True}},
         )
         group: str = Field(
             title="Groep",
             description="Test group",
-            sa_column_kwargs={"info": {"ui_sortable": True, "ui_order": 2}},
+            sa_column_kwargs={"info": {"ui_sortable": True}},
         )
-        notes: str = Field(title="Notities")  # No ui_sortable or ui_order
+        notes: str = Field(title="Notities")  # No ui_sortable
 
     # When
     columns = get_table_columns(TestModel)
 
-    # Then
+    # Then - columns should appear in order of field definition
     assert columns == [
         {
             "name": "name",
@@ -71,7 +71,7 @@ def test_get_table_columns_handles_missing_metadata():
     # When
     columns = get_table_columns(SimpleModel)
 
-    # Then
+    # Then - columns should appear in order of field definition
     assert columns == [
         {
             "name": "id",
@@ -175,13 +175,11 @@ def test_get_table_columns_formats_dates():
         id: int = Field()
         default_date: date = Field(
             title="Default Format",
-            sa_column_kwargs={"info": {"ui_order": 1}},
         )
         custom_date: date = Field(
             title="Custom Format",
             sa_column_kwargs={
                 "info": {
-                    "ui_order": 2,
                     "format": "YYYY-MM-DD",
                 }
             },
@@ -210,13 +208,11 @@ def test_get_table_columns_formats_decimals():
         id: int = Field()
         default_decimal: Decimal = Field(
             title="Default Format",
-            sa_column_kwargs={"info": {"ui_order": 1}},
         )
         custom_decimal: Decimal = Field(
             title="Custom Format",
             sa_column_kwargs={
                 "info": {
-                    "ui_order": 2,
                     "decimals": 2,
                 }
             },
