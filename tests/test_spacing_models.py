@@ -6,7 +6,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 from sqlmodel import create_engine
-from production_control.spacing.models import WijderzetRegistratie, SpacingRepository
+from production_control.spacing.repository import SpacingRepository
+from production_control.spacing.models import WijderzetRegistratie
 
 
 @pytest.fixture
@@ -77,7 +78,7 @@ def test_wijderzet_registratie_warning_emoji():
     assert registratie_without_error.warning_emoji == ""
 
 
-@patch("production_control.spacing.models.Session")
+@patch("production_control.spacing.repository.Session")
 def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
     """Test paginated retrieval of spacing records."""
     # Arrange
@@ -124,7 +125,7 @@ def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
         assert isinstance(reg, WijderzetRegistratie)
 
 
-@patch("production_control.spacing.models.Session")
+@patch("production_control.spacing.repository.Session")
 def test_spacing_repository_datum_laatste_wdz_filter(mock_session_class, mock_engine):
     """Test that get_paginated only returns records with datum_laatste_wdz."""
     # Arrange

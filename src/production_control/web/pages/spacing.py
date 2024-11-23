@@ -6,7 +6,9 @@ from typing import Dict, Any, Callable
 from nicegui import APIRouter, ui
 from pydantic import ValidationError
 
-from ...spacing.models import SpacingRepository, WijderzetRegistratie
+from ...spacing.repository import SpacingRepository
+
+from ...spacing.models import WijderzetRegistratie
 from ...spacing.commands import CorrectSpacingRecord
 from ...spacing.optech import OpTechClient, OpTechError
 from ..components import frame
