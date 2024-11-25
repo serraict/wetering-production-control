@@ -50,6 +50,16 @@ graph TD
 
   - How to do dependency injection properly (e.g. to avoid patch difficulties in the test)
   - Read how fastapi does this.
+  - Document appropriate project structure.
+  - How to do validation. E.g. load invalid objects and display validation errors on screen.
+    Leverage Pydantic as much as possible here
+
+- Goal: Improve test coverage
+
+  - Increase coverage of web interface components
+  - Add tests for __web__.py (currently 0% coverage)
+  - Improve home page test coverage (currently 36%)
+  - Focus on critical user paths and error scenarios
 
 - Goal: User can see greenhouse utilization
 
@@ -63,13 +73,6 @@ graph TD
 - Goal: User can track potting process segment
 
   - Integration with spacing tracking for complete process view
-
-- Goal: Improve test coverage
-
-  - Increase coverage of web interface components
-  - Add tests for __web__.py (currently 0% coverage)
-  - Improve home page test coverage (currently 36%)
-  - Focus on critical user paths and error scenarios
 
 - Goal: Improve products list view
 
