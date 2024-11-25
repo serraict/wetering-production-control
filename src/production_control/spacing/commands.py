@@ -109,7 +109,7 @@ class FixMissingWdz2DateCommand(BaseModel):
         return CorrectSpacingRecord(
             partij_code=self.partij_code,
             aantal_tafels_na_wdz1=self.aantal_tafels_na_wdz2,  # Move WDZ2 count to WDZ1
-            aantal_tafels_na_wdz2=None,  # Clear WDZ2 count
+            aantal_tafels_na_wdz2=0,  # Set WDZ2 count to 0 for API compatibility
             # Required fields for CorrectSpacingRecord
             product_naam="",  # Not needed for correction
             productgroep_naam="",  # Not needed for correction
