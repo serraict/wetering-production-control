@@ -1,7 +1,7 @@
 """Spacing data models."""
 
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
 from pydantic import computed_field
@@ -111,6 +111,12 @@ class WijderzetRegistratie(SQLModel, table=True):
     def warning_emoji(self) -> str:
         """Return a warning emoji if there's an error, empty string otherwise."""
         return "⚠️" if self.wijderzet_registratie_fout else ""
+
+    @computed_field(return_type=int)
+    @property
+    def rounded_aantal_tafels_oppotten_plan(self) -> int:
+        """Return the rounded number of tables from the plan."""
+        return int(self.aantal_tafels_oppotten_plan.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
 
     def __str__(self) -> str:
         """Format record as string with batch code and potting date."""

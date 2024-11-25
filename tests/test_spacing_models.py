@@ -123,3 +123,28 @@ def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
     assert len(registraties) <= 10
     for reg in registraties:
         assert isinstance(reg, WijderzetRegistratie)
+
+
+@pytest.mark.parametrize(
+    "plan_value,expected_rounded",
+    [
+        (Decimal("10.0"), 10),  # Whole number
+        (Decimal("10.2"), 10),  # Round down
+        (Decimal("10.5"), 11),  # Round half up
+        (Decimal("10.7"), 11),  # Round up
+        (Decimal("0.4"), 0),    # Small number round down
+        (Decimal("0.5"), 1),    # Small number round half up
+        (Decimal("0.6"), 1),    # Small number round up
+    ],
+)
+def test_rounded_aantal_tafels_oppotten_plan(plan_value: Decimal, expected_rounded: int):
+    """Test rounding of aantal_tafels_oppotten_plan."""
+    record = WijderzetRegistratie(
+        partij_code="TEST-001",
+        product_naam="Test Product",
+        productgroep_naam="Test Group",
+        aantal_planten_gerealiseerd=100,
+        aantal_tafels_totaal=10,
+        aantal_tafels_oppotten_plan=plan_value,
+    )
+    assert record.rounded_aantal_tafels_oppotten_plan == expected_rounded
