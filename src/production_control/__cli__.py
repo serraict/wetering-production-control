@@ -1,6 +1,7 @@
 """Command line interface for Production Control."""
 
 import logging
+from pathlib import Path
 import typer
 from rich.console import Console
 from rich.logging import RichHandler
@@ -9,7 +10,7 @@ from typing import Optional
 from . import __version__
 from .products.models import ProductRepository
 from .spacing.repositories import SpacingRepository
-from .spacing.commands import CorrectSpacingRecord
+from .spacing.commands import CorrectSpacingRecord, FixMissingWdz2DateCommand
 from .spacing.optech import OpTechClient, OpTechError
 
 # Configure logging
@@ -184,6 +185,105 @@ def correct_spacing(
             logger.error(msg)
             typer.echo(msg, err=True)
             raise typer.Exit(code=1)
+
+
+@app.command(name="fix-spacing-errors")
+def fix_spacing_errors(
+    error_type: str = typer.Option(..., "--error", "-e", help="Error type to fix"),
+    log_file: Optional[Path] = typer.Option(None, "--log", "-l", help="Path to log file for manual review cases"),
+    dry_run: bool = typer.Option(True, "--dry-run/--no-dry-run", help="Preview changes without applying them"),
+):
+    """Fix spacing errors of a specific type."""
+    logger.info(f"Retrieving spacing records with error type: {error_type}")
+    repository = SpacingRepository()
+    error_records = [
+        r for r in repository.get_error_records()
+        if error_type.lower() in r.wijderzet_registratie_fout.lower()
+    ]
+
+    if not error_records:
+        msg = f"No records found with error matching: {error_type}"
+        logger.info(msg)
+        typer.echo(msg)
+        return
+
+    logger.info(f"Found {len(error_records)} records to process")
+
+    # Set up manual review logging if needed
+    manual_review_logger = None
+    if log_file:
+        manual_review_logger = logging.getLogger("manual_review")
+        handler = logging.FileHandler(log_file)
+        handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
+        manual_review_logger.addHandler(handler)
+        manual_review_logger.setLevel(logging.INFO)
+
+    # Process records
+    fixed = 0
+    manual_review = 0
+    client = OpTechClient()
+
+    for record in error_records:
+        # Handle missing WDZ2 date errors
+        if "Geen wdz2 datum maar wel tafel aantal na wdz 2" in record.wijderzet_registratie_fout:
+            fix_command = FixMissingWdz2DateCommand.from_record(record)
+            if fix_command.can_fix_automatically():
+                correction = fix_command.get_correction()
+                if correction:
+                    preview = (
+                        f"{'[DRY RUN] ' if dry_run else ''}"
+                        f"Fixing partij {record.partij_code} ({record.product_naam}): "
+                        f"Move WDZ2 count ({record.aantal_tafels_na_wdz2}) to WDZ1, clear WDZ2"
+                    )
+                    logger.info(preview)
+                    typer.echo(preview)
+
+                    if not dry_run:
+                        try:
+                            result = client.send_correction(correction)
+                            typer.echo(result.message)
+                            fixed += 1
+                        except OpTechError as e:
+                            msg = f"Failed to update partij {record.partij_code}: {str(e)}"
+                            logger.error(msg)
+                            typer.echo(msg, err=True)
+                            if manual_review_logger:
+                                manual_review_logger.error(msg)
+                            manual_review += 1
+                    else:
+                        fixed += 1
+            else:
+                msg = (
+                    f"Partij {record.partij_code} ({record.product_naam}) needs manual review: "
+                    f"WDZ1 count ({record.aantal_tafels_na_wdz1}) doesn't match "
+                    f"rounded plan ({record.rounded_aantal_tafels_oppotten_plan})"
+                )
+                logger.info(msg)
+                if manual_review_logger:
+                    manual_review_logger.info(msg)
+                manual_review += 1
+        else:
+            # Log other error types for manual review
+            msg = (
+                f"Partij {record.partij_code} ({record.product_naam}) needs manual review: "
+                f"{record.wijderzet_registratie_fout}"
+            )
+            logger.info(msg)
+            if manual_review_logger:
+                manual_review_logger.info(msg)
+            manual_review += 1
+
+    # Summary
+    summary = (
+        f"\nProcessed {len(error_records)} records:\n"
+        f"- {'Would fix' if dry_run else 'Fixed'}: {fixed}\n"
+        f"- Manual review needed: {manual_review}"
+    )
+    if log_file and manual_review > 0:
+        summary += f"\nRecords needing manual review have been logged to: {log_file}"
+
+    logger.info(summary)
+    typer.echo(summary)
 
 
 def cli():
