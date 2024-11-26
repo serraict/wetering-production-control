@@ -6,6 +6,7 @@ from typing import Generator
 
 import pytest
 from typer.testing import CliRunner
+from unittest.mock import patch, MagicMock
 
 from production_control.__cli__ import app
 
@@ -44,11 +45,16 @@ def test_cli_logs_operations(cli_runner, captured_logs):
 
 def test_cli_logs_errors(cli_runner, captured_logs):
     """Test that CLI errors are properly logged."""
-    # Run a command that should generate an error
-    result = cli_runner.invoke(app, ["spacing-errors", "--error", "nonexistent"])
-    assert result.exit_code == 0
+    # Mock the SpacingRepository to return empty results
+    mock_repo = MagicMock()
+    mock_repo.get_error_records.return_value = []
 
-    # Verify error is logged
-    logs = captured_logs.getvalue()
-    assert "No records found" in logs
-    assert "nonexistent" in logs
+    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
+        # Run a command that should generate an error
+        result = cli_runner.invoke(app, ["spacing-errors", "--error", "nonexistent"])
+        assert result.exit_code == 0
+
+        # Verify error is logged
+        logs = captured_logs.getvalue()
+        assert "No records found" in logs
+        assert "nonexistent" in logs
