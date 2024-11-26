@@ -84,7 +84,7 @@ class SpacingRepository(DremioRepository[WijderzetRegistratie]):
 
     def get_by_partij_code(self, partij_code: str) -> Optional[WijderzetRegistratie]:
         """Get a spacing record by its partij_code.
-        
+
         This is an alias for get_by_id, since partij_code is our primary identifier.
         """
         return self.get_by_id(partij_code)

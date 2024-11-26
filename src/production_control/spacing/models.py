@@ -116,7 +116,7 @@ class WijderzetRegistratie(SQLModel, table=True):
     @property
     def rounded_aantal_tafels_oppotten_plan(self) -> int:
         """Return the rounded number of tables from the plan."""
-        return int(self.aantal_tafels_oppotten_plan.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+        return int(self.aantal_tafels_oppotten_plan.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
     def __str__(self) -> str:
         """Format record as string with batch code and potting date."""

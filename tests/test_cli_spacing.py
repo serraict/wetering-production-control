@@ -54,7 +54,7 @@ def test_correct_spacing_dry_run(cli_runner, mock_record):
 
     with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
         result = cli_runner.invoke(app, ["correct-spacing", "TEST-001", "--wdz1", "25"])
-        
+
         assert result.exit_code == 0
         assert "[DRY RUN]" in result.stdout
         assert "TEST-001" in result.stdout
@@ -70,7 +70,7 @@ def test_correct_spacing_invalid_partij(cli_runner):
 
     with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
         result = cli_runner.invoke(app, ["correct-spacing", "INVALID", "--wdz1", "25"])
-        
+
         assert result.exit_code == 1
         assert "not found" in result.stdout.lower()
 
@@ -82,7 +82,7 @@ def test_correct_spacing_no_changes(cli_runner, mock_record):
 
     with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
         result = cli_runner.invoke(app, ["correct-spacing", "TEST-001"])
-        
+
         assert result.exit_code == 0
         assert "No changes specified" in result.stdout
 
@@ -94,7 +94,7 @@ def test_correct_spacing_negative_tables(cli_runner, mock_record):
 
     with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
         result = cli_runner.invoke(app, ["correct-spacing", "TEST-001", "--wdz1", "-5"])
-        
+
         assert result.exit_code == 1
         assert "must be positive" in result.stdout.lower()
 
@@ -106,7 +106,7 @@ def test_correct_spacing_wdz2_requires_wdz1(cli_runner, mock_record):
 
     with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
         result = cli_runner.invoke(app, ["correct-spacing", "TEST-001", "--wdz2", "30"])
-        
+
         assert result.exit_code == 1
         assert "wdz1 must be set" in result.stdout.lower()
 
@@ -115,17 +115,19 @@ def test_correct_spacing_actual_correction(cli_runner, mock_record):
     """Test actual spacing correction (non-dry-run mode)."""
     mock_repo = MagicMock()
     mock_repo.get_by_partij_code.return_value = mock_record
-    
+
     mock_optech = MagicMock()
     mock_optech.send_correction.return_value.success = True
     mock_optech.send_correction.return_value.message = "Successfully updated"
 
-    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo), \
-         patch("production_control.__cli__.OpTechClient", return_value=mock_optech):
+    with (
+        patch("production_control.__cli__.SpacingRepository", return_value=mock_repo),
+        patch("production_control.__cli__.OpTechClient", return_value=mock_optech),
+    ):
         result = cli_runner.invoke(
             app, ["correct-spacing", "TEST-001", "--wdz1", "25", "--no-dry-run"]
         )
-        
+
         assert result.exit_code == 0
         assert "Successfully updated" in result.stdout
         assert mock_optech.send_correction.called
@@ -135,16 +137,18 @@ def test_correct_spacing_api_error(cli_runner, mock_record):
     """Test handling of API errors during correction."""
     mock_repo = MagicMock()
     mock_repo.get_by_partij_code.return_value = mock_record
-    
+
     mock_optech = MagicMock()
     mock_optech.send_correction.side_effect = OpTechResponseError(400, "Invalid data")
 
-    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo), \
-         patch("production_control.__cli__.OpTechClient", return_value=mock_optech):
+    with (
+        patch("production_control.__cli__.SpacingRepository", return_value=mock_repo),
+        patch("production_control.__cli__.OpTechClient", return_value=mock_optech),
+    ):
         result = cli_runner.invoke(
             app, ["correct-spacing", "TEST-001", "--wdz1", "25", "--no-dry-run"]
         )
-        
+
         assert result.exit_code == 1
         assert "Failed to update" in result.stdout
         assert "Invalid data" in result.stdout
@@ -154,18 +158,20 @@ def test_correct_spacing_connection_error(cli_runner, mock_record):
     """Test handling of connection errors during correction."""
     mock_repo = MagicMock()
     mock_repo.get_by_partij_code.return_value = mock_record
-    
+
     mock_optech = MagicMock()
     mock_optech.send_correction.side_effect = OpTechConnectionError(
         "Connection failed", "http://optech.test"
     )
 
-    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo), \
-         patch("production_control.__cli__.OpTechClient", return_value=mock_optech):
+    with (
+        patch("production_control.__cli__.SpacingRepository", return_value=mock_repo),
+        patch("production_control.__cli__.OpTechClient", return_value=mock_optech),
+    ):
         result = cli_runner.invoke(
             app, ["correct-spacing", "TEST-001", "--wdz1", "25", "--no-dry-run"]
         )
-        
+
         assert result.exit_code == 1
         assert "Failed to connect" in result.stdout
         assert "Connection failed" in result.stdout

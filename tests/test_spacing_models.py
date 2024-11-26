@@ -132,9 +132,9 @@ def test_spacing_repository_get_paginated(mock_session_class, mock_engine):
         (Decimal("10.2"), 10),  # Round down
         (Decimal("10.5"), 11),  # Round half up
         (Decimal("10.7"), 11),  # Round up
-        (Decimal("0.4"), 0),    # Small number round down
-        (Decimal("0.5"), 1),    # Small number round half up
-        (Decimal("0.6"), 1),    # Small number round up
+        (Decimal("0.4"), 0),  # Small number round down
+        (Decimal("0.5"), 1),  # Small number round half up
+        (Decimal("0.6"), 1),  # Small number round up
     ],
 )
 def test_rounded_aantal_tafels_oppotten_plan(plan_value: Decimal, expected_rounded: int):
