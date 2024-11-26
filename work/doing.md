@@ -10,7 +10,7 @@ In this document we describe what we are working on now.
 - Critical for accurate cost determination per lot
 - Impacts greenhouse space utilization tracking
 
-Completed work:
+### Completed
 
 - Created data model and repository for spacing records with SQLModel
 - Built web interface for viewing and correcting spacing records
