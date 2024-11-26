@@ -64,6 +64,15 @@ def create_correction_form(record: WijderzetRegistratie, on_close: Callable[[], 
     create_command_form(command, handle_save, on_close)
 
 
+def display_record(record: WijderzetRegistratie) -> None:
+    if record.wijderzet_registratie_fout:
+        with ui.card().classes("mt-4 bg-warning bg-opacity-10"):
+            ui.label("Fout").classes("text-lg font-bold")
+            ui.label(record.wijderzet_registratie_fout)
+
+    display_model_card(record, title=str(record))
+
+
 @router.page("/")
 def spacing_page() -> None:
     """Render the spacing page with a table of all spacing records."""
@@ -94,10 +103,22 @@ def spacing_page() -> None:
         else:
             show_error("Record niet gevonden")
 
+    def handle_view(e: Dict[str, Any]) -> None:
+        """Handle view button click."""
+        partij_code = e.args.get("key")
+        record = repository.get_by_id(partij_code)
+        if record:
+            with ui.dialog() as dialog, ui.card():
+                display_record(record)
+                ui.button("Close", on_click=dialog.close)
+                dialog.open()
+        else:
+            show_error("Record niet gevonden")
+
     row_actions = {
         "view": {
             "icon": "visibility",
-            "handler": lambda e: ui.navigate.to(f"/spacing/{e.args.get('key')}"),
+            "handler": handle_view,
         },
         "edit": {
             "icon": "edit",
@@ -182,13 +203,9 @@ def spacing_detail(partij_code: str) -> None:
             with ui.row().classes("w-full justify-between items-center mb-6"):
                 ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
 
-            display_model_card(record, title=str(record))
-
             # Show error message if present
-            if record.wijderzet_registratie_fout:
-                with ui.card().classes("mt-4 bg-warning bg-opacity-10"):
-                    ui.label("Fout").classes("text-lg font-bold")
-                    ui.label(record.wijderzet_registratie_fout)
+            display_record(record)
+
         else:
             show_error("Record niet gevonden")
             ui.link("← Terug naar Wijderzetten", "/spacing").classes(LINK_CLASSES + " mt-4")
