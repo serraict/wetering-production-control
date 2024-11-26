@@ -290,7 +290,7 @@ def fix_spacing_errors(
 
     for record in error_records:
         # Handle missing WDZ2 date errors
-        if "Geen wdz2 datum maar wel tafel aantal na wdz 2" in record.wijderzet_registratie_fout:
+        if "Geen wdz2 datum, maar wel tafel aantal na wdz 2" in record.wijderzet_registratie_fout:
             fix_command = FixMissingWdz2DateCommand.from_record(record)
             if fix_command.can_fix_automatically():
                 correction = fix_command.get_correction()

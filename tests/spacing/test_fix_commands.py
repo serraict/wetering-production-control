@@ -13,6 +13,7 @@ from production_control.spacing.commands import FixMissingWdz2DateCommand
     [
         (10, 20, Decimal("10.0"), True),  # WDZ1 equals rounded plan
         (10, 20, Decimal("10.4"), True),  # WDZ1 equals rounded plan (round down)
+        (20, 20, Decimal("10.4"), True),  # WDZ1=WDZ2, plan doesn't matter
         (12, 20, Decimal("10.6"), False),  # WDZ1 doesn't equal rounded plan (10.6 rounds to 11)
         (10, None, Decimal("10.0"), False),  # No WDZ2 count
     ],

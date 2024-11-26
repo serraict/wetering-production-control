@@ -74,7 +74,9 @@ class FixMissingWdz2DateCommand(BaseModel):
 
     # Record details
     partij_code: str = Field(..., description="Code van de partij")
-    aantal_tafels_oppotten_plan: Decimal = Field(..., description="Aantal tafels volgens oppot plan")
+    aantal_tafels_oppotten_plan: Decimal = Field(
+        ..., description="Aantal tafels volgens oppot plan"
+    )
     aantal_tafels_na_wdz1: int = Field(..., description="Aantal tafels na wijderzet 1")
     aantal_tafels_na_wdz2: Optional[int] = Field(None, description="Aantal tafels na wijderzet 2")
 
@@ -90,7 +92,7 @@ class FixMissingWdz2DateCommand(BaseModel):
 
     def can_fix_automatically(self) -> bool:
         """Check if the record can be fixed automatically.
-        
+
         A record can be fixed automatically if:
         1. WDZ1 count equals rounded aantal_tafels_oppotten_plan
         2. WDZ2 count is present
@@ -98,8 +100,16 @@ class FixMissingWdz2DateCommand(BaseModel):
         if self.aantal_tafels_na_wdz2 is None:
             return False
 
-        rounded_plan = int(self.aantal_tafels_oppotten_plan.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
-        return self.aantal_tafels_na_wdz1 == rounded_plan
+        rounded_plan = int(
+            self.aantal_tafels_oppotten_plan.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        )
+        if self.aantal_tafels_na_wdz1 == rounded_plan:
+            return True
+
+        if self.aantal_tafels_na_wdz1 == self.aantal_tafels_na_wdz2:
+            return True
+
+        return False
 
     def get_correction(self) -> Optional[CorrectSpacingRecord]:
         """Get correction command if the record can be fixed automatically."""

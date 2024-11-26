@@ -33,7 +33,7 @@ def mock_records():
             aantal_tafels_na_wdz1=10,  # Matches rounded plan
             aantal_tafels_na_wdz2=20,
             datum_oppotten_real=date(2024, 1, 1),
-            wijderzet_registratie_fout="Geen wdz2 datum maar wel tafel aantal na wdz 2",
+            wijderzet_registratie_fout="Geen wdz2 datum, maar wel tafel aantal na wdz 2",
             aantal_planten_gerealiseerd=1000,
             rounded_aantal_tafels_oppotten_plan=10,
         ),
@@ -46,7 +46,7 @@ def mock_records():
             aantal_tafels_na_wdz1=15,  # Doesn't match rounded plan
             aantal_tafels_na_wdz2=20,
             datum_oppotten_real=date(2024, 1, 1),
-            wijderzet_registratie_fout="Geen wdz2 datum maar wel tafel aantal na wdz 2",
+            wijderzet_registratie_fout="Geen wdz2 datum, maar wel tafel aantal na wdz 2",
             aantal_planten_gerealiseerd=1000,
             rounded_aantal_tafels_oppotten_plan=10,
         ),
@@ -65,9 +65,7 @@ def test_fix_spacing_errors_dry_run(cli_runner, mock_repo):
     """Test fix-spacing-errors command in dry-run mode."""
     with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo):
         # Run command
-        result = cli_runner.invoke(
-            app, ["fix-spacing-errors", "--error", "Geen wdz2 datum"]
-        )
+        result = cli_runner.invoke(app, ["fix-spacing-errors", "--error", "Geen wdz2 datum"])
 
         # Verify output
         assert result.exit_code == 0
@@ -80,12 +78,13 @@ def test_fix_spacing_errors_dry_run(cli_runner, mock_repo):
 
 def test_fix_spacing_errors_with_logging(cli_runner, mock_repo):
     """Test fix-spacing-errors command with log file."""
-    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo), \
-         tempfile.NamedTemporaryFile(suffix=".log", delete=False) as temp_log:
+    with (
+        patch("production_control.__cli__.SpacingRepository", return_value=mock_repo),
+        tempfile.NamedTemporaryFile(suffix=".log", delete=False) as temp_log,
+    ):
         # Run command with log file
         result = cli_runner.invoke(
-            app,
-            ["fix-spacing-errors", "--error", "Geen wdz2 datum", "--log", temp_log.name]
+            app, ["fix-spacing-errors", "--error", "Geen wdz2 datum", "--log", temp_log.name]
         )
 
         # Verify output
@@ -105,20 +104,20 @@ def test_fix_spacing_errors_with_logging(cli_runner, mock_repo):
 
 def test_fix_spacing_errors_actual_fix(cli_runner, mock_repo):
     """Test fix-spacing-errors command with actual fixes."""
-    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo), \
-         patch("production_control.__cli__.OpTechClient") as mock_client_class:
+    with (
+        patch("production_control.__cli__.SpacingRepository", return_value=mock_repo),
+        patch("production_control.__cli__.OpTechClient") as mock_client_class,
+    ):
         # Set up mock client
         mock_client = MagicMock()
         mock_client.send_correction.return_value = CorrectionResponse(
-            success=True,
-            message="Successfully updated spacing data for partij TEST-001"
+            success=True, message="Successfully updated spacing data for partij TEST-001"
         )
         mock_client_class.return_value = mock_client
 
         # Run command without dry-run
         result = cli_runner.invoke(
-            app,
-            ["fix-spacing-errors", "--error", "Geen wdz2 datum", "--no-dry-run"]
+            app, ["fix-spacing-errors", "--error", "Geen wdz2 datum", "--no-dry-run"]
         )
 
         # Verify output
@@ -137,9 +136,11 @@ def test_fix_spacing_errors_actual_fix(cli_runner, mock_repo):
 
 def test_fix_spacing_errors_api_error(cli_runner, mock_repo):
     """Test fix-spacing-errors command handling API errors."""
-    with patch("production_control.__cli__.SpacingRepository", return_value=mock_repo), \
-         patch("production_control.__cli__.OpTechClient") as mock_client_class, \
-         tempfile.NamedTemporaryFile(suffix=".log", delete=False) as temp_log:
+    with (
+        patch("production_control.__cli__.SpacingRepository", return_value=mock_repo),
+        patch("production_control.__cli__.OpTechClient") as mock_client_class,
+        tempfile.NamedTemporaryFile(suffix=".log", delete=False) as temp_log,
+    ):
         # Set up mock client to raise an error
         mock_client = MagicMock()
         error_msg = "API Error: Invalid request"
@@ -151,10 +152,12 @@ def test_fix_spacing_errors_api_error(cli_runner, mock_repo):
             app,
             [
                 "fix-spacing-errors",
-                "--error", "Geen wdz2 datum",
+                "--error",
+                "Geen wdz2 datum",
                 "--no-dry-run",
-                "--log", temp_log.name,
-            ]
+                "--log",
+                temp_log.name,
+            ],
         )
 
         # Verify output
