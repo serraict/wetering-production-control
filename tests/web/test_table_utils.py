@@ -4,7 +4,11 @@ from datetime import date
 from decimal import Decimal
 from sqlmodel import SQLModel, Field
 
-from production_control.web.components.table_utils import get_table_columns, format_row
+from production_control.web.components.table_utils import (
+    get_table_columns,
+    format_row,
+    format_date,
+)
 from production_control.products.models import Product
 
 
@@ -167,37 +171,59 @@ def test_format_row_respects_hidden_fields():
     assert "hidden" not in row
 
 
-def test_get_table_columns_formats_dates():
-    """Test that get_table_columns adds date formatting."""
+def test_format_date():
+    """Test that format_date correctly formats dates using ISO week year."""
+    # Given
+    test_date = date(2024, 12, 30)  # Monday of week 1, 2025
+    empty_date = None
 
+    # When/Then
+    assert format_date(test_date) == "25w01-1"  # ISO week year
+    assert format_date(empty_date) == "--"  # Empty date handling
+
+
+def test_format_row_with_dates():
+    """Test that format_row correctly formats date fields."""
+    # Given
+    class ModelWithDates(SQLModel):
+        id: int = Field(primary_key=True)
+        name: str = Field()
+        created_at: date = Field()
+
+    model = ModelWithDates(
+        id=1,
+        name="Test",
+        created_at=date(2024, 12, 30),  # Monday of week 1, 2025
+    )
+
+    # When
+    row = format_row(model)
+
+    # Then
+    assert row == {
+        "id": 1,
+        "name": "Test",
+        "created_at": "25w01-1",  # Date should be formatted
+    }
+
+
+def test_get_table_columns_with_dates():
+    """Test that get_table_columns handles date fields correctly."""
     # Given
     class ModelWithDates(SQLModel):
         id: int = Field()
-        default_date: date = Field(
-            title="Default Format",
-        )
-        custom_date: date = Field(
-            title="Custom Format",
-            sa_column_kwargs={
-                "info": {
-                    "format": "YYYY-MM-DD",
-                }
-            },
-        )
+        created_at: date = Field(title="Created")
 
     # When
     columns = get_table_columns(ModelWithDates)
 
     # Then
-    default_col = next(col for col in columns if col["name"] == "default_date")
-    custom_col = next(col for col in columns if col["name"] == "custom_date")
-
-    assert (
-        default_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''"
-    )
-    assert (
-        custom_col[":format"] == "value => value ? Quasar.date.formatDate(value, 'YYYY-MM-DD') : ''"
-    )
+    date_col = next(col for col in columns if col["name"] == "created_at")
+    assert date_col == {
+        "name": "created_at",
+        "label": "Created",
+        "field": "created_at",
+    }
 
 
 def test_get_table_columns_formats_decimals():
