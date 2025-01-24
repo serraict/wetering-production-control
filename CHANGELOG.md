@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed week number display for year-end dates (e.g., 2024-12-30 now correctly shows as 25w01-1)
+- Improved date formatting consistency by moving it to server-side
+
+### Changed
+
+- Enhanced test coverage for date formatting utilities
+- Updated spacing page tests to properly handle ISO week dates
+
 ## [0.1.5] - 2024-11-26
 
 ### Added
