@@ -24,7 +24,7 @@ but his primary concern is getting the job done.
 - Document appropriate project structure.
 - How to do validation. E.g. load invalid objects and display validation errors on screen.
   Leverage Pydantic as much as possible here
-- Review build pipelind
+- Review build pipeline
   - Package does not seem to run tests. We should run the tests on the container.
 
 ### Goal: User can see greenhouse utilization
