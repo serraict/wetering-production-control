@@ -121,6 +121,6 @@ class WijderzetRegistratie(SQLModel, table=True):
     def __str__(self) -> str:
         """Format record as string with batch code and potting date."""
         if self.datum_oppotten_real:
-            date_str = self.datum_oppotten_real.strftime("%yw%V-%u").replace("y", "")
+            date_str = self.datum_oppotten_real.strftime("%gw%V-%u")
             return f"{self.partij_code} ({date_str})"
         return self.partij_code
