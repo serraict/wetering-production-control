@@ -14,6 +14,7 @@ class ClientStorageTableState:
 
     pagination: Pagination
     filter: str = ""
+    warning_filter: bool = False
     rows: List[Any] = field(default_factory=list)
     storage_key: str = field(default="")
 
@@ -24,11 +25,13 @@ class ClientStorageTableState:
             app.storage.client[storage_key] = {
                 "pagination": Pagination(),
                 "filter": "",
+                "warning_filter": False,
                 "rows": [],
             }
         return cls(
             pagination=app.storage.client[storage_key]["pagination"],
             filter=app.storage.client[storage_key]["filter"],
+            warning_filter=app.storage.client[storage_key]["warning_filter"],
             rows=app.storage.client[storage_key]["rows"],
             storage_key=storage_key,
         )
@@ -46,6 +49,12 @@ class ClientStorageTableState:
         self.pagination.page = 1
         self._save()
 
+    def update_warning_filter(self, enabled: bool) -> None:
+        """Update warning filter and reset to first page."""
+        self.warning_filter = enabled
+        self.pagination.page = 1
+        self._save()
+
     def update_rows(self, rows: List[Any], total: int) -> None:
         """Update rows and total count."""
         self.rows = rows
@@ -57,5 +66,6 @@ class ClientStorageTableState:
         app.storage.client[self.storage_key] = {
             "pagination": self.pagination,
             "filter": self.filter,
+            "warning_filter": self.warning_filter,
             "rows": self.rows,
         }

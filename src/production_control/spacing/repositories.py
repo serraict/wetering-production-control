@@ -35,6 +35,7 @@ class SpacingRepository(DremioRepository[WijderzetRegistratie]):
         sort_by: Optional[str] = None,
         descending: bool = False,
         filter_text: Optional[str] = None,
+        warning_filter: bool = False,
         pagination: Optional[Pagination] = None,
     ) -> Tuple[List[WijderzetRegistratie], int]:
         """Get paginated spacing records from the data source."""
@@ -50,6 +51,12 @@ class SpacingRepository(DremioRepository[WijderzetRegistratie]):
             count_stmt = select(func.count(distinct(WijderzetRegistratie.partij_code))).where(
                 WijderzetRegistratie.datum_laatste_wdz.is_not(None)
             )
+
+            # Add warning filter if enabled
+            if warning_filter:
+                warning_condition = WijderzetRegistratie.wijderzet_registratie_fout.is_not(None)
+                base_query = base_query.where(warning_condition)
+                count_stmt = count_stmt.where(warning_condition)
 
             # Execute paginated query
             return self._execute_paginated_query(

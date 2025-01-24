@@ -84,9 +84,11 @@ def spacing_page() -> None:
     def load_data():
         pagination = table_state.pagination
         filter_text = table_state.filter
+        warning_filter = table_state.warning_filter
         items, total = repository.get_paginated(
             pagination=pagination,
             filter_text=filter_text,
+            warning_filter=warning_filter,
         )
         table_state.update_rows([format_row(item) for item in items], total)
         server_side_paginated_table.refresh()
@@ -132,6 +134,11 @@ def spacing_page() -> None:
         table_state.update_filter(e.value if e.value else "")
         load_data()
 
+    async def handle_warning_filter(e: Any) -> None:
+        """Handle changes to the warning filter."""
+        table_state.update_warning_filter(e.value if e.value else False)
+        load_data()
+
     def handle_table_request(event: Dict[str, Any]) -> None:
         """Handle table request events."""
         table_state.update_from_request(event)
@@ -167,6 +174,11 @@ def spacing_page() -> None:
                                 ui.icon("edit_calendar").on("click", menu_to.open).classes(
                                     "cursor-pointer"
                                 )
+
+                    # Warning filter
+                    ui.switch(
+                        "Toon alleen waarschuwingen", on_change=handle_warning_filter
+                    ).classes("mr-4").mark("warning_filter")
 
                     # Search input
                     with (

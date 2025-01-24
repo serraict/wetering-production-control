@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added warning filter to spacing page:
+  - Toggle to show only records with warning messages
+  - Integrated with existing search and pagination
+  - Enhanced repository to support warning filtering
+  - Added tests for warning filter functionality
+
 ### Fixed
 
 - Fixed week number display for year-end dates (e.g., 2024-12-30 now correctly shows as 25w01-1)
