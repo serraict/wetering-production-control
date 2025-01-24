@@ -19,7 +19,7 @@ async def test_spacing_page_shows_table(user: User) -> None:
         # Given
         mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
-        test_date = date(2023, 1, 1)
+        test_date = date(2023, 1, 2)  # Monday of week 1, 2023
         mock_repo.get_paginated.return_value = (
             [
                 WijderzetRegistratie(
@@ -122,36 +122,43 @@ async def test_spacing_page_shows_table(user: User) -> None:
                 "label": "Wijderzet 1",
                 "field": "datum_wdz1_real",
                 "sortable": True,
-                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {
                 "name": "datum_wdz2_real",
                 "label": "Wijderzet 2",
                 "field": "datum_wdz2_real",
                 "sortable": True,
-                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {
                 "name": "datum_oppotten_real",
                 "label": "Oppotdatum",
                 "field": "datum_oppotten_real",
                 "sortable": True,
-                ":format": "value => value ? Quasar.date.formatDate(value, 'YY[w]ww-E') : ''",
             },
             {"name": "actions", "label": "Acties", "field": "actions"},
         ]
 
         # Check essential visible fields in rows
         assert len(table.rows) == 2
+        # Check row 0
         assert table.rows[0]["partij_code"] == "TEST123"
         assert table.rows[0]["product_naam"] == "Test Plant"
         assert table.rows[0]["aantal_tafels_totaal"] == 10
         assert table.rows[0]["warning_emoji"] == ""
+        # Check date formatting (2023-01-02 is Monday of week 1)
+        assert table.rows[0]["datum_wdz1_real"] == "23w01-1"
+        assert table.rows[0]["datum_wdz2_real"] == "23w01-1"
+        assert table.rows[0]["datum_oppotten_real"] == "23w01-1"
 
+        # Check row 1
         assert table.rows[1]["partij_code"] == "TEST456"
         assert table.rows[1]["product_naam"] == "Other Plant"
         assert table.rows[1]["aantal_tafels_totaal"] == 20
         assert table.rows[1]["warning_emoji"] == "⚠️"
+        # Check date formatting (2023-01-02 is Monday of week 1)
+        assert table.rows[1]["datum_wdz1_real"] == "23w01-1"
+        assert table.rows[1]["datum_wdz2_real"] == "23w01-1"
+        assert table.rows[1]["datum_oppotten_real"] == "23w01-1"
 
 
 async def test_spacing_page_filtering_calls_repository(user: User) -> None:
