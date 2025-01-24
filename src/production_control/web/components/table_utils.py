@@ -10,12 +10,15 @@ from pydantic_core._pydantic_core import PydanticUndefinedType
 DATE_FORMAT = "%gw%V-%u"
 
 
-def format_date(value: date, format_str: str = "YY[w]ww-E") -> str:
-    """Format a date value using Quasar date format strings.
+def format_date(value: date, format_str: str = DATE_FORMAT) -> str:
+    """Format a date value using strftime format string.
 
     Args:
         value: The date to format
-        format_str: The format string to use (default: YY[w]ww-E)
+        format_str: The strftime format string to use (default: %gw%V-%u)
+                   %g = ISO week year without century
+                   %V = ISO week number
+                   %u = weekday (1-7, 1=Monday)
 
     Returns:
         The formatted date string
@@ -95,13 +98,6 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
         if field_info.get("ui_sortable"):
             column["sortable"] = True
 
-        # Add formatter for date fields
-        if is_date_field(field.annotation):
-            format_str = field_info.get("format", "YY[w]ww-E")
-            column[":format"] = (
-                f"value => value ? Quasar.date.formatDate(value, '{format_str}') : ''"
-            )
-
         # Add formatter for decimal fields
         if is_decimal_field(field.annotation):
             decimals = field_info.get("decimals", 1)  # Default to 1 decimal place
@@ -166,7 +162,11 @@ def format_row(model: SQLModel) -> Dict[str, Any]:
         if field_info.get("ui_hidden"):
             continue
 
-        # Add field value to row
-        row[field_name] = getattr(model, field_name)
+        # Add field value to row, formatting dates using our custom format
+        value = getattr(model, field_name)
+        if is_date_field(field.annotation) and value:
+            row[field_name] = format_date(value)
+        else:
+            row[field_name] = value
 
     return row
