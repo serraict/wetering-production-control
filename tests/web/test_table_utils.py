@@ -184,6 +184,7 @@ def test_format_date():
 
 def test_format_row_with_dates():
     """Test that format_row correctly formats date fields."""
+
     # Given
     class ModelWithDates(SQLModel):
         id: int = Field(primary_key=True)
@@ -209,6 +210,7 @@ def test_format_row_with_dates():
 
 def test_get_table_columns_with_dates():
     """Test that get_table_columns handles date fields correctly."""
+
     # Given
     class ModelWithDates(SQLModel):
         id: int = Field()
