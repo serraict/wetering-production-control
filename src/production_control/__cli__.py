@@ -12,6 +12,7 @@ from .products.models import ProductRepository
 from .spacing.repositories import SpacingRepository
 from .spacing.commands import CorrectSpacingRecord, FixMissingWdz2DateCommand
 from .spacing.optech import OpTechClient, OpTechError
+from .data import backup
 
 # Configure logging
 logging.basicConfig(
@@ -21,6 +22,9 @@ logger = logging.getLogger("production_control")
 
 app = typer.Typer()
 console = Console()
+
+# Add sub-commands
+app.add_typer(backup.app, name="backup", help="Dremio backup commands")
 
 
 def send_spacing_correction(

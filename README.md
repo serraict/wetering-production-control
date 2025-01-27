@@ -65,3 +65,26 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
    ```bash
    docker compose up -d
    ```
+
+## Features
+
+### Dremio Backup Command
+
+The `backup` command allows you to export Dremio query results to CSV files:
+
+```bash
+# Basic usage - saves to ./backups by default
+production-control backup backup-table "SELECT * FROM Verkoop.afroepbestellingen"
+
+# Specify output directory
+production-control backup backup-table "SELECT * FROM table" --output-dir /path/to/backups
+
+# Control chunk size for large results (default: 100,000 rows per file)
+production-control backup backup-table "SELECT * FROM table" --chunk-size 50000
+```
+
+The command will:
+- Execute the provided SQL query against Dremio
+- Save results as CSV files with headers
+- Split large results into multiple files based on chunk size
+- Create output directory if it doesn't exist
