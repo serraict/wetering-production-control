@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added Dremio backup command:
+  - Export query results to CSV files
+  - Support for large result sets with chunking
+
 - Added warning filter to spacing page:
-  - Toggle to show only records with warning messages
-  - Integrated with existing search and pagination
-  - Enhanced repository to support warning filtering
-  - Added tests for warning filter functionality
 
 ### Fixed
 

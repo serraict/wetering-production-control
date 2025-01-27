@@ -27,10 +27,8 @@ def backup_table(
     output_dir: Annotated[
         Path,
         typer.Option(
-            exists=True,
             file_okay=False,
             dir_okay=True,
-            writable=True,
             help="Output directory (default: $DREMIO_BACKUP_DIR or ./backups)",
         ),
     ] = Path.cwd()
@@ -69,4 +67,4 @@ def backup_table(
         raise typer.Abort()
     except OSError as e:
         typer.echo(f"File system error: {str(e)}", err=True)
-        raise typer.Abort()
+        raise typer.Exit(code=1)
