@@ -4,8 +4,9 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-- [x] The year of week is not printed correctly for dates like 2024-12-30. In week number notation, this should be 25w01-1, but it is displayed as 24w01-1
-- On the spacing page, add a filter to display only records with an warning message.
+Create a command line utility that backs up a dremio table as a csv file.
+Example: 'select * from Verkoop.afroepbestellingen'.
+Should be saved to a configurable location.
 
 ## Later
 
