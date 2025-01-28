@@ -4,10 +4,6 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-Create a command line utility that backs up a dremio table as a csv file.
-Example: 'select * from Verkoop.afroepbestellingen'.
-Should be saved to a configurable location.
-
 ## Later
 
 ### Goal: Get Paul to use this app

@@ -17,10 +17,10 @@ that we confidently install at a customer.
 
 This means that:
 
-* The work identified in [doing](./work/doing.md) is completed
-* `make quality` passes
-* `make releasable` passes
-* `make check-ci` is successful
+- The work identified in [doing](./work/doing.md) is completed
+- `make quality` passes
+- `make releasable` passes
+- `make check-ci` is successful
 
 ### Coding guidelines
 

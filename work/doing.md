@@ -30,18 +30,18 @@ In this document we describe what we are working on now.
    - ~~Add environment variable support for output directory~~
    - ~~Update help text and documentation~~
 
-2. ~~Create entry point for `pc` command:~~
+1. ~~Create entry point for `pc` command:~~
 
    - ~~Add script entry point in pyproject.toml~~
    - ~~This will allow using `pc` instead of `production_control`~~
 
-3. ~~Update tests:~~
+1. ~~Update tests:~~
 
    - ~~Update test cases to use new command structure~~
    - ~~Add tests for name parameter~~
    - ~~Add test for environment variable precedence~~
 
-4. Example of new interface:
+1. Example of new interface:
 
    ```bash
    # Old interface

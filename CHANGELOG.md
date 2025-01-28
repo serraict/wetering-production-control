@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## \[Unreleased\]
 
 ### Added
 
 - Added Dremio backup command:
+
   - Export query results to CSV files with custom naming
   - Support for large result sets with chunking
   - Environment variable support for backup directory
@@ -27,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced test coverage for date formatting utilities
 - Updated spacing page tests to properly handle ISO week dates
 
-## [0.1.5] - 2024-11-26
+## \[0.1.5\] - 2024-11-26
 
 ### Added
 
@@ -43,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `get_by_partij_code` method while maintaining backward compatibility
   - Improved error handling for record lookups
 
-## [0.1.4] - 2024-11-22
+## \[0.1.4\] - 2024-11-22
 
 ### Added
 
@@ -65,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed field name mapping for OpTech API integration
 - Improved error handling and display for API interactions
 
-## [0.1.3] - 2024-11-21
+## \[0.1.3\] - 2024-11-21
 
 ### Added
 
@@ -96,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decimal formatting
   - Support for custom field formatting
 
-## [0.1.2] - 2024-11-18
+## \[0.1.2\] - 2024-11-18
 
 ### Added
 
@@ -113,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed database connection issue causing 500 error on products page
 
-## [0.1.0] - 2024-11-16
+## \[0.1.0\] - 2024-11-16
 
 ### Added
 

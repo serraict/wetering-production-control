@@ -84,6 +84,7 @@ production-control backup backup-table "SELECT * FROM table" --chunk-size 50000
 ```
 
 The command will:
+
 - Execute the provided SQL query against Dremio
 - Save results as CSV files with headers
 - Split large results into multiple files based on chunk size
