@@ -30,8 +30,12 @@ def get_engine() -> Engine:
 
 @app.command(name="query")
 def backup_query(
-    query: Annotated[str, typer.Argument(help="SQL query to execute (e.g. 'SELECT * FROM bestelling')")],
-    name: Annotated[str, typer.Option(help="Name prefix for the backup files (e.g. 'afroep_opdrachten')")] = None,
+    query: Annotated[
+        str, typer.Argument(help="SQL query to execute (e.g. 'SELECT * FROM bestelling')")
+    ],
+    name: Annotated[
+        str, typer.Option(help="Name prefix for the backup files (e.g. 'afroep_opdrachten')")
+    ] = None,
     output_dir: Annotated[
         Path,
         typer.Option(
@@ -42,7 +46,9 @@ def backup_query(
         ),
     ] = Path.cwd()
     / "backups",
-    chunk_size: Annotated[int, typer.Option(help="Rows per CSV file chunk (default: 100,000)")] = 100_000,
+    chunk_size: Annotated[
+        int, typer.Option(help="Rows per CSV file chunk (default: 100,000)")
+    ] = 100_000,
 ):
     """Execute a Dremio query and save results as CSV files.
 
