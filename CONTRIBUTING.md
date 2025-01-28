@@ -8,7 +8,21 @@ If you are an LLM or AI, please read [our more specific ai prompt](./CONTRIBUTIN
 especially the Test-First Development section which provides detailed guidance
 on our single-test-at-a-time approach.
 
-## Coding guidelines
+## Definition of Done
+
+Our Definition of Done makes transparent everything that needs to be done for our product increment to be releasable.
+Our product increment is deemed releasable if `make release` would result in a published package
+of the required quality standard
+that we confidently install at a customer.
+
+This means that:
+
+* The work identified in [doing](./work/doing.md) is completed
+* `make quality` passes
+* `make releasable` passes
+* `make check-ci` is successful
+
+### Coding guidelines
 
 We use flake8 for linting, black for automatic formatting, and mdformat for markdown files.
 
@@ -17,12 +31,34 @@ make format     # to apply formatting to tests and source files
 make quality    # to verify code quality and run tests
 ```
 
-## Test Driven Development
+### Versioning
 
-We prefer to write tests before production code.
-Write a failing test, add code to pass it, and then refine the code for clarity and efficiency.
+We follow [Semantic Versioning](https://semver.org/) (SemVer) for version numbers.
+The project version is determined using `setuptools_scm`.
 
-## Commit Guidelines
+### Language Guidelines
+
+For user-facing text in the web interface (UI labels, messages, etc.), use Dutch language.
+Follow existing patterns in the codebase for terminology and phrasing.
+Code, comments, and documentation should be in English.
+
+### Changelog
+
+We maintain a changelog following the [Keep a Changelog](https://keepachangelog.com/) format.
+Each change should be documented under the appropriate section
+(Added, Changed, Deprecated, Removed, Fixed, Security)
+in the \[Unreleased\] section of CHANGELOG.md.
+
+## Way of Working
+
+Our way of working aims to create a product that meets our Definition of Done,
+in a way that is sustainable for all stakeholders.
+
+### Collaboration
+
+We behave kindly, think critically, and act deliberately.
+
+### Commit Guidelines
 
 Make atomic commits that represent a single, logical change.
 This helps maintain a clean git history
@@ -30,30 +66,18 @@ and makes it easier to understand, review, and if needed, revert changes.
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages.
 
-## Language Guidelines
+### Test Driven Development
 
-For user-facing text (UI labels, messages, etc.), use Dutch language.
-Follow existing patterns in the codebase for terminology and phrasing.
-Code, comments, and documentation should be in English.
+We prefer to write tests before production code.
+Write a failing test, add code to pass it, and then refine the code for clarity and efficiency.
 
-## Versioning
-
-We follow [Semantic Versioning](https://semver.org/) (SemVer) for version numbers.
-The project version is determined using `setuptools_scm`.
-
-## Changelog
-
-We maintain a changelog following the [Keep a Changelog](https://keepachangelog.com/) format.
-Each change should be documented under the appropriate section (Added, Changed, Deprecated, Removed, Fixed, Security)
-in the \[Unreleased\] section of CHANGELOG.md.
-
-## Testing
+### Testing
 
 Unit tests are placed in the `./tests/` directory.
 We record the coverage of our unit tests.
 Our test coverage should not drop between commits.
 
-## Development Environment
+### Development Environment
 
 1. Create and activate a virtual environment:
 
@@ -80,7 +104,7 @@ make test
 make server
 ```
 
-## Docker Development
+### Docker Development
 
 1. Build and start services:
 
@@ -94,7 +118,7 @@ make docker_compose_debug
 make docker_image
 ```
 
-## Releasing
+### Releasing
 
 Releases are created using a Github action.
 

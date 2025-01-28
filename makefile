@@ -44,7 +44,7 @@ build:
 printversion:
 	@python -m setuptools_scm
 
-release:
+releasable:
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "There are uncommitted changes or untracked files"; \
 		exit 1; \
@@ -57,6 +57,8 @@ release:
 		echo "Local branch is ahead of origin"; \
 		exit 1; \
 	fi
+
+release: releasable
 	sed -i '' "s/\[Unreleased\]/[$(NEW_VERSION)] - $$(date +%Y-%m-%d)/" CHANGELOG.md
 	if [ -n "$$(git status --porcelain CHANGELOG.md)" ]; then \
 		git add CHANGELOG.md && \

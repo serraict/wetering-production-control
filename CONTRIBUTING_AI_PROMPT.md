@@ -12,21 +12,21 @@ Follow both this guide and the main CONTRIBUTING.md when making changes.
    - Write only one test before writing code
    - Get that test passing before writing the next
 
-2. Keep the test-code cycle small:
+1. Keep the test-code cycle small:
 
    - Write minimal test code
    - Write minimal production code to pass
    - Refactor only after test passes
    - Move to next test only after current test is stable
 
-3. Choose the first test wisely:
+1. Choose the first test wisely:
 
    - Start with basic existence/structure tests
    - Then add basic functionality tests
    - Progress to edge cases
    - End with error conditions
 
-4. Example test progression:
+1. Example test progression:
 
    ```python
    # First test: verify component exists
@@ -182,7 +182,6 @@ Things we consider doing in the future are described in [backlog.md](./work/back
 
    - Clearly explain the change
    - Include context and reasoning
-   - Reference related issues/PRs
 
 1. After pushing changes:
 
