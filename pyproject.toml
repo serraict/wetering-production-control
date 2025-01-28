@@ -22,6 +22,7 @@ build-backend = "setuptools.build_meta"
 
 [project.scripts]
 production_control = "production_control.__cli__:cli"
+pc = "production_control.__cli__:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -21,14 +21,16 @@ def get_engine() -> Engine:
     return repo.engine
 
 
-@app.command()
-def backup_table(
+@app.command(name="query")
+def backup_query(
     query: Annotated[str, typer.Argument(help="SQL query to execute (e.g. 'SELECT * FROM table')")],
+    name: Annotated[str, typer.Option(help="Name prefix for the backup files")] = None,
     output_dir: Annotated[
         Path,
         typer.Option(
             file_okay=False,
             dir_okay=True,
+            envvar="DREMIO_BACKUP_DIR",
             help="Output directory (default: $DREMIO_BACKUP_DIR or ./backups)",
         ),
     ] = Path.cwd()
@@ -52,7 +54,7 @@ def backup_table(
                 if not chunk:
                     break
 
-                filename = output_dir / f"backup_{file_counter:03d}.csv"
+                filename = output_dir / f"{name or 'backup'}_{file_counter:03d}.csv"
                 with open(filename, "w", newline="") as f:
                     writer = csv.writer(f)
                     writer.writerow(result.keys())  # Write header

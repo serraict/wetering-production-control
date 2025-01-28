@@ -32,8 +32,8 @@ def runner():
     return CliRunner()
 
 
-def test_backup_table_success(tmp_path, mock_engine, mock_session, runner):
-    """Test successful backup of table data."""
+def test_backup_query_success(tmp_path, mock_engine, mock_session, runner):
+    """Test successful backup of table data with default name."""
     # Mock query result
     mock_result = MagicMock()
     mock_result.keys.return_value = ["id", "name", "value"]
@@ -47,7 +47,7 @@ def test_backup_table_success(tmp_path, mock_engine, mock_session, runner):
     with patch("production_control.data.backup.DremioRepository") as mock_repo:
         mock_repo.return_value.engine = mock_engine
         result = runner.invoke(
-            app, ["backup", "backup-table", "SELECT * FROM test", "--output-dir", str(tmp_path)]
+            app, ["backup", "query", "SELECT * FROM test", "--output-dir", str(tmp_path)]
         )
 
     # Verify command output
@@ -64,7 +64,39 @@ def test_backup_table_success(tmp_path, mock_engine, mock_session, runner):
         assert rows[1:] == [["1", "test1", "100"], ["2", "test2", "200"]]  # Data
 
 
-def test_backup_table_db_error(tmp_path, mock_engine, mock_session, runner):
+def test_backup_query_with_name(tmp_path, mock_engine, mock_session, runner):
+    """Test successful backup of table data with custom name."""
+    # Mock query result
+    mock_result = MagicMock()
+    mock_result.keys.return_value = ["id", "name"]
+    mock_result.fetchmany.side_effect = [
+        [(1, "test1")],
+        [],
+    ]
+    mock_session.return_value.__enter__.return_value.exec.return_value = mock_result
+
+    # Run backup command
+    with patch("production_control.data.backup.DremioRepository") as mock_repo:
+        mock_repo.return_value.engine = mock_engine
+        result = runner.invoke(
+            app, ["backup", "query", "SELECT * FROM test", "--name", "custom", "--output-dir", str(tmp_path)]
+        )
+
+    # Verify command output
+    assert result.exit_code == 0
+    assert "Success: Saved 1 file(s)" in result.stdout
+
+    # Verify file contents
+    output_file = tmp_path / "custom_001.csv"
+    assert output_file.exists()
+    with open(output_file) as f:
+        reader = csv.reader(f)
+        rows = list(reader)
+        assert rows[0] == ["id", "name"]  # Header
+        assert rows[1:] == [["1", "test1"]]  # Data
+
+
+def test_backup_query_db_error(tmp_path, mock_engine, mock_session, runner):
     """Test handling of database errors."""
     # Mock database error
     mock_session.return_value.__enter__.return_value.exec.side_effect = sa.exc.SQLAlchemyError(
@@ -75,7 +107,7 @@ def test_backup_table_db_error(tmp_path, mock_engine, mock_session, runner):
     with patch("production_control.data.backup.DremioRepository") as mock_repo:
         mock_repo.return_value.engine = mock_engine
         result = runner.invoke(
-            app, ["backup", "backup-table", "SELECT * FROM test", "--output-dir", str(tmp_path)]
+            app, ["backup", "query", "SELECT * FROM test", "--output-dir", str(tmp_path)]
         )
 
     # Verify error handling
@@ -83,7 +115,7 @@ def test_backup_table_db_error(tmp_path, mock_engine, mock_session, runner):
     assert "Database error: Connection failed" in result.stdout
 
 
-def test_backup_table_filesystem_error(tmp_path, mock_engine, mock_session, runner):
+def test_backup_query_filesystem_error(tmp_path, mock_engine, mock_session, runner):
     """Test handling of filesystem errors."""
     # Mock query result
     mock_result = MagicMock()
@@ -100,7 +132,7 @@ def test_backup_table_filesystem_error(tmp_path, mock_engine, mock_session, runn
     with patch("production_control.data.backup.DremioRepository") as mock_repo:
         mock_repo.return_value.engine = mock_engine
         result = runner.invoke(
-            app, ["backup", "backup-table", "SELECT * FROM test", "--output-dir", str(readonly_dir)]
+            app, ["backup", "query", "SELECT * FROM test", "--output-dir", str(readonly_dir)]
         )
 
     # Verify error handling
@@ -108,7 +140,7 @@ def test_backup_table_filesystem_error(tmp_path, mock_engine, mock_session, runn
     assert "File system error" in result.stdout
 
 
-def test_backup_table_large_result(tmp_path, mock_engine, mock_session, runner):
+def test_backup_query_large_result(tmp_path, mock_engine, mock_session, runner):
     """Test handling of large result sets with chunking."""
     # Mock query result with multiple chunks
     mock_result = MagicMock()
@@ -127,7 +159,7 @@ def test_backup_table_large_result(tmp_path, mock_engine, mock_session, runner):
             app,
             [
                 "backup",
-                "backup-table",
+                "query",
                 "SELECT * FROM test",
                 "--output-dir",
                 str(tmp_path),

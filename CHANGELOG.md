@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added Dremio backup command:
-  - Export query results to CSV files
+  - Export query results to CSV files with custom naming
   - Support for large result sets with chunking
+  - Environment variable support for backup directory
+  - Convenient `pc` command alias for shorter CLI usage
 
 - Added warning filter to spacing page:
 
