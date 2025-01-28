@@ -1,4 +1,11 @@
-"""Dremio backup command implementation."""
+"""Dremio backup command implementation.
+
+This module provides commands for backing up Dremio query results to CSV files.
+The backup command supports:
+- Custom naming of backup files with --name
+- Output directory configuration via DREMIO_BACKUP_DIR environment variable
+- Automatic chunking of large result sets
+"""
 
 import csv
 from pathlib import Path
@@ -23,8 +30,8 @@ def get_engine() -> Engine:
 
 @app.command(name="query")
 def backup_query(
-    query: Annotated[str, typer.Argument(help="SQL query to execute (e.g. 'SELECT * FROM table')")],
-    name: Annotated[str, typer.Option(help="Name prefix for the backup files")] = None,
+    query: Annotated[str, typer.Argument(help="SQL query to execute (e.g. 'SELECT * FROM bestelling')")],
+    name: Annotated[str, typer.Option(help="Name prefix for the backup files (e.g. 'afroep_opdrachten')")] = None,
     output_dir: Annotated[
         Path,
         typer.Option(
@@ -35,12 +42,22 @@ def backup_query(
         ),
     ] = Path.cwd()
     / "backups",
-    chunk_size: Annotated[int, typer.Option(help="Rows per CSV file chunk")] = 100_000,
+    chunk_size: Annotated[int, typer.Option(help="Rows per CSV file chunk (default: 100,000)")] = 100_000,
 ):
     """Execute a Dremio query and save results as CSV files.
 
-    The results are chunked into multiple files if they exceed the chunk size.
-    Each file will include a header row with column names.
+    The command executes the provided SQL query against Dremio and saves the results
+    in one or more CSV files. Large result sets are automatically split into multiple
+    files based on the chunk_size parameter.
+
+    Each output file follows the naming pattern: {name}_{number}.csv
+    where {name} is either the provided name or 'backup' by default,
+    and {number} is a 3-digit sequence starting at 001.
+
+    Examples:
+        pc backup query "SELECT * FROM bestelling WHERE ar > 0" --name afroep_opdrachten
+        pc backup query "SELECT * FROM bestelling" --output-dir /path/to/dir
+        DREMIO_BACKUP_DIR=/backup/path pc backup query "SELECT * FROM bestelling"
     """
     try:
         output_dir.mkdir(parents=True, exist_ok=True)

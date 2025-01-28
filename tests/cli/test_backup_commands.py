@@ -79,7 +79,16 @@ def test_backup_query_with_name(tmp_path, mock_engine, mock_session, runner):
     with patch("production_control.data.backup.DremioRepository") as mock_repo:
         mock_repo.return_value.engine = mock_engine
         result = runner.invoke(
-            app, ["backup", "query", "SELECT * FROM test", "--name", "custom", "--output-dir", str(tmp_path)]
+            app,
+            [
+                "backup",
+                "query",
+                "SELECT * FROM test",
+                "--name",
+                "custom",
+                "--output-dir",
+                str(tmp_path),
+            ],
         )
 
     # Verify command output
@@ -138,6 +147,41 @@ def test_backup_query_filesystem_error(tmp_path, mock_engine, mock_session, runn
     # Verify error handling
     assert result.exit_code == 1
     assert "File system error" in result.stdout
+
+
+def test_backup_query_env_var_precedence(tmp_path, mock_engine, mock_session, runner):
+    """Test that DREMIO_BACKUP_DIR environment variable takes precedence."""
+    # Create two directories
+    default_dir = tmp_path / "default"
+    default_dir.mkdir()
+    env_dir = tmp_path / "env"
+    env_dir.mkdir()
+
+    # Mock query result
+    mock_result = MagicMock()
+    mock_result.keys.return_value = ["id"]
+    mock_result.fetchmany.side_effect = [
+        [(1,)],  # First chunk
+        [],  # End of results
+    ]
+    mock_session.return_value.__enter__.return_value.exec.return_value = mock_result
+
+    # Run backup command with environment variable set
+    with patch("production_control.data.backup.DremioRepository") as mock_repo:
+        mock_repo.return_value.engine = mock_engine
+        result = runner.invoke(
+            app,
+            ["backup", "query", "SELECT * FROM test"],
+            env={"DREMIO_BACKUP_DIR": str(env_dir)},
+        )
+
+    # Verify command output
+    assert result.exit_code == 0
+    assert "Success: Saved 1 file(s)" in result.stdout
+
+    # Verify file was created in env directory, not default
+    assert not (default_dir / "backup_001.csv").exists()
+    assert (env_dir / "backup_001.csv").exists()
 
 
 def test_backup_query_large_result(tmp_path, mock_engine, mock_session, runner):
