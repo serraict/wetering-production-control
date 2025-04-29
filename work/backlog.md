@@ -4,7 +4,21 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
+### Goal: allow ai agents to inspect the local Dremio instance ont he command line
+
+Options:
+
+- use isql with local odbc driver
+- use Dremio's api to execute sql queries
+- use sql alchemy's engine to execute queries
+
 ## Later
+
+### Goal: smooth operation
+
+- app clearly shows when it is working
+- the search box behaves predictably (now key up or sth, that triggers many loads and the screen changes unpredictably)
+- do not show unused filter controls
 
 ### Goal: Get Paul to use this app
 
