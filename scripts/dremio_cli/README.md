@@ -75,8 +75,14 @@ If you're not using Apple Silicon, you can try the ISQL approach:
 View available tables and views, examine column definitions, understand relationships between tables.
 
 ```bash
-# List all tables in Dremio
-./scripts/dremio_cli/dremio_query.py "SHOW TABLES"
+# List all schemas
+./scripts/dremio_cli/dremio_query.py "SHOW SCHEMAS"
+
+# List all tables in a specific schema (note: schema name is required)
+./scripts/dremio_cli/dremio_query.py "SHOW TABLES IN Productie"
+
+# Show table details
+./scripts/dremio_cli/dremio_query.py "DESCRIBE TABLE Productie.producten"
 ```
 
 ### Data Validation
