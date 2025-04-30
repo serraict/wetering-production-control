@@ -30,6 +30,22 @@ For this reason, we've provided a Python-based solution that uses the Flight SQL
 
 The Python script uses the Flight SQL connection directly and works on all platforms, including Apple Silicon.
 
+#### Environment Setup
+
+The script requires the `SIMPLE_QUERY_CONNECTION` environment variable to be set with your Dremio connection string:
+
+```bash
+# Set the connection string (replace with your actual credentials)
+export SIMPLE_QUERY_CONNECTION="grpc://user:pass@host:port"
+
+# For encrypted connections, use grpc+tls protocol
+export SIMPLE_QUERY_CONNECTION="grpc+tls://user:pass@host:port"
+```
+
+You can add this to your `.env` file or set it in your shell session.
+
+#### Running Queries
+
 ```bash
 # Execute a simple query
 ./scripts/dremio_cli/dremio_query.py "SELECT * FROM table"
