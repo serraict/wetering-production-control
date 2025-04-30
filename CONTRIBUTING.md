@@ -104,6 +104,23 @@ make test
 make server
 ```
 
+### Dremio CLI Access
+
+For development and testing, you can use the Dremio CLI tool to execute SQL queries against the Dremio instance:
+
+```shell
+# Add the alias to your current shell session
+source scripts/dremio_cli/dremio_alias.sh
+
+# Execute a simple query
+dremio-query "SELECT * FROM table"
+
+# Execute a query from a file
+dremio-query --file path/to/query.sql
+```
+
+See the [Dremio CLI README](./scripts/dremio_cli/README.md) for more details on usage and example queries.
+
 ### Docker Development
 
 1. Build and start services:

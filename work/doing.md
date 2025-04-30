@@ -90,36 +90,43 @@ The ODBC setup requirement is deemed an acceptable tradeoff given:
 
 ### Tasks
 
-1. ODBC Driver Setup
-   - Document ODBC driver installation steps for Dremio
-   - Configure ODBC connection settings
-   - Create connection test script
-   - Document connection verification process
+1. ✅ ODBC Driver Setup
+   - ✅ Document ODBC driver installation steps for Dremio
+   - ✅ Configure ODBC connection settings
+   - ✅ Create connection test script
+   - ✅ Document connection verification process
 
-2. ISQL Integration
-   - Install isql command-line tool
-   - Configure isql to use Dremio ODBC connection
-   - Create basic connection test
-   - Document basic query examples
+2. ✅ ISQL Integration
+   - ✅ Install isql command-line tool
+   - ✅ Configure isql to use Dremio ODBC connection
+   - ✅ Create basic connection test
+   - ✅ Document basic query examples
 
-3. Helper Scripts
-   - Create shell script to launch isql with correct parameters
-   - Add common queries for schema inspection
-   - Add example queries for each use case
-   - Document helper script usage
+3. ✅ Helper Scripts
+   - ✅ Create Python script for Dremio queries (alternative to ISQL due to Apple Silicon limitations)
+   - ✅ Add example queries for schema inspection
+   - ✅ Add example queries for data validation
+   - ✅ Document script usage
 
-4. Documentation
-   - Update README with setup instructions
-   - Add example queries for each use case
-   - Document troubleshooting steps
-   - Add section in architecture.md about Dremio CLI access
+4. ✅ Documentation
+   - ✅ Update README with setup instructions
+   - ✅ Add example queries for key use cases
+   - ✅ Document troubleshooting steps
+   - ✅ Document ODBC driver limitations on Apple Silicon
 
-5. Testing & Validation
-   - Test all use cases:
-     - Schema inspection
-     - Data validation
-     - Query testing
-     - Development support
-     - Troubleshooting
-   - Document any limitations or issues found
-   - Add example queries that worked well
+5. ✅ Testing & Validation
+   - ✅ Test key use cases:
+     - ✅ Schema inspection
+     - ✅ Data validation
+   - ✅ Document limitations and issues found
+   - ✅ Verify script works with actual Dremio instance
+
+### Completed
+
+1. ✅ Create Alias
+   - ✅ Create a simple alias to access the script when activating the venv
+   - ✅ Document how to use the alias in CONTRIBUTING.md
+   - ✅ Document how to make the alias permanent in README.md
+1. ✅ Code Cleanup
+   - ✅ Suppress SQLAlchemy deprecation warnings in a more elegant way
+   - ✅ Remove unused code (interactive mode) and documentation

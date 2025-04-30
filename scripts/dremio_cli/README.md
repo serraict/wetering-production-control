@@ -5,6 +5,7 @@ This directory contains tools and documentation for accessing Dremio via the com
 ## Overview
 
 The Dremio CLI access allows AI agents and developers to:
+
 - Inspect schema information
 - Validate data
 - Test SQL queries
@@ -13,7 +14,7 @@ The Dremio CLI access allows AI agents and developers to:
 
 ## Important Note for Apple Silicon Users
 
-We've discovered that the Arrow Flight SQL ODBC driver is not supported on Apple Silicon (M1/M2/M3) architecture, as stated in the [Dremio documentation](https://docs.dremio.com/software/drivers/odbc-driver/). 
+We've discovered that the Arrow Flight SQL ODBC driver is not supported on Apple Silicon (M1/M2/M3) architecture, as stated in the [Dremio documentation](https://docs.dremio.com/software/drivers/odbc-driver/).
 
 For this reason, we've provided a Python-based solution that uses the Flight SQL connection directly, which works on all platforms including Apple Silicon.
 
@@ -35,9 +36,24 @@ The Python script uses the Flight SQL connection directly and works on all platf
 
 # Execute a query from a file
 ./scripts/dremio_cli/dremio_query.py --file path/to/query.sql
+```
 
-# Run in interactive mode
-./scripts/dremio_cli/dremio_query.py --interactive
+### Using the Alias (Easier)
+
+For convenience, you can create an alias to the script:
+
+```bash
+# Add the alias to your current shell session
+source scripts/dremio_cli/dremio_alias.sh
+
+# Now you can use the alias
+dremio-query "SELECT * FROM table"
+```
+
+To make the alias permanent, add the following line to your shell profile file (e.g., ~/.bashrc, ~/.zshrc):
+
+```bash
+source /path/to/production_control/scripts/dremio_cli/dremio_alias.sh
 ```
 
 ### Using ISQL with ODBC (Non-Apple Silicon Only)
@@ -75,8 +91,8 @@ Verify data quality, check for null values, validate data transformations.
 Test SQL queries before implementing them in code, debug complex queries.
 
 ```bash
-# Interactive SQL session
-./scripts/dremio_cli/dremio_query.py --interactive
+# Test a complex query
+./scripts/dremio_cli/dremio_query.py "SELECT * FROM table WHERE complex_condition"
 ```
 
 ### Development Support
