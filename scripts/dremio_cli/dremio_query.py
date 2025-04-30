@@ -14,6 +14,10 @@ Usage:
 import argparse
 import os
 import sys
+import warnings
+
+# Suppress SQLAlchemy warnings
+warnings.filterwarnings("ignore", category=Warning)
 
 try:
     import pandas as pd
