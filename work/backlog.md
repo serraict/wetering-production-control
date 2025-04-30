@@ -4,14 +4,6 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Goal: allow ai agents to inspect the local Dremio instance ont he command line
-
-Options:
-
-- use isql with local odbc driver
-- use Dremio's api to execute sql queries
-- use sql alchemy's engine to execute queries
-
 ## Later
 
 ### Goal: smooth operation
