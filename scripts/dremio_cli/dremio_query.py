@@ -14,17 +14,11 @@ import argparse
 import os
 import sys
 import warnings
+import pandas as pd
 
 # Suppress SQLAlchemy deprecation warnings more specifically
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="sqlalchemy")
-
-try:
-    import pandas as pd
-    from sqlalchemy import create_engine, text
-except ImportError:
-    print("Required packages not found. Please install them with:")
-    print("pip install pandas sqlalchemy sqlalchemy-dremio pyarrow")
-    sys.exit(1)
+warnings.filterwarnings("ignore", category=Warning)
+from sqlalchemy import create_engine, text
 
 
 def execute_query(query: str) -> None:
