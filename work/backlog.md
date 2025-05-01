@@ -4,6 +4,12 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
+### Goal: Improve table selection persistence
+
+- Selection is lost when navigating between pages or changing page size
+- Modify ClientStorageTableState to persist selection across pagination changes
+- Update table request handling to preserve selection
+
 ## Later
 
 ### Goals the user can print labels so that she can easily mark the first and last pot in a production lot
