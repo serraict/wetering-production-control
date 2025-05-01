@@ -6,6 +6,10 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Later
 
+### Goals the user can print labels so that she can easily mark the first and last pot in a production lot
+
+(to do: clarify)
+
 ### Goal: smooth operation
 
 - app clearly shows when it is working
@@ -29,6 +33,7 @@ but his primary concern is getting the job done.
   Leverage Pydantic as much as possible here
 - Review build pipeline
   - Package does not seem to run tests. We should run the tests on the container.
+- Refactor and document usage of week numbering
 
 ### Goal: User can see greenhouse utilization
 

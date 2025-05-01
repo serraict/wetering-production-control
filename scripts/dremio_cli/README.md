@@ -21,8 +21,7 @@ For this reason, we've provided a Python-based solution that uses the Flight SQL
 ## Components
 
 1. **Python Script** - A Python script for executing SQL queries against Dremio
-2. **ODBC Documentation** - Documentation about ODBC setup (for non-Apple Silicon machines)
-3. **Example Queries** - SQL queries for various use cases
+2. **Example Queries** - SQL queries for various use cases
 
 ## Quick Start
 
@@ -77,8 +76,8 @@ source /path/to/production_control/scripts/dremio_cli/dremio_alias.sh
 If you're not using Apple Silicon, you can try the ISQL approach:
 
 1. Install the Dremio ODBC driver (see [ODBC Setup](./odbc_setup/install.md))
-2. Configure your ODBC connection (see [ODBC Configuration](./odbc_setup/configuration.md))
-3. Use the connect.sh script:
+1. Configure your ODBC connection (see [ODBC Configuration](./odbc_setup/configuration.md))
+1. Use the connect.sh script:
 
 ```bash
 # Connect to Dremio and run a query
@@ -88,6 +87,7 @@ If you're not using Apple Silicon, you can try the ISQL approach:
 ## Use Cases
 
 ### Schema Inspection
+
 View available tables and views, examine column definitions, understand relationships between tables.
 
 ```bash
@@ -102,6 +102,7 @@ View available tables and views, examine column definitions, understand relation
 ```
 
 ### Data Validation
+
 Verify data quality, check for null values, validate data transformations.
 
 ```bash
@@ -110,6 +111,7 @@ Verify data quality, check for null values, validate data transformations.
 ```
 
 ### Query Testing
+
 Test SQL queries before implementing them in code, debug complex queries.
 
 ```bash
@@ -118,6 +120,7 @@ Test SQL queries before implementing them in code, debug complex queries.
 ```
 
 ### Development Support
+
 Generate test data, create fixtures, verify changes haven't broken existing queries.
 
 ```bash
@@ -126,6 +129,7 @@ Generate test data, create fixtures, verify changes haven't broken existing quer
 ```
 
 ### Troubleshooting
+
 Investigate production issues, compare expected vs actual data.
 
 ```bash

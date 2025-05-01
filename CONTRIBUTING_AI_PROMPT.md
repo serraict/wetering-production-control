@@ -42,11 +42,15 @@ Follow both this guide and the main CONTRIBUTING.md when making changes.
        assert Component().operation("") == default_value
    ```
 
+   Do not add "#ARRANGE ... #ACT ... #ASSERT ..." comments.
+
 ## Workflow
 
 The currently active task is described in [doing.md](./work/doing.md).
 
 Things we consider doing in the future are described in [backlog.md](./work/backlog.md).
+
+When a task is done, suggest a prompt to start the next task.
 
 ## Tool Usage
 

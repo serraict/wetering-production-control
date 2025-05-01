@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added warning filter to spacing page:
 
 - Added Dremio CLI access:
+
   - Created Python script for executing SQL queries against Dremio
   - Added shell alias for easier access
   - Documented usage in CONTRIBUTING.md
