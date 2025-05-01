@@ -21,7 +21,7 @@ For this reason, we've provided a Python-based solution that uses the Flight SQL
 ## Components
 
 1. **Python Script** - A Python script for executing SQL queries against Dremio
-2. **Example Queries** - SQL queries for various use cases
+1. **Example Queries** - SQL queries for various use cases
 
 ## Quick Start
 
