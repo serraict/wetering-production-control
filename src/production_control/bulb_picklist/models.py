@@ -3,7 +3,6 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import computed_field
 from sqlmodel import Field, SQLModel
 
 
@@ -52,12 +51,3 @@ class BulbPickList(SQLModel, table=True):
         description="The planting date",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
-
-    # Computed fields
-    @computed_field(return_type=Optional[int])
-    @property
-    def oppot_week(self) -> Optional[int]:
-        """Return the week number extracted from oppot_datum."""
-        if self.oppot_datum:
-            return self.oppot_datum.isocalendar()[1]
-        return None

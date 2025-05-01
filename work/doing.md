@@ -17,7 +17,6 @@ Based on data exploration, we'll implement the following:
 We'll create a `BulbPickList` model that maps to the `Productie.Oppotten."bollen_pick_lijst"` table with the following fields:
 
 - `oppot_datum`: Date - The planting date
-- `oppot_week`: Integer (computed) - The week number extracted from oppot_datum
 - `ras`: String - The bulb variety name
 - `bollen_code`: Integer - The bulb code
 - `locatie`: String - The storage location
@@ -71,8 +70,8 @@ Following our test-first development approach, we'll implement this feature in s
 
 ### 2. Web Interface
 
-- [ ] Test bulb picking page rendering
-- [ ] Create basic page structure
+- [x] Test bulb picking page rendering
+- [x] Create basic page structure
 - [ ] Test table component with selection
 - [ ] Implement table with row selection
 - [ ] Test "Select All" functionality
@@ -92,8 +91,8 @@ Following our test-first development approach, we'll implement this feature in s
 
 - [ ] Test end-to-end workflow
 - [ ] Fix any integration issues
-- [ ] Update application startup to include new module
-- [ ] Update menu to include new page
+- [x] Update application startup to include new module
+- [x] Update menu to include new page
 - [ ] Update CHANGELOG.md
 
 ### 5. Quality Assurance

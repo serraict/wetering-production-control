@@ -24,8 +24,6 @@ class BulbPickListRepository(DremioRepository[BulbPickList]):
         """Apply default sorting to query.
 
         Sort by oppot_datum (descending) and location as specified in the requirements.
-        Since oppot_week is computed from oppot_datum, sorting by oppot_datum
-        effectively sorts by oppot_week.
         """
         return query.order_by(
             self.model.oppot_datum.desc(),

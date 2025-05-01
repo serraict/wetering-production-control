@@ -31,27 +31,3 @@ def test_bulb_picklist_model_attributes():
     assert bulb_picklist.aantal_bakken == 10.5
     assert bulb_picklist.aantal_bollen == 100.0
     assert bulb_picklist.oppot_datum == test_date
-
-
-def test_bulb_picklist_oppot_week_calculation():
-    """Test the oppot_week computed property."""
-    # Test with date
-    bulb_with_date = BulbPickList(
-        bollen_code=12345,
-        oppot_datum=date(2023, 1, 1),  # Week 52
-    )
-    assert bulb_with_date.oppot_week == 52
-
-    # Test with different date
-    bulb_with_different_date = BulbPickList(
-        bollen_code=12345,
-        oppot_datum=date(2023, 6, 15),  # Week 24
-    )
-    assert bulb_with_different_date.oppot_week == 24
-
-    # Test without date
-    bulb_without_date = BulbPickList(
-        bollen_code=12345,
-        oppot_datum=None,
-    )
-    assert bulb_without_date.oppot_week is None
