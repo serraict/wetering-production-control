@@ -102,3 +102,10 @@ Following our test-first development approach, we'll implement this feature in s
 - [ ] Run `make quality` for linting
 - [ ] Verify changes meet project standards
 - [ ] Remove ORM mapping tests from other models (focus on behavior, not implementation details)
+
+### 6. Refactoring
+
+- [ ] Create generic components for model detail pages and view actions
+- [ ] Refactor bulb_picklist.py to use these components
+- [ ] Refactor other pages (products.py, spacing.py) to use the same components
+- [ ] Update tests to reflect the new structure
