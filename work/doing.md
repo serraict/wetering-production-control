@@ -15,6 +15,7 @@ Based on data exploration, we'll implement the following:
 ### Data Model
 
 We'll create a `BulbPickList` model that maps to the `Productie.Oppotten."bollen_pick_lijst"` table with the following fields:
+
 - `oppot_datum`: Date - The planting date
 - `oppot_week`: Integer (computed) - The week number extracted from oppot_datum
 - `ras`: String - The bulb variety name
@@ -27,6 +28,7 @@ We'll create a `BulbPickList` model that maps to the `Productie.Oppotten."bollen
 ### Web Interface
 
 We'll create a new page at `/bulb-picking` that displays:
+
 - A table showing the bulb pick list data
 - Sorting by oppot week (descending) and location
 - Row selection functionality
@@ -36,6 +38,7 @@ We'll create a new page at `/bulb-picking` that displays:
 ### Label Generation
 
 The pick labels will include:
+
 - Plant name (ras)
 - QR code linking to a detail page
 - Batch codes (bollen_code)
@@ -55,16 +58,16 @@ Following our test-first development approach, we'll implement this feature in s
 
 ### 1. Model and Repository
 
-- [ ] Create test for `BulbPickList` model existence
-- [ ] Implement basic `BulbPickList` model
-- [ ] Test model fields and validation
-- [ ] Complete model implementation
-- [ ] Test repository initialization
-- [ ] Implement repository class
-- [ ] Test data retrieval with pagination
-- [ ] Implement data retrieval methods
-- [ ] Test filtering and sorting
-- [ ] Implement filtering and sorting
+- [x] Create test for `BulbPickList` model existence
+- [x] Implement basic `BulbPickList` model
+- [x] Test model fields and validation
+- [x] Complete model implementation
+- [x] Test repository initialization
+- [x] Implement repository class
+- [x] Test data retrieval with pagination
+- [x] Implement data retrieval methods
+- [x] Test filtering and sorting
+- [x] Implement filtering and sorting
 
 ### 2. Web Interface
 
@@ -99,3 +102,4 @@ Following our test-first development approach, we'll implement this feature in s
 - [ ] Run `make format` for code formatting
 - [ ] Run `make quality` for linting
 - [ ] Verify changes meet project standards
+- [ ] Remove ORM mapping tests from other models (focus on behavior, not implementation details)
