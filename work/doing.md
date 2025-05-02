@@ -131,8 +131,10 @@ Add a button each row to generate a label for that row.
 
 ### 5. Quality Assurance
 
-- [x] Run `make test` to verify all tests pass
-- [x] Run `make format` for code formatting
+Run these everytime we check a box in this document, and one final time before the complete task as done:
+
+- [ ] Run `make test` to verify all tests pass
+- [ ] Run `make format` for code formatting
 - [ ] Run `make quality` for linting
 - [ ] Verify changes meet project standards
 - [ ] Remove ORM mapping tests from other models (focus on behavior, not implementation details)
