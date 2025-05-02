@@ -41,8 +41,8 @@ def bulb_picklist_page() -> None:
     # actions
     def handle_view(e: Dict[str, Any]) -> None:
         """Handle view button click."""
-        bollen_code = e.args.get("key")
-        record = repository.get_by_id(bollen_code)
+        id = e.args.get("key")
+        record = repository.get_by_id(id)
         if record:
             with ui.dialog() as dialog, ui.card():
                 ui.label(f"{record.ras} ({record.bollen_code})").classes(HEADER_CLASSES)
@@ -100,13 +100,13 @@ def bulb_picklist_page() -> None:
     load_data()
 
 
-@router.page("/{bollen_code}")
-def bulb_picklist_detail(bollen_code: int) -> None:
+@router.page("/{id}")
+def bulb_picklist_detail(id: int) -> None:
     """Render the bulb picklist record detail page."""
     repository = BulbPickListRepository()
 
     with frame("Bollen Picklist Details"):
-        record = repository.get_by_id(bollen_code)
+        record = repository.get_by_id(id)
 
         if record:
             with ui.row().classes("w-full justify-between items-center mb-6"):

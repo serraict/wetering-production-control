@@ -12,9 +12,14 @@ class BulbPickList(SQLModel, table=True):
     __tablename__ = "bollen_pick_lijst"
     __table_args__ = {"schema": "Productie.Oppotten"}
 
-    # Primary key - assuming bollen_code is the primary key based on the description
-    bollen_code: int = Field(
+    id: int = Field(
         primary_key=True,
+        title="ID",
+        description="The potting lot identifier",
+        sa_column_kwargs={"info": {"ui_sortable": True}},
+    )
+
+    bollen_code: int = Field(
         title="Bollen Code",
         description="The bulb code",
         sa_column_kwargs={"info": {"ui_sortable": True}},

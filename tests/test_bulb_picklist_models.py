@@ -16,6 +16,7 @@ def test_bulb_picklist_model_attributes():
 
     # Act
     bulb_picklist = BulbPickList(
+        id=1001,
         bollen_code=12345,
         ras="Test Bulb",
         locatie="A1-B2",
@@ -25,9 +26,24 @@ def test_bulb_picklist_model_attributes():
     )
 
     # Assert
+    assert bulb_picklist.id == 1001
     assert bulb_picklist.bollen_code == 12345
     assert bulb_picklist.ras == "Test Bulb"
     assert bulb_picklist.locatie == "A1-B2"
     assert bulb_picklist.aantal_bakken == 10.5
     assert bulb_picklist.aantal_bollen == 100.0
     assert bulb_picklist.oppot_datum == test_date
+
+
+def test_bulb_picklist_primary_key():
+    """Test that id is the primary key for BulbPickList model."""
+    from sqlalchemy.inspection import inspect
+
+    # Use SQLAlchemy's inspect to check the primary key
+    primary_key_columns = [column.name for column in inspect(BulbPickList).primary_key]
+
+    # Check that id is the primary key
+    assert "id" in primary_key_columns
+
+    # Check that bollen_code is not a primary key
+    assert "bollen_code" not in primary_key_columns

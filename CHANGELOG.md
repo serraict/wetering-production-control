@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added shell alias for easier access
   - Documented usage in CONTRIBUTING.md
 
+- Added Bulb Picklist module:
+
+  - Created BulbPickList model with proper field mappings
+  - Implemented repository for data access with pagination and filtering
+  - Added web interface for viewing bulb picklist data
+  - Updated model to use id field as primary key instead of bollen_code
+
 ### Fixed
 
 - Fixed week number display for year-end dates (e.g., 2024-12-30 now correctly shows as 25w01-1)

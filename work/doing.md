@@ -72,40 +72,33 @@ Following our test-first development approach, we'll implement this feature in s
 
 - [x] Test bulb picking page rendering
 - [x] Create basic page structure
-- [x] Test table component with selection
-      - Add tests for selection state tracking in ClientStorageTableState
-      - Add tests for selection handling in ServerSidePaginatingTable
-      - Test selection events and state updates
-      - Test persistence of selection state
-- [x] Implement table with row selection
-      - Update ServerSidePaginatingTable to support selection:
-        - Add selection and on_select parameters to constructor
-        - Pass selection configuration to parent ui.table
-        - Add selection event handling
-      - Update ClientStorageTableState:
-        - Add selected_rows field for tracking selections
-        - Add methods to update selection state
-        - Add selection state persistence
-      - Update bulb_picklist page:
-        - Add selection state tracking
-        - Add selection event handlers
-        - Configure table for row selection
-- [x] Test "Select All" functionality
-      - Not needed - using built-in table header checkbox for selecting all rows
-- [x] Implement "Select All" button
-      - Not needed - using built-in table header checkbox for selecting all rows
+- [x] Update BulbPickList model to use potting lot code (id) as primary key
+  - [x] Identify the potting lot code field in the database (found 'id' field is most suitable)
+  - [x] Update model changes:
+  - Add 'id' field as primary key
+  - Remove primary key from bollen_code but keep as regular field
+  - Keep all other fields unchanged
+  - [x] Update repository changes:
+  - Update get_by_id method to use 'id' instead of bollen_code
+  - Update \_apply_default_sorting to keep same sorting logic
+  - Update get_paginated to use 'id' in count query
+  - [x] Update UI changes:
+  - Update view handler to use 'id' instead of bollen_code
+  - Update detail page route to use 'id'
+  - [x] Update tests:
+  - Update test_bulb_picklist_models.py for new primary key
+  - Update test_bulb_picklist_repository.py to use 'id'
+  - Update test_web_bulb_picklist.py to use 'id' in test data
+- [ ] Test table component with selection. We ran into problem with this earlier.
+  Before starting, we have to analyze hove server side paging works, and document it.
+  Then we have to find out how to include selection, leveraging nicegui as good as possible.
+  We have to be careful when storing selection state.
+- [ ] Implement table with row selection
+- [ ] Test "Select All" functionality
+- [ ] Implement "Select All" button
 - [ ] Exploratory tests by user.
-      - collect results and determine actions
-      - ask questions based on usage
-      - Research NiceGUI table selection behavior:
-        - Found that the built-in selection mechanism doesn't trigger events as expected
-        - Need to investigate alternative approaches for row selection
-        - Consider custom selection implementation with checkboxes or buttons
-- [ ] Update BulbPickList model to use potting lot code as primary key
-      - Identify the potting lot code field in the database
-      - Update model to include this field
-      - Update repository to use potting lot code as primary key
-      - Update UI to use potting lot code for row identification
+  - collect results and determine actions
+  - ask questions based on usage
 
 ### 3. Label Generation
 
@@ -123,7 +116,7 @@ Following our test-first development approach, we'll implement this feature in s
 - [ ] Fix any integration issues
 - [x] Update application startup to include new module
 - [x] Update menu to include new page
-- [ ] Update CHANGELOG.md
+- [x] Update CHANGELOG.md
 
 ### 5. Quality Assurance
 

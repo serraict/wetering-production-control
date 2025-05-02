@@ -14,7 +14,7 @@ class BulbPickListRepository(DremioRepository[BulbPickList]):
     """Read-only repository for bulb picklist data access."""
 
     # Fields to search when filtering bulb picklist records
-    search_fields = ["bollen_code", "ras", "locatie"]
+    search_fields = ["id", "bollen_code", "ras", "locatie"]
 
     def __init__(self, connection: Optional[Engine] = None):
         """Initialize repository with optional connection."""
@@ -47,7 +47,7 @@ class BulbPickListRepository(DremioRepository[BulbPickList]):
         with Session(self.engine) as session:
             # Create base queries
             base_query = select(BulbPickList)
-            count_stmt = select(func.count(distinct(BulbPickList.bollen_code)))
+            count_stmt = select(func.count(distinct(BulbPickList.id)))
 
             # Execute paginated query
             return self._execute_paginated_query(
@@ -62,10 +62,8 @@ class BulbPickListRepository(DremioRepository[BulbPickList]):
                 descending,
             )
 
-    def get_by_id(self, bollen_code: int) -> Optional[BulbPickList]:
-        """Get a bulb picklist record by its bollen_code."""
+    def get_by_id(self, id: int) -> Optional[BulbPickList]:
+        """Get a bulb picklist record by its id."""
         with Session(self.engine) as session:
             # Using text() since Dremio Flight doesn't support parameterized queries
-            return session.exec(
-                select(BulbPickList).where(text(f"bollen_code = {bollen_code}"))
-            ).first()
+            return session.exec(select(BulbPickList).where(text(f"id = {id}"))).first()
