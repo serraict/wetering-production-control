@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bulb Picklist Label</title>
+    <style>
+        @page {
+            size: 152mm 101mm; /* 6x4 inches in mm */
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .label {
+            width: 152mm;
+            height: 101mm;
+            box-sizing: border-box;
+            border: 1px solid #000;
+            display: grid;
+            grid-template-rows: 33% 33% 33%;
+            grid-template-columns: 50% 50%;
+        }
+        .plant-name {
+            grid-column: 1 / 3;
+            grid-row: 1;
+            font-size: 24pt;
+            font-weight: bold;
+            padding: 10mm 5mm;
+        }
+        .code-left {
+            grid-column: 1;
+            grid-row: 2;
+            font-size: 18pt;
+            padding: 5mm;
+            border-top: 1px solid #000;
+            border-right: 1px solid #000;
+        }
+        .code-right {
+            grid-column: 2;
+            grid-row: 2;
+            font-size: 18pt;
+            padding: 5mm;
+            border-top: 1px solid #000;
+        }
+        .location {
+            grid-column: 1;
+            grid-row: 3;
+            font-size: 18pt;
+            padding: 5mm;
+            border-top: 1px solid #000;
+            border-right: 1px solid #000;
+        }
+        .trays {
+            grid-column: 2;
+            grid-row: 3;
+            font-size: 18pt;
+            padding: 5mm;
+            border-top: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="label">
+        <div class="plant-name">{{ ras }}</div>
+        <div class="code-left">{{ bollen_code }}</div>
+        <div class="code-right">{{ id }}</div>
+        <div class="location">{{ locatie }}</div>
+        <div class="trays">{{ aantal_bakken }} kratten</div>
+    </div>
+</body>
+</html>

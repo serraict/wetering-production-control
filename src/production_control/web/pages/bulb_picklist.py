@@ -1,11 +1,13 @@
 """Bulb picklist page implementation."""
 
+import os
 from typing import Dict, Any
 
 from nicegui import APIRouter, ui
 
 from ...bulb_picklist.repositories import BulbPickListRepository
 from ...bulb_picklist.models import BulbPickList
+from ...bulb_picklist.label_generation import LabelGenerator
 from ..components import frame
 from ..components.styles import (
     CARD_CLASSES,
@@ -59,14 +61,34 @@ def bulb_picklist_page() -> None:
         id = e.args.get("key")
         record = repository.get_by_id(id)
         if record:
+            # Create a dialog to show the label preview
             with ui.dialog() as dialog, ui.card():
                 ui.label(f"{record.ras} ({record.bollen_code})").classes(HEADER_CLASSES)
                 ui.label(f"Locatie: {record.locatie}")
                 ui.label(f"Aantal bakken: {record.aantal_bakken}")
                 ui.label(f"Aantal bollen: {record.aantal_bollen}")
                 ui.label(f"Oppot datum: {record.oppot_datum}")
-                # Placeholder for print functionality
-                ui.button("Afdrukken")
+                
+                # Generate PDF label
+                label_generator = LabelGenerator()
+                
+                def handle_print():
+                    """Generate and download the PDF label."""
+                    # Generate PDF in a temporary file
+                    pdf_path = label_generator.generate_pdf(record)
+                    
+                    # Create a download link for the PDF
+                    filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
+                    ui.download(pdf_path, filename=filename)
+                    
+                    # Clean up the temporary file after download
+                    # Note: This will run after the download is complete
+                    def cleanup():
+                        if os.path.exists(pdf_path):
+                            os.remove(pdf_path)
+                    ui.timer(5, cleanup, once=True)
+                
+                ui.button("Afdrukken", on_click=handle_print)
                 ui.button("Sluiten", on_click=dialog.close)
                 dialog.open()
 

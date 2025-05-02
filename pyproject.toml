@@ -12,6 +12,7 @@ dependencies = [
     "sqlalchemy-dremio",
     "pyarrow",
     "pandas",
+    "weasyprint",
 ]
 dynamic = ["version"]
 license.file = "LICENCE"
