@@ -104,9 +104,20 @@ Add a button each row to generate a label for that row.
 
 ### 3a. Add QR Code to label
 
-- [ ] Research QR code generation options
-- [ ] Test QR code generation
-- [ ] Implement QR code integration
+- [x] Add qrcode\[pil\] dependency to pyproject.toml
+- [x] Test QR code generation:
+  - Add test for QR code generation method in test_pdf_label_generation.py
+  - Test QR code content (should encode `/bulb-picking/{record.id}`)
+  - Test QR code image generation (base64 format for HTML embedding)
+  - Test QR code integration with label HTML
+- [x] Implement QR code generation:
+  - Add generate_qr_code method to LabelGenerator class
+  - Generate QR code as base64 image (~25mm square size)
+  - Position QR code in bottom right of label template
+  - Update generate_label_html to include QR code
+  - Ensure proper sizing and contrast (black on white)
+- [x] base url should be configurable and/or retrieved from nicegui context
+  - verify that the app works
 
 ### 3b. Generate labels for selected records
 

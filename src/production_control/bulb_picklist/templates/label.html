@@ -73,6 +73,14 @@
             position: relative;
         }
 
+        .qr-code {
+            position: absolute;
+            bottom: 5mm;
+            right: 5mm;
+            width: 25mm;
+            height: 25mm;
+        }
+
         .label-text {
             display: block;
             font-size: 8pt;
@@ -100,6 +108,7 @@
         <div class="trays">
             {{ aantal_bakken }} kratten
             <span class="label-text">Aantal</span>
+            <img src="{{ qr_code }}" alt="QR Code" class="qr-code">
         </div>
     </div>
 </body>

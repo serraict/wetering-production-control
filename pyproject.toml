@@ -13,6 +13,7 @@ dependencies = [
     "pyarrow",
     "pandas",
     "weasyprint",
+    "qrcode[pil]",
 ]
 dynamic = ["version"]
 license.file = "LICENCE"
