@@ -89,6 +89,27 @@ Following our test-first development approach, we'll implement this feature in s
   - Update test_bulb_picklist_models.py for new primary key
   - Update test_bulb_picklist_repository.py to use 'id'
   - Update test_web_bulb_picklist.py to use 'id' in test data
+
+### 3. Label Generation
+
+Add a button each row to generate a label for that row.
+
+- [x] add button
+- [x] add popup dialog that show the label
+- [x] add print button to the popup
+- [ ] Research PDF generation
+- [ ] Implement PDF generation for a single label
+- [ ] Test PDF generation
+- [ ] Implement "Print Label" button
+
+### 3a. Add QR Code to label
+
+- [ ] Research QR code generation options
+- [ ] Test QR code generation
+- [ ] Implement QR code integration
+
+### 3b. Generate labels for selected records
+
 - [ ] Test table component with selection. We ran into problem with this earlier.
   Before starting, we have to analyze hove server side paging works, and document it.
   Then we have to find out how to include selection, leveraging nicegui as good as possible.
@@ -100,16 +121,6 @@ Following our test-first development approach, we'll implement this feature in s
   - collect results and determine actions
   - ask questions based on usage
 
-### 3. Label Generation
-
-- [ ] Research PDF and QR code generation options
-- [ ] Test PDF generation
-- [ ] Implement PDF generation for labels
-- [ ] Test QR code generation
-- [ ] Implement QR code integration
-- [ ] Test complete label generation
-- [ ] Implement "Print Labels" button
-
 ### 4. Integration
 
 - [ ] Test end-to-end workflow
@@ -120,8 +131,8 @@ Following our test-first development approach, we'll implement this feature in s
 
 ### 5. Quality Assurance
 
-- [ ] Run `make test` to verify all tests pass
-- [ ] Run `make format` for code formatting
+- [x] Run `make test` to verify all tests pass
+- [x] Run `make format` for code formatting
 - [ ] Run `make quality` for linting
 - [ ] Verify changes meet project standards
 - [ ] Remove ORM mapping tests from other models (focus on behavior, not implementation details)

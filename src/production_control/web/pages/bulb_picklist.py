@@ -53,10 +53,31 @@ def bulb_picklist_page() -> None:
                 ui.button("Sluiten", on_click=dialog.close)
                 dialog.open()
 
+    # actions
+    def handle_label(e: Dict[str, Any]) -> None:
+        """Handle label button click."""
+        id = e.args.get("key")
+        record = repository.get_by_id(id)
+        if record:
+            with ui.dialog() as dialog, ui.card():
+                ui.label(f"{record.ras} ({record.bollen_code})").classes(HEADER_CLASSES)
+                ui.label(f"Locatie: {record.locatie}")
+                ui.label(f"Aantal bakken: {record.aantal_bakken}")
+                ui.label(f"Aantal bollen: {record.aantal_bollen}")
+                ui.label(f"Oppot datum: {record.oppot_datum}")
+                # Placeholder for print functionality
+                ui.button("Afdrukken")
+                ui.button("Sluiten", on_click=dialog.close)
+                dialog.open()
+
     row_actions = {
         "view": {
             "icon": "visibility",
             "handler": handle_view,
+        },
+        "label": {
+            "icon": "print",
+            "handler": handle_label,
         },
     }
 
