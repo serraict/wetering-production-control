@@ -68,26 +68,27 @@ def bulb_picklist_page() -> None:
                 ui.label(f"Aantal bakken: {record.aantal_bakken}")
                 ui.label(f"Aantal bollen: {record.aantal_bollen}")
                 ui.label(f"Oppot datum: {record.oppot_datum}")
-                
+
                 # Generate PDF label
                 label_generator = LabelGenerator()
-                
+
                 def handle_print():
                     """Generate and download the PDF label."""
                     # Generate PDF in a temporary file
                     pdf_path = label_generator.generate_pdf(record)
-                    
+
                     # Create a download link for the PDF
                     filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
                     ui.download(pdf_path, filename=filename)
-                    
+
                     # Clean up the temporary file after download
                     # Note: This will run after the download is complete
                     def cleanup():
                         if os.path.exists(pdf_path):
                             os.remove(pdf_path)
+
                     ui.timer(5, cleanup, once=True)
-                
+
                 ui.button("Afdrukken", on_click=handle_print)
                 ui.button("Sluiten", on_click=dialog.close)
                 dialog.open()
