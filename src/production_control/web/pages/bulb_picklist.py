@@ -3,7 +3,7 @@
 import os
 from typing import Dict, Any
 
-from nicegui import APIRouter, ui
+from nicegui import APIRouter, ui, app
 
 from ...bulb_picklist.repositories import BulbPickListRepository
 from ...bulb_picklist.models import BulbPickList
@@ -74,8 +74,15 @@ def bulb_picklist_page() -> None:
 
                 def handle_print():
                     """Generate and download the PDF label."""
+                    # Get the base URL from environment variable, app.urls, or empty string
+                    base_url = os.environ.get("QR_CODE_BASE_URL", "")
+
+                    # If no env var, try to get from app.urls
+                    if not base_url:
+                        base_url = next(iter(app.urls), "")
+
                     # Generate PDF in a temporary file
-                    pdf_path = label_generator.generate_pdf(record)
+                    pdf_path = label_generator.generate_pdf(record, base_url=base_url)
 
                     # Create a download link for the PDF
                     filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
