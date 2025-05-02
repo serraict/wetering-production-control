@@ -97,10 +97,10 @@ Add a button each row to generate a label for that row.
 - [x] add button
 - [x] add popup dialog that show the label
 - [x] add print button to the popup
-- [ ] Research PDF generation
-- [ ] Implement PDF generation for a single label
-- [ ] Test PDF generation
-- [ ] Implement "Print Label" button
+- [x] Research PDF generation
+- [x] Implement PDF generation for a single label
+- [x] Test PDF generation
+- [x] Implement "Print Label" button
 
 ### 3a. Add QR Code to label
 
