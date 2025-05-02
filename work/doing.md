@@ -72,10 +72,40 @@ Following our test-first development approach, we'll implement this feature in s
 
 - [x] Test bulb picking page rendering
 - [x] Create basic page structure
-- [ ] Test table component with selection
-- [ ] Implement table with row selection
-- [ ] Test "Select All" functionality
-- [ ] Implement "Select All" button
+- [x] Test table component with selection
+      - Add tests for selection state tracking in ClientStorageTableState
+      - Add tests for selection handling in ServerSidePaginatingTable
+      - Test selection events and state updates
+      - Test persistence of selection state
+- [x] Implement table with row selection
+      - Update ServerSidePaginatingTable to support selection:
+        - Add selection and on_select parameters to constructor
+        - Pass selection configuration to parent ui.table
+        - Add selection event handling
+      - Update ClientStorageTableState:
+        - Add selected_rows field for tracking selections
+        - Add methods to update selection state
+        - Add selection state persistence
+      - Update bulb_picklist page:
+        - Add selection state tracking
+        - Add selection event handlers
+        - Configure table for row selection
+- [x] Test "Select All" functionality
+      - Not needed - using built-in table header checkbox for selecting all rows
+- [x] Implement "Select All" button
+      - Not needed - using built-in table header checkbox for selecting all rows
+- [ ] Exploratory tests by user.
+      - collect results and determine actions
+      - ask questions based on usage
+      - Research NiceGUI table selection behavior:
+        - Found that the built-in selection mechanism doesn't trigger events as expected
+        - Need to investigate alternative approaches for row selection
+        - Consider custom selection implementation with checkboxes or buttons
+- [ ] Update BulbPickList model to use potting lot code as primary key
+      - Identify the potting lot code field in the database
+      - Update model to include this field
+      - Update repository to use potting lot code as primary key
+      - Update UI to use potting lot code for row identification
 
 ### 3. Label Generation
 
