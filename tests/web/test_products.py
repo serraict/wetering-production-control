@@ -135,5 +135,5 @@ async def test_product_detail_page_handles_invalid_id(user: User) -> None:
         await user.open("/products/999")
 
         # Then
-        await user.should_see("Product niet gevonden")
+        await user.should_see("Record niet gevonden")
         await user.should_see("← Terug naar Producten")

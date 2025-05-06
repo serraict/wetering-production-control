@@ -150,7 +150,18 @@ Run these everytime we check a box in this document, and one final time before t
 
 ### 6. Refactoring
 
-- [ ] Create generic components for model detail pages and view actions
+- [x] Create generic components for model detail pages and view actions
+  - [x] Create model_detail_page.py component
+  - [x] Create model_list_page.py component
+- [x] Refactor products.py to use these components
+  - [x] Update products list page to use model_list_page.py
+  - [x] Update product detail page to use model_detail_page.py
+  - [x] Update tests to reflect the new structure
 - [ ] Refactor bulb_picklist.py to use these components
-- [ ] Refactor other pages (products.py, spacing.py) to use the same components
-- [ ] Update tests to reflect the new structure
+  - [ ] Refactor to use model_detail_page.py for the detail pages
+  - [ ] Refactor to use model_list_page.py for the list page
+  - [ ] Update the view and label actions to use the generic components
+- [ ] Refactor spacing.py to use these components
+  - [ ] Refactor to use model_detail_page.py for the detail pages
+  - [ ] Refactor to use model_list_page.py for the list page
+  - [ ] Update the view and edit actions to use the generic components
