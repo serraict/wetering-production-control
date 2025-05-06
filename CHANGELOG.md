@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented repository for data access with pagination and filtering
   - Added web interface for viewing bulb picklist data
   - Updated model to use id field as primary key instead of bollen_code
+  - Added label generation functionality with PDF output
+  - Implemented QR code generation with Serra logo
+  - Added scan landing page for QR code links
 
 ### Fixed
 

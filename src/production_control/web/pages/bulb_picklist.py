@@ -61,44 +61,30 @@ def bulb_picklist_page() -> None:
         id = e.args.get("key")
         record = repository.get_by_id(id)
         if record:
-            # Create a dialog to show the label preview
-            with ui.dialog() as dialog, ui.card():
-                ui.label(f"{record.ras} ({record.bollen_code})").classes(HEADER_CLASSES)
-                ui.label(f"Locatie: {record.locatie}")
-                ui.label(f"Aantal bakken: {record.aantal_bakken}")
-                ui.label(f"Aantal bollen: {record.aantal_bollen}")
-                ui.label(f"Oppot datum: {record.oppot_datum}")
+            # Generate PDF label directly without showing a dialog
+            label_generator = LabelGenerator()
 
-                # Generate PDF label
-                label_generator = LabelGenerator()
+            # Get the base URL from environment variable, app.urls, or empty string
+            base_url = os.environ.get("QR_CODE_BASE_URL", "")
 
-                def handle_print():
-                    """Generate and download the PDF label."""
-                    # Get the base URL from environment variable, app.urls, or empty string
-                    base_url = os.environ.get("QR_CODE_BASE_URL", "")
+            # If no env var, try to get from app.urls
+            if not base_url:
+                base_url = next(iter(app.urls), "")
 
-                    # If no env var, try to get from app.urls
-                    if not base_url:
-                        base_url = next(iter(app.urls), "")
+            # Generate PDF in a temporary file
+            pdf_path = label_generator.generate_pdf(record, base_url=base_url)
 
-                    # Generate PDF in a temporary file
-                    pdf_path = label_generator.generate_pdf(record, base_url=base_url)
+            # Create a download link for the PDF
+            filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
+            ui.download(pdf_path, filename=filename)
 
-                    # Create a download link for the PDF
-                    filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
-                    ui.download(pdf_path, filename=filename)
+            # Clean up the temporary file after download
+            # Note: This will run after the download is complete
+            def cleanup():
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
 
-                    # Clean up the temporary file after download
-                    # Note: This will run after the download is complete
-                    def cleanup():
-                        if os.path.exists(pdf_path):
-                            os.remove(pdf_path)
-
-                    ui.timer(5, cleanup, once=True)
-
-                ui.button("Afdrukken", on_click=handle_print)
-                ui.button("Sluiten", on_click=dialog.close)
-                dialog.open()
+            ui.timer(5, cleanup, once=True)
 
     row_actions = {
         "view": {
@@ -157,6 +143,29 @@ def bulb_picklist_detail(id: int) -> None:
     repository = BulbPickListRepository()
 
     with frame("Bollen Picklist Details"):
+        record = repository.get_by_id(id)
+
+        if record:
+            with ui.row().classes("w-full justify-between items-center mb-6"):
+                ui.link("← Terug naar Bollen Picklist", "/bulb-picking").classes(LINK_CLASSES)
+
+            with ui.card().classes(CARD_CLASSES):
+                ui.label(f"{record.ras} ({record.bollen_code})").classes(HEADER_CLASSES)
+                ui.label(f"Locatie: {record.locatie}")
+                ui.label(f"Aantal bakken: {record.aantal_bakken}")
+                ui.label(f"Aantal bollen: {record.aantal_bollen}")
+                ui.label(f"Oppot datum: {record.oppot_datum}")
+        else:
+            ui.label("Record niet gevonden").classes("text-negative text-h6")
+            ui.link("← Terug naar Bollen Picklist", "/bulb-picking").classes(LINK_CLASSES + " mt-4")
+
+
+@router.page("/scan/{id}")
+def bulb_picklist_scan(id: int) -> None:
+    """Render the landing page for QR code scans."""
+    repository = BulbPickListRepository()
+
+    with frame("Bollen Picklist Scan"):
         record = repository.get_by_id(id)
 
         if record:

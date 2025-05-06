@@ -119,23 +119,21 @@ Add a button each row to generate a label for that row.
 - [x] base url should be configurable and/or retrieved from nicegui context
   - verify that the app works
 
-### 3b. Generate labels for selected records
+### 3b Pretty and smooth qr code usage experience
 
-- [ ] Test table component with selection. We ran into problem with this earlier.
-  Before starting, we have to analyze hove server side paging works, and document it.
-  Then we have to find out how to include selection, leveraging nicegui as good as possible.
-  We have to be careful when storing selection state.
-- [ ] Implement table with row selection
-- [ ] Test "Select All" functionality
-- [ ] Implement "Select All" button
-- [ ] Exploratory tests by user.
-  - collect results and determine actions
-  - ask questions based on usage
+- [x] Create a landing page for pick label scans
+  - scanning the qr code should bring us to this page
+  - base url should be configurable
+- [x] Add logo to center of qr code so people know it is a serra link
+  - move the qr code to the top-right of the label
+  - add a small, gray, readable url below the label title
+  - there should be a serra icon in the center of the qr code
+- [x] The print button in the list should not opene a popup but instead print the label to pdf immediately
 
 ### 4. Integration
 
-- [ ] Test end-to-end workflow
-- [ ] Fix any integration issues
+- [x] Test end-to-end workflow
+- [x] Fix any integration issues
 - [x] Update application startup to include new module
 - [x] Update menu to include new page
 - [x] Update CHANGELOG.md
@@ -144,10 +142,10 @@ Add a button each row to generate a label for that row.
 
 Run these everytime we check a box in this document, and one final time before the complete task as done:
 
-- [ ] Run `make test` to verify all tests pass
-- [ ] Run `make format` for code formatting
-- [ ] Run `make quality` for linting
-- [ ] Verify changes meet project standards
+- [x] Run `make test` to verify all tests pass
+- [x] Run `make format` for code formatting
+- [x] Run `make quality` for linting
+- [x] Verify changes meet project standards
 - [ ] Remove ORM mapping tests from other models (focus on behavior, not implementation details)
 
 ### 6. Refactoring

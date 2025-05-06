@@ -35,6 +35,7 @@ but his primary concern is getting the job done.
 - How to do dependency injection properly (e.g. to avoid patch difficulties in the test)
 - Read how fastapi does this.
 - Document appropriate project structure.
+- USe a templating frameweork instead string replace like we do now
 - How to do validation. E.g. load invalid objects and display validation errors on screen.
   Leverage Pydantic as much as possible here
 - Review build pipeline

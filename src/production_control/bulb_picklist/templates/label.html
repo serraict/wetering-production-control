@@ -33,6 +33,15 @@
             font-size: 24pt;
             font-weight: bold;
             padding: 10mm 5mm;
+            position: relative;
+        }
+
+        .url-text {
+            display: block;
+            font-size: 8pt;
+            color: #999;
+            font-weight: normal;
+            margin-top: 2mm;
         }
 
         .code-left {
@@ -75,7 +84,7 @@
 
         .qr-code {
             position: absolute;
-            bottom: 5mm;
+            top: 5mm;
             right: 5mm;
             width: 25mm;
             height: 25mm;
@@ -92,7 +101,11 @@
 
 <body>
     <div class="label">
-        <div class="plant-name">{{ ras }}</div>
+        <div class="plant-name">
+            {{ ras }}
+            <span class="url-text">{{ scan_url }}</span>
+            <img src="{{ qr_code }}" alt="QR Code" class="qr-code">
+        </div>
         <div class="code-left">
             {{ bollen_code }}
             <span class="label-text">Bollencode</span>
@@ -108,7 +121,6 @@
         <div class="trays">
             {{ aantal_bakken }} kratten
             <span class="label-text">Aantal</span>
-            <img src="{{ qr_code }}" alt="QR Code" class="qr-code">
         </div>
     </div>
 </body>
