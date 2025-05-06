@@ -64,6 +64,7 @@ def create_model_view_action(
         A dictionary with the view action configuration
     """
     if dialog:
+
         def handle_view(e: Dict[str, Any]) -> None:
             """Handle view button click."""
             id_value = e.args.get("key")

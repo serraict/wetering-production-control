@@ -49,7 +49,7 @@ async def test_bulb_picklist_has_label_button(user: User) -> None:
         # Verify that the table has a print button for the row
         table = user.find(ui.table).elements.pop()
         assert table is not None, "Table not found"
-        
+
         # Check that the table has actions column
         assert any(col["name"] == "actions" for col in table.columns), "Actions column not found"
 
@@ -125,13 +125,13 @@ async def test_label_button_downloads_pdf(user: User) -> None:
 
         # Check that the function exists
         assert create_label_action is not None, "create_label_action function not found"
-        
+
         # Verify that the table has a print button for the row
         table = user.find(ui.table).elements.pop()
         assert table is not None, "Table not found"
-        
+
         # Check that the table has actions column
         assert any(col["name"] == "actions" for col in table.columns), "Actions column not found"
-        
+
         # Note: In a real test, we would trigger the label button click
         # but for simplicity, we're just checking the function and button exist

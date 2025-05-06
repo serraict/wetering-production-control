@@ -18,6 +18,7 @@ def display_model_list_page(
     card_width: str = "max-w-5xl",
     filter_placeholder: str = "Zoek ...",
     custom_filters: Optional[Callable[[ui.row], None]] = None,
+    custom_load_data: Optional[Callable[[Any, Any], Callable]] = None,
 ) -> None:
     """Display a model list page with standard layout.
 
@@ -34,15 +35,27 @@ def display_model_list_page(
     # Set up table data access
     table_state = ClientStorageTableState.initialize(table_state_key)
 
-    def load_data():
-        pagination = table_state.pagination
-        filter_text = table_state.filter
-        items, total = repository.get_paginated(
-            pagination=pagination,
-            filter_text=filter_text,
-        )
-        table_state.update_rows([format_row(item) for item in items], total)
-        server_side_paginated_table.refresh()
+    # Use custom load_data function if provided, otherwise use default
+    if custom_load_data:
+        load_data = custom_load_data(repository, table_state)
+        # If a store_load_data function is provided, use it to store the load_data function
+        if (
+            hasattr(custom_load_data, "__globals__")
+            and "store_load_data" in custom_load_data.__globals__
+        ):
+            store_load_data = custom_load_data.__globals__["store_load_data"]
+            load_data = store_load_data(load_data)
+    else:
+
+        def load_data():
+            pagination = table_state.pagination
+            filter_text = table_state.filter
+            items, total = repository.get_paginated(
+                pagination=pagination,
+                filter_text=filter_text,
+            )
+            table_state.update_rows([format_row(item) for item in items], total)
+            server_side_paginated_table.refresh()
 
     # event handlers
     async def handle_filter(e: Any) -> None:
