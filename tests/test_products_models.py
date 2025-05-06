@@ -15,9 +15,3 @@ def test_product_model_attributes():
     assert product.name == "Test Product"
     assert product.product_group_id == 100
     assert product.product_group_name == "Test Group"
-
-
-def test_product_model_tablename():
-    """Test Product model has correct table name."""
-    assert Product.__tablename__ == "products"
-    assert Product.__table_args__["schema"] == "Vines"

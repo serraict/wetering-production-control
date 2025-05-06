@@ -34,15 +34,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented QR code generation with Serra logo
   - Added scan landing page for QR code links
 
+### Changed
+
+- Improved test quality:
+  - Removed ORM mapping tests from models (focusing on behavior, not implementation details)
+- Enhanced test coverage for date formatting utilities
+- Updated spacing page tests to properly handle ISO week dates
+
 ### Fixed
 
 - Fixed week number display for year-end dates (e.g., 2024-12-30 now correctly shows as 25w01-1)
 - Improved date formatting consistency by moving it to server-side
-
-### Changed
-
-- Enhanced test coverage for date formatting utilities
-- Updated spacing page tests to properly handle ISO week dates
 
 ## \[0.1.5\] - 2024-11-26
 

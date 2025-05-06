@@ -33,17 +33,3 @@ def test_bulb_picklist_model_attributes():
     assert bulb_picklist.aantal_bakken == 10.5
     assert bulb_picklist.aantal_bollen == 100.0
     assert bulb_picklist.oppot_datum == test_date
-
-
-def test_bulb_picklist_primary_key():
-    """Test that id is the primary key for BulbPickList model."""
-    from sqlalchemy.inspection import inspect
-
-    # Use SQLAlchemy's inspect to check the primary key
-    primary_key_columns = [column.name for column in inspect(BulbPickList).primary_key]
-
-    # Check that id is the primary key
-    assert "id" in primary_key_columns
-
-    # Check that bollen_code is not a primary key
-    assert "bollen_code" not in primary_key_columns

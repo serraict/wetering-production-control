@@ -146,7 +146,7 @@ Run these everytime we check a box in this document, and one final time before t
 - [x] Run `make format` for code formatting
 - [x] Run `make quality` for linting
 - [x] Verify changes meet project standards
-- [ ] Remove ORM mapping tests from other models (focus on behavior, not implementation details)
+- [x] Remove ORM mapping tests from other models (focus on behavior, not implementation details)
 
 ### 6. Refactoring
 
