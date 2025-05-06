@@ -17,14 +17,7 @@ router = APIRouter(prefix="/bulb-picking")
 
 
 def create_label_action(repository: BulbPickListRepository) -> Dict[str, Any]:
-    """Create a label action for bulb picklist records.
-    
-    Args:
-        repository: The repository to use for fetching records
-        
-    Returns:
-        A dictionary with the label action configuration
-    """
+
     def handle_label(e: Dict[str, Any]) -> None:
         """Handle label button click."""
         id_value = e.args.get("key")
@@ -61,11 +54,7 @@ def create_label_action(repository: BulbPickListRepository) -> Dict[str, Any]:
 
 
 def display_bulb_picklist_record(record: BulbPickList) -> None:
-    """Display a bulb picklist record in a card.
-    
-    Args:
-        record: The record to display
-    """
+
     ui.label(f"{record.ras} ({record.bollen_code})").classes("text-h6 font-bold mb-4")
     ui.label(f"Locatie: {record.locatie}")
     ui.label(f"Aantal bakken: {record.aantal_bakken}")
@@ -75,7 +64,6 @@ def display_bulb_picklist_record(record: BulbPickList) -> None:
 
 @router.page("/")
 def bulb_picklist_page() -> None:
-    """Render the bulb picklist page with a table of all bulb picklist records."""
     repository = BulbPickListRepository()
 
     # Create actions
