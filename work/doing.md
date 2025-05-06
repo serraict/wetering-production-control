@@ -161,7 +161,7 @@ Run these everytime we check a box in this document, and one final time before t
   - [x] Refactor to use model_detail_page.py for the detail pages
   - [x] Refactor to use model_list_page.py for the list page
   - [x] Update the view and label actions to use the generic components
-- [ ] Refactor spacing.py to use these components
-  - [ ] Refactor to use model_detail_page.py for the detail pages
-  - [ ] Refactor to use model_list_page.py for the list page
-  - [ ] Update the view and edit actions to use the generic components
+- [x] Refactor spacing.py to use these components
+  - [x] Refactor to use model_detail_page.py for the detail pages
+  - [x] Refactor to use model_list_page.py for the list page
+  - [x] Update the view and edit actions to use the generic components
