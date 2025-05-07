@@ -13,34 +13,28 @@ router = APIRouter(prefix="/products")
 
 @router.page("/")
 def products_page() -> None:
-    """Render the products page with a table of all products."""
     repository = ProductRepository()
+    title = "Producten"
 
-    # Create view action
     row_actions = {
         "view": create_model_view_action(
             repository=repository,
-            dialog=False,
             detail_url="/products/{id}",
         )
     }
 
-    # Render page
-    with frame("Producten"):
+    with frame(title):
         display_model_list_page(
             repository=repository,
             model_cls=Product,
             table_state_key="products_table",
-            title="Producten",
+            title=title,
             row_actions=row_actions,
-            card_width="max-w-5xl",
-            filter_placeholder="Zoek producten...",
         )
 
 
 @router.page("/{product_id:int}")
 def product_detail(product_id: int) -> None:
-    """Render the product detail page."""
     repository = ProductRepository()
     product = repository.get_by_id(product_id)
 
