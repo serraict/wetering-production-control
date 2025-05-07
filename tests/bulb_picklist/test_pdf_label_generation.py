@@ -54,7 +54,7 @@ def test_generate_label_html():
     assert record.locatie in html
     assert str(int(record.aantal_bakken)) in html
     assert "kratten" in html
-    
+
     # Check that the default dimensions are used
     assert "151mm" in html
     assert "101mm" in html
@@ -83,10 +83,13 @@ def test_generate_label_html_with_custom_dimensions():
     # Check that the HTML contains the custom dimensions
     assert custom_width in html
     assert custom_height in html
-    
-    # Check that the scaling variables are present
-    assert "--base-width: 151" in html
-    assert "--base-height: 101" in html
+
+    # Check that the page size is set correctly
+    assert f"size: {custom_width} {custom_height}" in html
+
+    # Check that the label dimensions are set correctly
+    assert f"width: {custom_width}" in html
+    assert f"height: {custom_height}" in html
 
 
 def test_generate_qr_code():
@@ -232,7 +235,9 @@ def test_generate_pdf_with_custom_dimensions(provide_output_path, tmp_path):
 
         if provide_output_path:
             output_path = os.path.join(tmp_path, "test_label.pdf")
-            result = generator.generate_pdf(record, output_path, width=custom_width, height=custom_height)
+            result = generator.generate_pdf(
+                record, output_path, width=custom_width, height=custom_height
+            )
             assert result == output_path
         else:
             result = generator.generate_pdf(record, width=custom_width, height=custom_height)

@@ -95,11 +95,11 @@ class LabelGenerator:
         return f"data:image/png;base64,{img_str}"
 
     def generate_label_html(
-        self, 
-        record: BulbPickList, 
+        self,
+        record: BulbPickList,
         base_url: Optional[str] = None,
         width: str = "151mm",
-        height: str = "101mm"
+        height: str = "101mm",
     ) -> str:
         """
         Generate HTML for a label from a BulbPickList record.
