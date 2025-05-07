@@ -16,12 +16,12 @@ from ..bulb_picklist.models import BulbPickList
 
 
 class LabelGenerator:
-    """Generate PDF labels for bulb picklist items."""
+    """Generate PDF labels for bulb pick list items."""
 
     def __init__(self):
         """Initialize the label generator."""
         self.template_dir = Path(__file__).parent / "templates"
-        self.template_path = self.template_dir / "label.html"
+        self.template_path = self.template_dir / "label.html.template"
 
     def generate_qr_code(self, record: BulbPickList, base_url: Optional[str] = None) -> str:
         """
@@ -94,7 +94,13 @@ class LabelGenerator:
         # Return as a data URL
         return f"data:image/png;base64,{img_str}"
 
-    def generate_label_html(self, record: BulbPickList, base_url: Optional[str] = None) -> str:
+    def generate_label_html(
+        self, 
+        record: BulbPickList, 
+        base_url: Optional[str] = None,
+        width: str = "151mm",
+        height: str = "101mm"
+    ) -> str:
         """
         Generate HTML for a label from a BulbPickList record.
 
@@ -102,6 +108,8 @@ class LabelGenerator:
             record: The BulbPickList record to generate a label for
             base_url: Optional base URL to use for the QR code. If not provided,
                       a relative URL will be used.
+            width: Width of the label (default: 151mm)
+            height: Height of the label (default: 101mm)
         """
         with open(self.template_path, "r") as f:
             template = f.read()
@@ -115,8 +123,16 @@ class LabelGenerator:
         if base_url:
             display_url = urljoin(base_url, path)
 
+        # Use the provided dimensions
+        label_width = width
+        label_height = height
+        page_size = f"{label_width} {label_height}"
+
         # Replace template variables with record values
         html = template.replace("{{ ras }}", record.ras)
+        html = html.replace("{{ page_size }}", page_size)
+        html = html.replace("{{ label_width }}", label_width)
+        html = html.replace("{{ label_height }}", label_height)
         html = html.replace("{{ bollen_code }}", str(record.bollen_code))
         html = html.replace("{{ id }}", str(record.id))
         html = html.replace("{{ locatie }}", record.locatie)
@@ -131,6 +147,8 @@ class LabelGenerator:
         record: BulbPickList,
         output_path: Optional[str] = None,
         base_url: Optional[str] = None,
+        width: str = "151mm",
+        height: str = "101mm",
     ) -> str:
         """
         Generate a PDF label for a BulbPickList record.
@@ -139,11 +157,14 @@ class LabelGenerator:
             record: The BulbPickList record to generate a label for
             output_path: Optional path to save the PDF to. If not provided,
                          a temporary file will be created.
+            base_url: Optional base URL to use for the QR code
+            width: Width of the label (default: 151mm)
+            height: Height of the label (default: 101mm)
 
         Returns:
             The path to the generated PDF file
         """
-        html_content = self.generate_label_html(record, base_url)
+        html_content = self.generate_label_html(record, base_url, width, height)
 
         # Create a temporary file if no output path is provided
         if output_path is None:

@@ -25,7 +25,7 @@ def test_label_generator_init_with_defaults():
 
     assert generator.template_dir is not None
     assert generator.template_path is not None
-    assert generator.template_path.name == "label.html"
+    assert generator.template_path.name == "label.html.template"
     assert generator.template_path.exists()
 
 
@@ -54,6 +54,39 @@ def test_generate_label_html():
     assert record.locatie in html
     assert str(int(record.aantal_bakken)) in html
     assert "kratten" in html
+    
+    # Check that the default dimensions are used
+    assert "151mm" in html
+    assert "101mm" in html
+
+
+def test_generate_label_html_with_custom_dimensions():
+    """Test generating HTML for a label with custom dimensions."""
+    from production_control.bulb_picklist.label_generation import LabelGenerator
+
+    # Create a test record
+    record = BulbPickList(
+        id=41393,
+        bollen_code=26647,
+        ras="T.Double Dutch 13",
+        locatie="3604.1000",
+        aantal_bakken=12.0,
+        aantal_bollen=100.0,
+        oppot_datum=date(2023, 1, 2),
+    )
+
+    generator = LabelGenerator()
+    custom_width = "100mm"
+    custom_height = "75mm"
+    html = generator.generate_label_html(record, width=custom_width, height=custom_height)
+
+    # Check that the HTML contains the custom dimensions
+    assert custom_width in html
+    assert custom_height in html
+    
+    # Check that the scaling variables are present
+    assert "--base-width: 151" in html
+    assert "--base-height: 101" in html
 
 
 def test_generate_qr_code():
@@ -166,6 +199,43 @@ def test_generate_pdf(provide_output_path, tmp_path):
             assert result == output_path
         else:
             result = generator.generate_pdf(record)
+            assert result.endswith(".pdf")
+
+        # Verify that HTML.write_pdf was called
+        mock_html_instance.write_pdf.assert_called_once()
+
+
+@pytest.mark.parametrize("provide_output_path", [True, False])
+def test_generate_pdf_with_custom_dimensions(provide_output_path, tmp_path):
+    """Test generating a PDF with custom dimensions."""
+    from production_control.bulb_picklist.label_generation import LabelGenerator
+
+    # Create a test record
+    record = BulbPickList(
+        id=41393,
+        bollen_code=26647,
+        ras="T.Double Dutch 13",
+        locatie="3604.1000",
+        aantal_bakken=12.0,
+        aantal_bollen=100.0,
+        oppot_datum=date(2023, 1, 2),
+    )
+
+    generator = LabelGenerator()
+    custom_width = "100mm"
+    custom_height = "75mm"
+
+    # Mock the HTML.write_pdf method to avoid actually generating a PDF
+    with patch("production_control.bulb_picklist.label_generation.HTML") as mock_html:
+        mock_html_instance = MagicMock()
+        mock_html.return_value = mock_html_instance
+
+        if provide_output_path:
+            output_path = os.path.join(tmp_path, "test_label.pdf")
+            result = generator.generate_pdf(record, output_path, width=custom_width, height=custom_height)
+            assert result == output_path
+        else:
+            result = generator.generate_pdf(record, width=custom_width, height=custom_height)
             assert result.endswith(".pdf")
 
         # Verify that HTML.write_pdf was called

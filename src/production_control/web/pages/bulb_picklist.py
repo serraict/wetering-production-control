@@ -22,12 +22,18 @@ def create_label_action(repository: BulbPickListRepository) -> Dict[str, Any]:
         id_value = e.args.get("key")
         record = repository.get_by_id(id_value)
         if record:
+            # Get label dimensions from environment variables or use defaults
+            label_width = os.environ.get("LABEL_WIDTH", "151mm")
+            label_height = os.environ.get("LABEL_HEIGHT", "101mm")
+
             label_generator = LabelGenerator()
             base_url = os.environ.get("QR_CODE_BASE_URL", "")
             if not base_url:
                 base_url = next(iter(app.urls), "")
 
-            pdf_path = label_generator.generate_pdf(record, base_url=base_url)
+            pdf_path = label_generator.generate_pdf(
+                record, base_url=base_url, width=label_width, height=label_height
+            )
 
             filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
             ui.download(pdf_path, filename=filename)

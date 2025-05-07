@@ -68,6 +68,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## Features
 
+### Configurable Label Sizes
+
+The application supports configurable label sizes for bulb picklist labels. You can set the dimensions in your `.env` file:
+
+```
+# Label dimensions
+LABEL_WIDTH="151mm"
+LABEL_HEIGHT="101mm"
+```
+
+The label layout will automatically scale to fit the specified dimensions while maintaining proper proportions.
+
 ### Dremio Backup Command
 
 The `backup` command allows you to export Dremio query results to CSV files:
