@@ -13,10 +13,10 @@ def display_model_list_page(
     repository: Any,
     model_cls: Type,
     table_state_key: str,
-    title: str,
+    title: str,  # to do: remove this parameter
     row_actions: Dict[str, Dict[str, Any]],
-    card_width: str = "max-w-5xl",
-    filter_placeholder: str = "Zoek ...",
+    card_width: str = "max-w-7xl",  # to do: remove this parameter
+    filter_placeholder: str = "Zoek ...",  # to do: remove this parameter
     custom_filters: Optional[Callable[[ui.row], None]] = None,
     custom_load_data: Optional[Callable[[Any, Any], Callable]] = None,
 ) -> None:
@@ -35,7 +35,7 @@ def display_model_list_page(
     # Set up table data access
     table_state = ClientStorageTableState.initialize(table_state_key)
 
-    # Use custom load_data function if provided, otherwise use default
+    # Use custom load_data function if provided, otherwise use default - why doe we need this?
     if custom_load_data:
         load_data = custom_load_data(repository, table_state)
         # If a store_load_data function is provided, use it to store the load_data function

@@ -1,7 +1,7 @@
 """Common style classes for the application."""
 
 # Common style classes
-CARD_CLASSES = "w-full max-w-3xl mx-auto p-4 shadow-lg"
+CARD_CLASSES = "w-full mx-auto p-4 shadow-lg"
 HEADER_CLASSES = "text-2xl font-bold text-primary"
 SUBHEADER_CLASSES = "text-lg text-gray-600"
 LABEL_CLASSES = "font-bold text-secondary"

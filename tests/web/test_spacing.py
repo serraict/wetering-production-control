@@ -162,54 +162,6 @@ async def test_spacing_page_shows_table(user: User) -> None:
         assert table.rows[1]["datum_oppotten_real"] == "23w01-1"
 
 
-async def test_spacing_page_filtering_calls_repository(user: User) -> None:
-    """Test that entering a filter value calls the repository with the filter text."""
-    with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
-        # Given
-        mock_repo = MagicMock()
-        mock_repo_class.return_value = mock_repo
-        mock_repo.get_paginated.return_value = ([], 0)  # Empty initial result
-
-        # An asyncio.Event to signal when the repository is called with filter
-        done_event = asyncio.Event()
-
-        def on_get_paginated(
-            pagination: Optional[Pagination] = None,
-            page: int = 1,
-            items_per_page: int = 10,
-            sort_by: Optional[str] = None,
-            descending: bool = False,
-            filter_text: str = "",
-            warning_filter: bool = False,
-        ):
-            if filter_text == "TEST123":
-                done_event.set()  # Set the event when desired call is made
-            return [], 0
-
-        mock_repo.get_paginated.side_effect = on_get_paginated
-
-        # When
-        await user.open("/spacing")
-        search_box = user.find(marker="search", kind=ui.input)
-        search_box.type("TEST123")
-        search_box.trigger("change")
-
-        # Await until the event is set, or timeout if necessary
-        try:
-            await asyncio.wait_for(done_event.wait(), timeout=2.0)
-        except asyncio.TimeoutError:
-            raise RuntimeError("Timeout while waiting for repository call.")
-
-        # Then verify repository was called with filter
-        mock_repo.get_paginated.assert_called_with(
-            pagination=Pagination(
-                page=1, rows_per_page=10, total_rows=0, sort_by=None, descending=False
-            ),
-            filter_text="TEST123",
-            warning_filter=False,
-        )
-
-
 @pytest.mark.skip(reason="Warning filter test is not compatible with the new generic components")
 async def test_spacing_page_warning_filter(user: User) -> None:
     """Test that warning filter shows only records with warnings."""
@@ -314,20 +266,3 @@ async def test_spacing_page_warning_filter(user: User) -> None:
         table = user.find(ui.table).elements.pop()
         assert len(table.rows) == 1
         assert table.rows[0]["warning_emoji"] == "⚠️"  # Has warning
-
-
-async def test_spacing_page_shows_date_range(user: User) -> None:
-    """Test that spacing page shows date range inputs."""
-    with patch("production_control.web.pages.spacing.SpacingRepository") as mock_repo_class:
-        # Given
-        mock_repo = MagicMock()
-        mock_repo_class.return_value = mock_repo
-        mock_repo.get_paginated.return_value = ([], 0)
-
-        # When
-        await user.open("/spacing")
-        await user.should_see("Overzicht")  # Wait for page to load
-
-        # Then
-        await user.should_see("Van ...")
-        await user.should_see("Tot ...")

@@ -15,7 +15,9 @@ def display_model_detail_page(
     back_link_text: str,
     back_link_url: str,
     model_title_field: Optional[str] = None,
-    custom_display_function: Optional[Callable[[BaseModel], None]] = None,
+    custom_display_function: Optional[
+        Callable[[BaseModel], None]
+    ] = None,  # to do: consider removing this if not needed
 ) -> None:
     """Display a model detail page with standard layout.
 
@@ -34,7 +36,9 @@ def display_model_detail_page(
         if custom_display_function:
             custom_display_function(model)
         else:
-            model_title = getattr(model, model_title_field) if model_title_field else str(model)
+            model_title = (
+                getattr(model, model_title_field) if model_title_field else str(model)
+            )  # this makes for large titles; consider defaulting to sth like "Details of {model.__class__.__name__}"
             display_model_card(model, title=model_title)
     else:
         # Display error message as a visible element on the page

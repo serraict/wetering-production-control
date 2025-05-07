@@ -165,3 +165,9 @@ Run these everytime we check a box in this document, and one final time before t
   - [x] Refactor to use model_detail_page.py for the detail pages
   - [x] Refactor to use model_list_page.py for the list page
   - [x] Update the view and edit actions to use the generic components
+- [ ] Refactor the pages into a clean concise state
+  - [x] products
+  - [x] bulb picklist
+  - [x] spacing
+    - [x] clean up sorting/filtering
+- [ ] make label size configurable
