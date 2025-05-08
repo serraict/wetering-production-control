@@ -4,11 +4,11 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Goal: Improve table selection persistence
+### Print multiple labels so that the user can print all labels for bulbs to pick for next week
 
-- Selection is lost when navigating between pages or changing page size
-- Modify ClientStorageTableState to persist selection across pagination changes
-- Update table request handling to preserve selection
+- print button on bulb selection screen
+- button prints all the labels for the weeknumber of the latest potting date
+- the labels are saved in a single pdf file
 
 ## Later
 
@@ -21,6 +21,12 @@ This backlog describes the product increments we have to build to realize our pr
 - app clearly shows when it is working
 - the search box behaves predictably (now key up or sth, that triggers many loads and the screen changes unpredictably)
 - do not show unused filter controls
+
+### Goal: Improve table selection persistence
+
+- Selection is lost when navigating between pages or changing page size
+- Modify ClientStorageTableState to persist selection across pagination changes
+- Update table request handling to preserve selection
 
 ### Goal: Get Paul to use this app
 
