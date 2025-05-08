@@ -56,3 +56,10 @@ class BulbPickList(SQLModel, table=True):
         description="The planting date",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
+
+    oppot_week: Optional[str] = Field(
+        default=None,
+        title="Oppot Week",
+        description="The planting week",
+        sa_column_kwargs={"info": {"ui_sortable": True}},
+    )

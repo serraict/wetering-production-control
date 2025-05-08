@@ -23,6 +23,7 @@ def test_bulb_picklist_model_attributes():
         aantal_bakken=10.5,
         aantal_bollen=100.0,
         oppot_datum=test_date,
+        oppot_week="22w52",
     )
 
     # Assert
@@ -33,3 +34,4 @@ def test_bulb_picklist_model_attributes():
     assert bulb_picklist.aantal_bakken == 10.5
     assert bulb_picklist.aantal_bollen == 100.0
     assert bulb_picklist.oppot_datum == test_date
+    assert bulb_picklist.oppot_week == "22w52"

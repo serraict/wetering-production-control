@@ -129,6 +129,7 @@ class LabelGenerator:
             "aantal_bakken": int(record.aantal_bakken),
             "qr_code": qr_code_data,
             "scan_url": display_url,
+            "oppot_week": record.oppot_week,
         }
 
     def generate_label_html(

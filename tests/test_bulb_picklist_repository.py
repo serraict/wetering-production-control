@@ -29,7 +29,7 @@ def test_bulb_picklist_repository_default_sorting():
     """Test the default sorting behavior of the repository."""
     repository = BulbPickListRepository()
     # We can verify the repository has the expected search fields
-    assert repository.search_fields == ["id", "bollen_code", "ras", "locatie"]
+    assert repository.search_fields == ["id", "bollen_code", "ras", "locatie", "oppot_week"]
 
     # We call _apply_default_sorting but don't need to use the result
     # This at least verifies the method doesn't raise exceptions

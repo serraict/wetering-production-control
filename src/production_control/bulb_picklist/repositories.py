@@ -14,7 +14,7 @@ class BulbPickListRepository(DremioRepository[BulbPickList]):
     """Read-only repository for bulb picklist data access."""
 
     # Fields to search when filtering bulb picklist records
-    search_fields = ["id", "bollen_code", "ras", "locatie"]
+    search_fields = ["id", "bollen_code", "ras", "locatie", "oppot_week"]
 
     def __init__(self, connection: Optional[Engine] = None):
         """Initialize repository with optional connection."""

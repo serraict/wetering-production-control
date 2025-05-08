@@ -90,6 +90,12 @@ async def test_bulb_picklist_page_shows_table(user: User) -> None:
                 "field": "oppot_datum",
                 "sortable": True,
             },
+            {
+                "name": "oppot_week",
+                "label": "Oppot Week",
+                "field": "oppot_week",
+                "sortable": True,
+            },
             {"name": "actions", "label": "Acties", "field": "actions"},
         ]
 

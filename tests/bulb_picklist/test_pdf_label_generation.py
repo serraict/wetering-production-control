@@ -42,6 +42,7 @@ def test_generate_label_html():
         aantal_bakken=12.0,
         aantal_bollen=100.0,
         oppot_datum=date(2023, 1, 2),
+        oppot_week="23w01",
     )
 
     generator = LabelGenerator()
@@ -54,6 +55,7 @@ def test_generate_label_html():
     assert record.locatie in html
     assert str(int(record.aantal_bakken)) in html
     assert "kratten" in html
+    assert record.oppot_week in html
 
     # Check that the default dimensions are used
     assert "151mm" in html
@@ -73,6 +75,7 @@ def test_generate_label_html_with_custom_dimensions():
         aantal_bakken=12.0,
         aantal_bollen=100.0,
         oppot_datum=date(2023, 1, 2),
+        oppot_week="23w01",
     )
 
     generator = LabelGenerator()
@@ -163,6 +166,7 @@ def test_qr_code_in_label_html():
         aantal_bakken=12.0,
         aantal_bollen=100.0,
         oppot_datum=date(2023, 1, 2),
+        oppot_week="23w01",
     )
 
     generator = LabelGenerator()
@@ -187,6 +191,7 @@ def test_generate_pdf(provide_output_path, tmp_path):
         aantal_bakken=12.0,
         aantal_bollen=100.0,
         oppot_datum=date(2023, 1, 2),
+        oppot_week="23w01",
     )
 
     generator = LabelGenerator()
@@ -222,6 +227,7 @@ def test_generate_pdf_with_custom_dimensions(provide_output_path, tmp_path):
         aantal_bakken=12.0,
         aantal_bollen=100.0,
         oppot_datum=date(2023, 1, 2),
+        oppot_week="23w01",
     )
 
     generator = LabelGenerator()
