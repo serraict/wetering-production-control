@@ -46,6 +46,7 @@ but his primary concern is getting the job done.
   Leverage Pydantic as much as possible here
 - Review build pipeline
   - Package does not seem to run tests. We should run the tests on the container.
+  - Review release procedure with respect to updating the changelog (currently [Unreleased] section remains after release)
 - Refactor and document usage of week numbering
 
 ### Goal: User can see greenhouse utilization
