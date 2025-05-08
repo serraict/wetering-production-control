@@ -5,9 +5,10 @@ import tempfile
 import base64
 from io import BytesIO
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urljoin
 
+import jinja2
 import qrcode
 from PIL import Image
 from weasyprint import HTML
@@ -21,7 +22,12 @@ class LabelGenerator:
     def __init__(self):
         """Initialize the label generator."""
         self.template_dir = Path(__file__).parent / "templates"
-        self.template_path = self.template_dir / "label.html.template"
+
+        # Initialize Jinja2 environment
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(self.template_dir),
+            autoescape=jinja2.select_autoescape(["html", "xml"]),
+        )
 
     def generate_qr_code(self, record: BulbPickList, base_url: Optional[str] = None) -> str:
         """
@@ -94,6 +100,37 @@ class LabelGenerator:
         # Return as a data URL
         return f"data:image/png;base64,{img_str}"
 
+    def _prepare_record_data(self, record: BulbPickList, base_url: Optional[str] = None) -> dict:
+        """
+        Prepare record data for template rendering.
+
+        Args:
+            record: The BulbPickList record to prepare data for
+            base_url: Optional base URL to use for the QR code
+
+        Returns:
+            Dictionary with record data ready for template rendering
+        """
+        # Generate QR code
+        qr_code_data = self.generate_qr_code(record, base_url)
+
+        # Create the URL path for display
+        path = f"/bulb-picking/scan/{record.id}"
+        display_url = path
+        if base_url:
+            display_url = urljoin(base_url, path)
+
+        # Prepare record data for template
+        return {
+            "id": record.id,
+            "bollen_code": record.bollen_code,
+            "ras": record.ras,
+            "locatie": record.locatie,
+            "aantal_bakken": int(record.aantal_bakken),
+            "qr_code": qr_code_data,
+            "scan_url": display_url,
+        }
+
     def generate_label_html(
         self,
         record: BulbPickList,
@@ -111,34 +148,57 @@ class LabelGenerator:
             width: Width of the label (default: 151mm)
             height: Height of the label (default: 101mm)
         """
-        with open(self.template_path, "r") as f:
-            template = f.read()
-
-        # Generate QR code
-        qr_code_data = self.generate_qr_code(record, base_url)
-
-        # Create the URL path for display
-        path = f"/bulb-picking/scan/{record.id}"
-        display_url = path
-        if base_url:
-            display_url = urljoin(base_url, path)
+        # Use Jinja2 template for single label
+        record_data = self._prepare_record_data(record, base_url)
 
         # Use the provided dimensions
-        label_width = width
-        label_height = height
-        page_size = f"{label_width} {label_height}"
+        page_size = f"{width} {height}"
 
-        # Replace template variables with record values
-        html = template.replace("{{ ras }}", record.ras)
-        html = html.replace("{{ page_size }}", page_size)
-        html = html.replace("{{ label_width }}", label_width)
-        html = html.replace("{{ label_height }}", label_height)
-        html = html.replace("{{ bollen_code }}", str(record.bollen_code))
-        html = html.replace("{{ id }}", str(record.id))
-        html = html.replace("{{ locatie }}", record.locatie)
-        html = html.replace("{{ aantal_bakken }}", str(int(record.aantal_bakken)))
-        html = html.replace("{{ qr_code }}", qr_code_data)
-        html = html.replace("{{ scan_url }}", display_url)
+        # Render template with Jinja2
+        template = self.jinja_env.get_template("labels.html.jinja2")
+        html = template.render(
+            records=[record_data], page_size=page_size, label_width=width, label_height=height
+        )
+
+        return html
+
+    def generate_multiple_labels_html(
+        self,
+        records: List[BulbPickList],
+        base_url: Optional[str] = None,
+        width: str = "151mm",
+        height: str = "101mm",
+    ) -> str:
+        """
+        Generate HTML for multiple labels from BulbPickList records.
+
+        Args:
+            records: List of BulbPickList records to generate labels for
+            base_url: Optional base URL to use for the QR codes
+            width: Width of each label (default: 151mm)
+            height: Height of each label (default: 101mm)
+
+        Returns:
+            HTML string containing all labels
+        """
+        if not records:
+            # Return empty template if no records
+            template = self.jinja_env.get_template("labels.html.jinja2")
+            return template.render(
+                records=[], page_size=f"{width} {height}", label_width=width, label_height=height
+            )
+
+        # Prepare data for all records
+        records_data = [self._prepare_record_data(record, base_url) for record in records]
+
+        # Use the provided dimensions
+        page_size = f"{width} {height}"
+
+        # Render template with Jinja2
+        template = self.jinja_env.get_template("labels.html.jinja2")
+        html = template.render(
+            records=records_data, page_size=page_size, label_width=width, label_height=height
+        )
 
         return html
 
@@ -165,6 +225,40 @@ class LabelGenerator:
             The path to the generated PDF file
         """
         html_content = self.generate_label_html(record, base_url, width, height)
+
+        # Create a temporary file if no output path is provided
+        if output_path is None:
+            fd, output_path = tempfile.mkstemp(suffix=".pdf")
+            os.close(fd)
+
+        # Generate PDF from HTML
+        HTML(string=html_content).write_pdf(output_path)
+
+        return output_path
+
+    def generate_multiple_pdf(
+        self,
+        records: List[BulbPickList],
+        output_path: Optional[str] = None,
+        base_url: Optional[str] = None,
+        width: str = "151mm",
+        height: str = "101mm",
+    ) -> str:
+        """
+        Generate a PDF with multiple labels for BulbPickList records.
+
+        Args:
+            records: List of BulbPickList records to generate labels for
+            output_path: Optional path to save the PDF to. If not provided,
+                         a temporary file will be created.
+            base_url: Optional base URL to use for the QR codes
+            width: Width of each label (default: 151mm)
+            height: Height of each label (default: 101mm)
+
+        Returns:
+            The path to the generated PDF file
+        """
+        html_content = self.generate_multiple_labels_html(records, base_url, width, height)
 
         # Create a temporary file if no output path is provided
         if output_path is None:

@@ -18,15 +18,15 @@ def test_label_generator_exists():
 
 
 def test_label_generator_init_with_defaults():
-    """Test that the LabelGenerator initializes with the template path."""
+    """Test that the LabelGenerator initializes with the template directory."""
     from production_control.bulb_picklist.label_generation import LabelGenerator
 
     generator = LabelGenerator()
 
     assert generator.template_dir is not None
-    assert generator.template_path is not None
-    assert generator.template_path.name == "label.html.template"
-    assert generator.template_path.exists()
+    assert generator.template_dir.exists()
+    assert (generator.template_dir / "base.html.jinja2").exists()
+    assert (generator.template_dir / "labels.html.jinja2").exists()
 
 
 def test_generate_label_html():

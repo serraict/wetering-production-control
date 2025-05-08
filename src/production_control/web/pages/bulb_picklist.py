@@ -11,6 +11,7 @@ from ...bulb_picklist.label_generation import LabelGenerator
 from ..components import frame
 from ..components.model_detail_page import display_model_detail_page, create_model_view_action
 from ..components.model_list_page import display_model_list_page
+from ..components.table_state import ClientStorageTableState
 
 
 router = APIRouter(prefix="/bulb-picking")
@@ -51,9 +52,69 @@ def create_label_action(repository: BulbPickListRepository) -> Dict[str, Any]:
     }
 
 
+def create_print_all_button(repository: BulbPickListRepository, table_state_key: str) -> None:
+    """Create a button to print labels for all currently visible records."""
+
+    def handle_print_all() -> None:
+        # Get the current table state
+        table_state = ClientStorageTableState.initialize(table_state_key)
+
+        # Get the IDs of the currently visible records
+        record_ids = [row.get("id") for row in table_state.rows]
+
+        if not record_ids:
+            ui.notify("Geen zichtbare records om af te drukken", color="warning")
+            return
+
+        # Fetch the full records from the repository
+        records = []
+        for id_value in record_ids:
+            record = repository.get_by_id(id_value)
+            if record:
+                records.append(record)
+
+        if not records:
+            ui.notify("Geen records gevonden om af te drukken", color="warning")
+            return
+
+        # Get label dimensions from environment variables or use defaults
+        label_width = os.environ.get("LABEL_WIDTH", "151mm")
+        label_height = os.environ.get("LABEL_HEIGHT", "101mm")
+
+        # Generate PDF with all labels
+        label_generator = LabelGenerator()
+        base_url = os.environ.get("QR_CODE_BASE_URL", "")
+        if not base_url:
+            base_url = next(iter(app.urls), "")
+
+        pdf_path = label_generator.generate_multiple_pdf(
+            records, base_url=base_url, width=label_width, height=label_height
+        )
+
+        # Create a descriptive filename
+        filename = f"labels_{len(records)}_records.pdf"
+        ui.download(pdf_path, filename=filename)
+
+        # Clean up the temporary file after download
+        def cleanup():
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+
+        ui.timer(5, cleanup, once=True)
+
+        # Notify the user
+        ui.notify(f"{len(records)} labels worden afgedrukt", color="positive")
+
+    # Create the button
+    with ui.button("Labels Afdrukken", icon="print").classes("bg-primary") as button:
+        ui.tooltip("Druk labels af voor alle zichtbare records")
+    button.on_click(handle_print_all)
+
+
 @router.page("/")
 def bulb_picklist_page() -> None:
     repository = BulbPickListRepository()
+    table_state_key = "bulb_picklist_table"
 
     row_actions = {
         "view": create_model_view_action(
@@ -63,10 +124,14 @@ def bulb_picklist_page() -> None:
     }
 
     with frame("Bollen Picklist"):
+        # Add the print all button at the top
+        with ui.row().classes("w-full justify-end mb-4"):
+            create_print_all_button(repository, table_state_key)
+
         display_model_list_page(
             repository=repository,
             model_cls=BulbPickList,
-            table_state_key="bulb_picklist_table",
+            table_state_key=table_state_key,
             title="Bollen Picklist",
             row_actions=row_actions,
         )

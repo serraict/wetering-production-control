@@ -14,6 +14,7 @@ dependencies = [
     "pandas",
     "weasyprint",
     "qrcode[pil]",
+    "jinja2",
 ]
 dynamic = ["version"]
 license.file = "LICENCE"

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added multi-label printing for bulb lots:
+
+  - Added Jinja2 for template rendering
+  - Implemented batch label generation for next week's bulb lots
+  - Added UI button for printing next week's labels
+
 - Added Dremio backup command:
 
   - Export query results to CSV files with custom naming
