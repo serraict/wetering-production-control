@@ -4,23 +4,17 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Print multiple labels so that the user can print all labels for bulbs to pick for next week
+### Goal: smooth operation
 
-- print button on bulb selection screen
-- button prints all the labels for the weeknumber of the latest potting date
-- the labels are saved in a single pdf file
+- the search box behaves predictably (now key up or sth, that triggers many loads and the screen changes unpredictably)
+- app clearly shows when it is working - e.g. loading data, or processing labels
+- do not show unused filter controls
 
 ## Later
 
 ### Goals the user can print labels so that she can easily mark the first and last pot in a production lot
 
 (to do: clarify)
-
-### Goal: smooth operation
-
-- app clearly shows when it is working
-- the search box behaves predictably (now key up or sth, that triggers many loads and the screen changes unpredictably)
-- do not show unused filter controls
 
 ### Goal: Improve table selection persistence
 
