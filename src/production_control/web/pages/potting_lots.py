@@ -7,7 +7,7 @@ from nicegui import APIRouter, ui, app
 
 from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
-from ...bulb_picklist.label_generation import LabelGenerator, LabelConfig  # Reuse existing label generator for now
+from ...potting_lots.label_generation import LabelGenerator, LabelConfig
 from ..components import frame
 from ..components.model_detail_page import display_model_detail_page, create_model_view_action
 from ..components.model_list_page import display_model_list_page
@@ -15,7 +15,7 @@ from ..components.table_state import ClientStorageTableState
 
 
 router = APIRouter(prefix="/potting-lots")
-label_generator = LabelGenerator()  # Reuse existing label generator
+label_generator = LabelGenerator()
 table_state_key = "potting_lots_table"
 
 
@@ -62,7 +62,8 @@ def create_label_action() -> Dict[str, Any]:
         )
 
         if record:
-            filename = f"label_{record.id}_{record.naam.replace(' ', '_')}.pdf"
+            # Create a descriptive filename
+            filename = f"oppotpartij_{record.id}_{record.naam.replace(' ', '_')}.pdf"
             generate_and_download_pdf(record, filename)
 
     return {
@@ -82,7 +83,7 @@ def handle_print_all() -> None:
         return
 
     # Create a descriptive filename using today with format %gW%V-%u
-    filename = f"labels_{date.today():%gW%V-%u}.pdf"
+    filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
     generate_and_download_pdf(records, filename)
 
 
