@@ -4,23 +4,13 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Goal: smooth operation
-
-- the search box behaves predictably (now key up or sth, that triggers many loads and the screen changes unpredictably)
-- app clearly shows when it is working - e.g. loading data, or processing labels
-- do not show unused filter controls
-
-## Later
-
 ### Goals the user can print labels so that she can easily mark the first and last pot in a production lot
 
-(to do: clarify)
+similar tp bulbpicklist, but now for potting lots (table: Productie.Oppotten.oppotlijst).
+similar searchable fields
+use slightly different label (ask for example)
 
-### Goal: Improve table selection persistence
-
-- Selection is lost when navigating between pages or changing page size
-- Modify ClientStorageTableState to persist selection across pagination changes
-- Update table request handling to preserve selection
+## Later
 
 ### Goal: Get Paul to use this app
 
