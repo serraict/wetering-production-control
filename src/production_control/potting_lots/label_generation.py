@@ -166,11 +166,7 @@ class LabelGenerator:
         if base_url:
             display_url = urljoin(base_url, path)
 
-        # Format the oppot_datum if it exists
-        oppot_datum_formatted = ""
-        if record.oppot_datum:
-            from ..web.components.table_utils import format_date
-            oppot_datum_formatted = format_date(record.oppot_datum)
+        # No need to format oppot_datum, we'll use it directly
 
         # Prepare record data for template
         return {
@@ -179,7 +175,7 @@ class LabelGenerator:
             "naam": record.naam,
             "qr_code": qr_code_data,
             "scan_url": display_url,
-            "oppot_datum": oppot_datum_formatted,
+            "oppot_datum": "--",
         }
 
     def generate_labels_html(
