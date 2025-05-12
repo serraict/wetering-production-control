@@ -15,19 +15,11 @@ from ..components.table_state import ClientStorageTableState
 
 
 router = APIRouter(prefix="/bulb-picking")
-
-# Create a single instance of LabelGenerator to be reused
 label_generator = LabelGenerator()
 table_state_key = "bulb_picklist_table"
 
 
 def get_label_config() -> LabelConfig:
-    """
-    Get a label configuration with base URL from environment or app.
-
-    Returns:
-        LabelConfig instance with base URL set
-    """
     config = LabelConfig.from_env()
     if not config.base_url:
         config.base_url = next(iter(app.urls), "")
