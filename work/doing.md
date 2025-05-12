@@ -5,6 +5,7 @@
 Improve the user experience by adding clear loading indicators during label generation. We'll start with this focused improvement before tackling search behavior.
 
 ### Current Issues
+
 1. No visual feedback during label generation
 2. User might click generate multiple times while processing
 
@@ -12,18 +13,12 @@ Improve the user experience by adding clear loading indicators during label gene
 
 Following test-first development, we'll implement these improvements in small, focused steps:
 
-#### 1. Label Generation Loading State
+#### 1. Faster label generation
 
-1. Create tests:
-   - Test button state changes during label generation
-   - Test background task completion restores button
-   - Test error handling restores button state
-
-2. Implementation:
-   - Modify label generation in bulb_picklist page
-   - Add container-based loading state management
-   - Use background tasks for async operations
-   - Ensure proper button state restoration
+- [x] Improve performance by using tablestate.rows instead of database roundtrips.
+- [ ] Refactor label generation: remove duplication from label_generation.py and bulbpicklist.py
+- [ ] Analyze test coverage of lablel genration.py
+- [ ] Remove unused method parameters
 
 #### 2. Debounced Search Implementation
 
