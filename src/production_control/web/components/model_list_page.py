@@ -84,6 +84,7 @@ def display_model_list_page(
                         on_change=lambda e: handle_filter(e),
                     )
                     .classes("w-64")
+                    .props("debounce=500")
                     .mark("search") as search
                 ):
                     with search.add_slot("append"):

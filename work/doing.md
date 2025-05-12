@@ -22,17 +22,7 @@ Following test-first development, we'll implement these improvements in small, f
 
 #### 2. Debounced Search Implementation
 
-1. Create tests:
-
-   - Test debounce functionality
-   - Test search triggering after delay
-   - Test cancellation of pending searches
-
-1. Implementation:
-
-   - Add debounce utility in `src/production_control/web/components/utils.py`
-   - Modify search input in model_list_page component
-   - Set appropriate debounce delay (300ms)
+- [x] Use Quasar's debouncing function.
 
 ### Quality Checks
 
