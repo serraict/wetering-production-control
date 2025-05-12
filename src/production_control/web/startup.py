@@ -3,7 +3,7 @@
 import logging
 from nicegui import app, ui
 
-from .pages import home, products, spacing, bulb_picklist
+from .pages import home, products, spacing, bulb_picklist, potting_lots
 
 
 def startup() -> None:
@@ -25,3 +25,4 @@ def startup() -> None:
     app.include_router(products.router)
     app.include_router(spacing.router)
     app.include_router(bulb_picklist.router)
+    app.include_router(potting_lots.router)

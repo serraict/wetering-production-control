@@ -55,10 +55,12 @@ class PottingLot(SQLModel, table=True):
 3. Implementation Steps:
 
 - Create potting_lots module with models.py and repositories.py
-- Create label template based on existing one but with simplified layout
 - Add web pages for list and detail views
 - Reuse existing date formatting (%gw%V-%u) for oppot_datum
+- Create label template based on existing one but with simplified layout
 - Set up label generation with QR codes linking to detail pages
+- Exploratory testing
+  - test search fields (opmerking? oppotweek)
 
 ### Notes
 
