@@ -56,7 +56,7 @@ def test_render_single_label_with_jinja():
     )
 
     generator = LabelGenerator()
-    html = generator.generate_label_html(record)
+    html = generator.generate_labels_html(record)
 
     # Check that the HTML contains the record values
     assert record.ras in html
@@ -96,7 +96,7 @@ def test_generate_multiple_labels():
     ]
 
     generator = LabelGenerator()
-    html = generator.generate_multiple_labels_html(records)
+    html = generator.generate_labels_html(records)
 
     # Check that the HTML contains all record values
     for record in records:
@@ -115,7 +115,7 @@ def test_generate_empty_labels():
     from production_control.bulb_picklist.label_generation import LabelGenerator
 
     generator = LabelGenerator()
-    html = generator.generate_multiple_labels_html([])
+    html = generator.generate_labels_html([])
 
     # Check that we have no labels
     assert '<div class="label">' not in html
