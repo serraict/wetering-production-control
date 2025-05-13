@@ -32,6 +32,9 @@ def test_potting_lot_model_attributes():
         water="Normal",
         fust="Standard",
         opmerking="Test remark",
+        product_groep="Test Product Group",
+        klant_code="CUST123",
+        oppot_week="2023-01",
     )
 
     # Assert
@@ -50,6 +53,9 @@ def test_potting_lot_model_attributes():
     assert potting_lot.water == "Normal"
     assert potting_lot.fust == "Standard"
     assert potting_lot.opmerking == "Test remark"
+    assert potting_lot.product_groep == "Test Product Group"
+    assert potting_lot.klant_code == "CUST123"
+    assert potting_lot.oppot_week == "2023-01"
 
 
 def test_potting_lot_model_optional_fields():
@@ -77,3 +83,6 @@ def test_potting_lot_model_optional_fields():
     assert potting_lot.water is None
     assert potting_lot.fust is None
     assert potting_lot.opmerking is None
+    assert potting_lot.product_groep is None
+    assert potting_lot.klant_code is None
+    assert potting_lot.oppot_week is None

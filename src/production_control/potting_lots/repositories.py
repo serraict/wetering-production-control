@@ -14,7 +14,16 @@ class PottingLotRepository(DremioRepository[PottingLot]):
     """Repository for potting lot records."""
 
     # Fields to search when filtering potting lot records
-    search_fields = ["id", "bollen_code", "naam", "oppot_datum", "opmerking"]
+    search_fields = [
+        "id",
+        "bollen_code",
+        "naam",
+        "oppot_datum",
+        "opmerking",
+        "product_groep",
+        "klant_code",
+        "oppot_week",
+    ]
 
     def __init__(self, connection: Optional[Engine] = None):
         """Initialize repository with optional connection."""

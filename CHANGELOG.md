@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[Unreleased\]
+## [Unreleased]
+
+### Added
+
+- Added new fields to PottingLot model:
+  - Added product_groep field for product group information
+  - Added klant_code field for customer code information
+  - Added oppot_week field for potting week information
+  - Added all new fields to search functionality
 
 ### Changed
 

@@ -45,9 +45,12 @@ def test_potting_lot_repository_filtering():
     # This test verifies that the repository has the correct search fields
     # for filtering potting lot records
     repository = PottingLotRepository()
-    assert len(repository.search_fields) == 5
+    assert len(repository.search_fields) == 8
     assert "id" in repository.search_fields
     assert "bollen_code" in repository.search_fields
     assert "naam" in repository.search_fields
     assert "oppot_datum" in repository.search_fields
     assert "opmerking" in repository.search_fields
+    assert "product_groep" in repository.search_fields
+    assert "klant_code" in repository.search_fields
+    assert "oppot_week" in repository.search_fields
