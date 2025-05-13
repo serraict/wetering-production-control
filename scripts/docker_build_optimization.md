@@ -12,13 +12,21 @@ The Dockerfile has been restructured with three stages:
 
 This structure allows for better layer caching and faster builds when only Python code changes.
 
+## Version Handling
+
+The Dockerfile now accepts a `VERSION` build argument that is passed to setuptools_scm via the `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable. This ensures proper versioning even without the .git directory in the Docker build context.
+
+The GitHub Actions workflow has been updated to:
+1. Extract the version from the git tag
+2. Pass it as a build argument to Docker
+
 ## Development Workflow
 
 For local development, you can continue using the existing docker-compose.yml:
 
 ```bash
-# Build with the optimized Dockerfile
-docker compose build
+# Build with the optimized Dockerfile (specify version for local development)
+docker compose build --build-arg VERSION=0.1.0-dev
 
 # Run the application
 docker compose up
@@ -33,8 +41,8 @@ To optimize production deployments with `docker compose pull`, follow these step
 Build and tag just the dependencies stage:
 
 ```bash
-# Build dependencies image
-docker build --target dependencies -t your-registry/production-control:deps .
+# Build dependencies image (specify version)
+docker build --target dependencies --build-arg VERSION=0.1.14 -t your-registry/production-control:deps .
 
 # Push dependencies image
 docker push your-registry/production-control:deps
@@ -47,8 +55,8 @@ This image only needs to be rebuilt when dependencies change (pyproject.toml or 
 Build the final image that includes your application code:
 
 ```bash
-# Build final image
-docker build -t your-registry/production-control:latest .
+# Build final image (specify version)
+docker build --build-arg VERSION=0.1.14 -t your-registry/production-control:latest .
 
 # Push final image
 docker push your-registry/production-control:latest
@@ -71,11 +79,13 @@ docker compose up -d
 - **Faster Deployments**: When only Python code changes, only the final stage needs to be rebuilt
 - **Efficient Caching**: Dependencies are cached in a separate image
 - **Reduced Download Size**: When pulling updates with only code changes, less data needs to be downloaded
+- **Proper Versioning**: Version is passed as a build argument, ensuring correct versioning without git metadata
 
 ## CI/CD Integration
 
-For optimal CI/CD integration:
+The GitHub Actions workflow has been updated to:
+1. Extract the version from the git tag
+2. Pass it as a build argument to Docker
+3. Build and push the image with proper versioning
 
-1. Only rebuild and push the dependencies image when requirements files change
-2. Always rebuild and push the final image for code changes
-3. Use appropriate tags to maintain this separation (e.g., `:deps` and `:latest`)
+This ensures that the version is correctly set in the Docker image, even without the .git directory in the build context.

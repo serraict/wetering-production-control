@@ -1,6 +1,12 @@
+# Accept build argument for version
+ARG VERSION
+
 # Stage 1: Base image with system dependencies
-FROM python:3.12-slim as base
+FROM python:3.12 as base
 WORKDIR /production_control
+
+# Pass version to this stage
+ARG VERSION
 
 # Install system dependencies
 RUN apt-get update && \
@@ -12,6 +18,9 @@ RUN apt-get update && \
 FROM base as dependencies
 WORKDIR /deps
 
+# Pass version to this stage
+ARG VERSION
+
 # Copy only requirements files
 COPY pyproject.toml requirements-dev.txt ./
 
@@ -22,6 +31,10 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Stage 3: Final image with application code
 FROM base
 WORKDIR /production_control
+
+# Pass version to this stage
+ARG VERSION
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION
 
 # Copy dependencies from the dependencies stage
 COPY --from=dependencies /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
