@@ -100,6 +100,8 @@ class BaseLabelGenerator(Generic[T]):
             autoescape=jinja2.select_autoescape(["html", "xml"]),
         )
 
+        self._default_config = LabelConfig.from_env()
+
     def get_scan_path(self, record: T) -> str:
         """
         Get the scan path for a record.
@@ -293,7 +295,7 @@ class BaseLabelGenerator(Generic[T]):
         """
         # Use default config if none provided
         if config is None:
-            config = LabelConfig()
+            config = self._default_config
 
         html_content = self.generate_labels_html(records, config)
 
