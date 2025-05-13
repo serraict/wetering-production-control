@@ -62,7 +62,6 @@ def test_label_generator_initialization():
     generator = LabelGenerator()
     assert generator is not None
     assert generator.template_dir.exists()
-    assert (generator.template_dir / "label.html.template").exists()
     assert (generator.template_dir / "labels.html.jinja2").exists()
 
 

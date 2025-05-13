@@ -1,0 +1,96 @@
+.label {
+    width: {{ label_width }};
+    height: {{ label_height }};
+    box-sizing: border-box;
+    border: 1px solid #000;
+    display: grid;
+    grid-template-rows: 33% 33% 33%;
+    grid-template-columns: 50% 50%;
+    page-break-inside: avoid;
+}
+
+.header {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    font-size: 120%;
+    font-weight: bold;
+    padding: 2mm;
+    position: relative;
+    padding-right: 30mm; /* Make room for QR code */
+}
+
+.url-text {
+    display: block;
+    font-size: 40%;
+    color: #999;
+    font-weight: normal;
+    margin-top: 2mm;
+}
+
+.middle-left {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 100%;
+    padding: 3mm;
+    border-top: 1px solid #000;
+    border-right: 1px solid #000;
+    position: relative;
+}
+
+.middle-right {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 100%;
+    padding: 3mm;
+    border-top: 1px solid #000;
+    position: relative;
+}
+
+.qr-code {
+    position: absolute;
+    top: 1mm;
+    right: 1mm;
+    width: 25%;
+    height: auto;
+    z-index: 10;
+    background-color: white;
+    padding: 2px;
+}
+
+.label-text {
+    display: block;
+    font-size: 80%;
+    color: #999;
+    margin-top: 2mm;
+}
+
+/* Bottom row styles - these will be extended by specific templates */
+.bottom-full {
+    grid-column: 1 / 3;
+    grid-row: 3;
+    font-size: 100%;
+    padding: 3mm;
+    border-top: 1px solid #000;
+    position: relative;
+}
+
+.bottom-left {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 100%;
+    padding: 3mm;
+    border-top: 1px solid #000;
+    border-right: 1px solid #000;
+    position: relative;
+}
+
+.bottom-right {
+    grid-column: 2;
+    grid-row: 3;
+    font-size: 100%;
+    padding: 3mm;
+    border-top: 1px solid #000;
+    position: relative;
+}
+
+/* Additional styles for specific label types can be added in the extending templates */

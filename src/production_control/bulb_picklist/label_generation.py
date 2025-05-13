@@ -56,7 +56,8 @@ class LabelGenerator(BaseLabelGenerator[BulbPickList]):
         return {
             "id": record.id,
             "bollen_code": record.bollen_code,
-            "ras": record.ras,
+            "plant_name": f"{record.ras} <br /> {record.oppot_week}",  # Combined for common template
+            "ras": record.ras,  # Keep original for backward compatibility
             "locatie": record.locatie,
             "aantal_bakken": int(record.aantal_bakken),
             "qr_code": qr_code_data,

@@ -34,7 +34,6 @@ def test_jinja2_template_loader():
         / "templates"
     )
     assert template_dir.exists()
-    assert (template_dir / "base.html.jinja2").exists()
     assert (template_dir / "labels.html.jinja2").exists()
 
 

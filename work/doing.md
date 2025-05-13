@@ -120,15 +120,100 @@ classDiagram
 2. Add tests for the base module functionality
 3. Verify that both label generators produce identical output before and after refactoring
 
-## Next Steps: Template Duplication
+## Template Structure and Inheritance
 
-After refactoring the label generation code, we still have duplication in the HTML templates:
-- `src/production_control/bulb_picklist/templates/labels.html.jinja2`
-- `src/production_control/potting_lots/templates/labels.html.jinja2`
-- `src/production_control/bulb_picklist/templates/base.html.jinja2`
-- `src/production_control/potting_lots/templates/base.html.jinja2`
+After analyzing the template structure, we've identified an issue with template inheritance that was causing recursion errors. Here's the current template structure and relationships:
 
-We should consider:
-1. Moving common templates to a shared location
-2. Using template inheritance to handle differences
-3. Creating a common CSS framework for label styling
+### Template Files and Their Relationships
+
+```mermaid
+graph TD
+    CommonBase["data/templates/base.html.jinja2"] --> CommonLabels["data/templates/labels.html.jinja2"]
+    CommonLabels --> BulbLabels["bulb_picklist/templates/labels.html.jinja2"]
+    CommonLabels --> PottingLabels["potting_lots/templates/labels.html.jinja2"]
+    CommonStyles["data/templates/label_styles.html.jinja2"] --> CommonLabels
+    
+    %% Individual label templates
+    CommonLabelTemplate["data/templates/label.html.template"]
+    BulbLabelTemplate["bulb_picklist/templates/label.html.template"]
+    PottingLabelTemplate["potting_lots/templates/label.html.template"]
+    
+    %% Module-specific base templates (potentially redundant)
+    BulbBase["bulb_picklist/templates/base.html.jinja2"]
+    PottingBase["potting_lots/templates/base.html.jinja2"]
+```
+
+### Common Templates (src/production_control/data/templates/)
+
+1. **base.html.jinja2**
+   - Purpose: Provides the basic HTML structure for all templates
+   - Contains: Basic HTML skeleton, page setup, and blocks for title, styles, and content
+   - Used by: labels.html.jinja2
+
+2. **labels.html.jinja2**
+   - Purpose: Defines the common structure for label pages
+   - Extends: base.html.jinja2
+   - Contains: Label container, common blocks for header, middle, and bottom sections
+   - Used by: Module-specific labels.html.jinja2 templates
+
+3. **label_styles.html.jinja2**
+   - Purpose: Contains common CSS styles for labels
+   - Included by: labels.html.jinja2
+
+4. **label.html.template**
+   - Purpose: Template for individual labels
+   - Contains: Basic label structure and styling
+
+### Module-Specific Templates
+
+#### Bulb Picklist (src/production_control/bulb_picklist/templates/)
+
+1. **labels.html.jinja2**
+   - Purpose: Customizes labels for bulb picklist records
+   - Extends: data/templates/labels.html.jinja2
+   - Overrides: title, header_content, middle_left_content, middle_right_content, label_bottom
+
+2. **label.html.template**
+   - Purpose: Template for individual bulb picklist labels
+   - Contains: Bulb picklist specific label structure
+
+3. **base.html.jinja2** (potentially redundant)
+   - Purpose: Duplicate of common base template
+   - Status: Should be evaluated for removal
+
+#### Potting Lots (src/production_control/potting_lots/templates/)
+
+1. **labels.html.jinja2**
+   - Purpose: Customizes labels for potting lot records
+   - Extends: data/templates/labels.html.jinja2
+   - Overrides: title, header_content, middle_left_content, middle_right_content, label_bottom
+
+2. **label.html.template**
+   - Purpose: Template for individual potting lot labels
+   - Contains: Potting lot specific label structure
+
+3. **base.html.jinja2** (potentially redundant)
+   - Purpose: Duplicate of common base template
+   - Status: Should be evaluated for removal
+
+### Issues Identified
+
+1. **Recursion Error**: Module-specific labels.html.jinja2 templates were extending "labels.html.jinja2" without specifying the path, causing Jinja2 to try to extend themselves.
+
+2. **Template Duplication**: There are duplicate base.html.jinja2 templates in each module that may be unnecessary.
+
+3. **Inconsistent Template Usage**: Some templates are used directly (label.html.template) while others are extended (labels.html.jinja2).
+
+### Fixes Implemented
+
+1. Made template inheritance paths explicit in module-specific labels.html.jinja2 files:
+   - Changed `{% extends "labels.html.jinja2" %}` to `{% extends "data/templates/labels.html.jinja2" %}`
+
+### Next Steps: Template Duplication
+
+After fixing the recursion error, we still need to address template duplication:
+
+1. Evaluate and potentially remove redundant base.html.jinja2 templates in module-specific directories
+2. Consider consolidating label.html.template files if they share significant structure
+3. Create a more consistent template inheritance pattern
+4. Implement a common CSS framework for label styling

@@ -1,130 +1,25 @@
-<!DOCTYPE html>
-<html>
+{% extends "labels_base.html.jinja2" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Potting Lot Labels</title>
-    <style>
-        @page {
-            size: {{ page_size }};
-            margin: 0;
-        }
+{% block title %}Potting Lot Labels{% endblock %}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
+{% block label_content %}
+<div class="header">
+    {{ record.naam }}
+    <span class="url-text">{{ record.scan_url }}</span>
+    <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
+</div>
 
-        .label-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            align-items: flex-start;
-        }
+<div class="middle-left">
+    {{ record.bollen_code }}
+    <span class="label-text">Bollencode</span>
+</div>
+<div class="middle-right">
+    {{ record.id }}
+    <span class="label-text">Oppotpartij</span>
+</div>
 
-        .label {
-            width: {{ label_width }};
-            height: {{ label_height }};
-            box-sizing: border-box;
-            border: 1px solid #000;
-            margin: 0;
-            page-break-inside: avoid;
-            display: grid;
-            grid-template-rows: 33% 33% 33%;
-            grid-template-columns: 50% 50%;
-        }
-
-        .plant-name {
-            grid-column: 1 / 3;
-            grid-row: 1;
-            font-size: 120%;
-            font-weight: bold;
-            padding: 2mm;
-            position: relative;
-            padding-right: 30mm; /* Make room for QR code */
-        }
-
-        .url-text {
-            display: block;
-            font-size: 40%;
-            color: #999;
-            font-weight: normal;
-            margin-top: 2mm;
-        }
-
-        .code-left {
-            grid-column: 1;
-            grid-row: 2;
-            font-size: 100%;
-            padding: 3mm;
-            border-top: 1px solid #000;
-            border-right: 1px solid #000;
-            position: relative;
-        }
-
-        .code-right {
-            grid-column: 2;
-            grid-row: 2;
-            font-size: 100%;
-            padding: 3mm;
-            border-top: 1px solid #000;
-            position: relative;
-        }
-
-        .plant-date {
-            grid-column: 1 / 3;
-            grid-row: 3;
-            font-size: 100%;
-            padding: 3mm;
-            border-top: 1px solid #000;
-            position: relative;
-        }
-
-        .qr-code {
-            position: absolute;
-            top: 1mm;
-            right: 1mm;
-            width: 25%;
-            height: auto;
-            z-index: 10;
-            background-color: white;
-            padding: 2px;
-        }
-
-        .label-text {
-            display: block;
-            font-size: 80%;
-            color: #999;
-            margin-top: 2mm;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="label-container">
-        {% for label in labels %}
-        <div class="label">
-            <div class="plant-name">
-                {{ label.naam }}
-                <span class="url-text">{{ label.scan_url }}</span>
-                <img src="{{ label.qr_code }}" alt="QR Code" class="qr-code">
-            </div>
-            <div class="code-left">
-                {{ label.bollen_code }}
-                <span class="label-text">Bollencode</span>
-            </div>
-            <div class="code-right">
-                {{ label.id }}
-                <span class="label-text">Oppotpartij</span>
-            </div>
-            <div class="plant-date">
-                {{ label.oppot_datum }}
-                <span class="label-text">Oppot Datum</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</body>
-
-</html>
+<div class="bottom-full">
+    {{ record.oppot_datum }}
+    <span class="label-text">Oppot Datum</span>
+</div>
+{% endblock %}

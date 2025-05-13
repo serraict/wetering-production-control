@@ -1,0 +1,55 @@
+{% extends "base.html.jinja2" %}
+
+{% block title %}{{ title|default("Labels") }}{% endblock %}
+
+{% block styles %}
+{% include "label_styles.html.jinja2" %}
+
+.label-container {
+display: flex;
+flex-wrap: wrap;
+justify-content: flex-start;
+align-items: flex-start;
+}
+
+.label {
+page-break-after: always;
+}
+
+.label:last-child {
+page-break-after: avoid;
+}
+
+/* Additional module-specific styles */
+{% block additional_styles %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="label-container">
+    {% for record in records %}
+    <div class="label">
+        {% block label_content scoped %}
+        <div class="header">
+            {{ record.naam|default("") }}
+            <span class="url-text">{{ record.scan_url }}</span>
+            <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
+        </div>
+        
+        <div class="middle-left">
+            {{ record.bollen_code|default("") }}
+            <span class="label-text">Bollencode</span>
+        </div>
+        <div class="middle-right">
+            {{ record.id|default("") }}
+            <span class="label-text">ID</span>
+        </div>
+        
+        <div class="bottom-full">
+            {{ record.oppot_datum|default("") }}
+            <span class="label-text">Datum</span>
+        </div>
+        {% endblock %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

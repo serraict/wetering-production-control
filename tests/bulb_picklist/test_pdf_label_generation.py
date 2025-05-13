@@ -63,7 +63,8 @@ def test_label_generator_init_with_defaults():
 
     assert generator.template_dir is not None
     assert generator.template_dir.exists()
-    assert (generator.template_dir / "base.html.jinja2").exists()
+    # We no longer have base.html.jinja2 in the module-specific directory
+    # as it's now in the common templates directory
     assert (generator.template_dir / "labels.html.jinja2").exists()
 
 

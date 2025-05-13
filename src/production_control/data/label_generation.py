@@ -75,13 +75,23 @@ class BaseLabelGenerator(Generic[T]):
                           subclasses must override this.
         """
         self.template_dir = template_dir
+        common_template_dir = Path(__file__).parent / "templates"
 
-        # Initialize Jinja2 environment if template_dir is provided
+        # Initialize Jinja2 environment with both common and module-specific templates
+        # Use a ChoiceLoader with a specific order to prevent recursion issues
+        loaders = []
+        
+        # First, add the module-specific loader if provided
         if self.template_dir:
-            self.jinja_env = jinja2.Environment(
-                loader=jinja2.FileSystemLoader(self.template_dir),
-                autoescape=jinja2.select_autoescape(["html", "xml"]),
-            )
+            loaders.append(jinja2.FileSystemLoader(self.template_dir))
+        
+        # Then add the common template loader
+        loaders.append(jinja2.FileSystemLoader(common_template_dir))
+        
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader(loaders),
+            autoescape=jinja2.select_autoescape(["html", "xml"]),
+        )
 
     def get_scan_path(self, record: T) -> str:
         """
@@ -217,6 +227,7 @@ class BaseLabelGenerator(Generic[T]):
                 page_size=f"{config.width} {config.height}",
                 label_width=config.width,
                 label_height=config.height,
+                title="Labels",
             )
 
         # Prepare data for all records
@@ -233,6 +244,7 @@ class BaseLabelGenerator(Generic[T]):
             page_size=page_size,
             label_width=config.width,
             label_height=config.height,
+            title="Labels",
         )
 
         return html
