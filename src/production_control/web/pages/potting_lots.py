@@ -93,7 +93,7 @@ def potting_lots_page() -> None:
 
         with ui.row().classes("w-full justify-end mb-4"):
             with ui.button("Labels Afdrukken", icon="print").classes("bg-primary") as button:
-                ui.tooltip("Druk labels af voor alle zichtbare records (2 labels per partij: begin en eind)")
+                ui.tooltip("Druk labels af voor alle zichtbare regels")
                 button.on_click(handle_print_all)
 
         display_model_list_page(
