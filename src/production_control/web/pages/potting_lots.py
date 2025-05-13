@@ -3,11 +3,11 @@
 from typing import Dict, Any, List, Union
 from datetime import date
 
-from nicegui import APIRouter, ui, app
+from nicegui import APIRouter, ui
 
 from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
-from ...potting_lots.label_generation import LabelGenerator, LabelConfig
+from ...potting_lots.label_generation import LabelGenerator
 from ..components import frame
 from ..components.model_detail_page import display_model_detail_page, create_model_view_action
 from ..components.model_list_page import display_model_list_page
@@ -19,13 +19,6 @@ label_generator = LabelGenerator()
 table_state_key = "potting_lots_table"
 
 
-def get_label_config() -> LabelConfig:
-    config = LabelConfig.from_env()
-    if not config.base_url:
-        config.base_url = next(iter(app.urls), "")
-    return config
-
-
 def generate_and_download_pdf(records: Union[PottingLot, List[PottingLot]], filename: str) -> None:
     """
     Generate a PDF for records and trigger download.
@@ -34,9 +27,7 @@ def generate_and_download_pdf(records: Union[PottingLot, List[PottingLot]], file
         records: A single PottingLot record or a list of records
         filename: Name for the downloaded file
     """
-    # Generate PDF
-    config = get_label_config()
-    pdf_path = label_generator.generate_pdf(records, config)
+    pdf_path = label_generator.generate_pdf(records)
 
     if not pdf_path:
         return

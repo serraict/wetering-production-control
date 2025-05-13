@@ -63,6 +63,13 @@ class LabelConfig:
         )
 
 
+# def get_label_config() -> LabelConfig:
+#     config = LabelConfig.from_env()
+#     if not config.base_url:
+#         config.base_url = next(iter(app.urls), "")
+#     return config
+
+
 class BaseLabelGenerator(Generic[T]):
     """Base class for generating PDF labels."""
 
@@ -193,7 +200,24 @@ class BaseLabelGenerator(Generic[T]):
         Note:
             This method must be implemented by subclasses.
         """
-        raise NotImplementedError("Subclasses must implement _prepare_record_data")
+        # Generate QR code
+        qr_code_data = self.generate_qr_code(record, base_url)
+
+        # Create the URL path for display
+        display_url = self.get_scan_path(record)
+        if base_url:
+            from urllib.parse import urljoin
+
+            display_url = urljoin(base_url, display_url)
+
+        # Get all model fields as a dictionary
+        record_dict = record.model_dump()
+
+        # Add QR code and scan URL
+        record_dict["qr_code"] = qr_code_data
+        record_dict["scan_url"] = display_url
+
+        return record_dict
 
     def generate_labels_html(
         self,
