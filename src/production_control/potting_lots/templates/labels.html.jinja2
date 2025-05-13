@@ -5,7 +5,7 @@
 {% block label_content %}
 <div class="header">
     {{ record.naam }} <br />
-    {{ record.klant_code }}
+    {{ record.klant_code|default('', true) }}
     <span class="url-text">{{ record.scan_url }}</span>
     <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
 </div>

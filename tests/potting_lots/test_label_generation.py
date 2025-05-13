@@ -8,7 +8,8 @@ from decimal import Decimal
 import pytest
 
 from production_control.potting_lots.models import PottingLot
-from production_control.potting_lots.label_generation import LabelGenerator, LabelConfig
+from production_control.potting_lots.label_generation import LabelGenerator
+from production_control.data.label_generation import LabelConfig
 
 
 @pytest.fixture
@@ -121,3 +122,63 @@ def test_generate_pdf(sample_potting_lot):
 
         # Clean up
         os.unlink(pdf_path)
+
+
+def test_generate_duplicate_labels(sample_potting_lot):
+    """Test that each potting lot gets two identical labels."""
+    generator = LabelGenerator()
+    config = LabelConfig(width="100mm", height="75mm")
+
+    # Generate HTML for a single potting lot
+    html = generator.generate_labels_html(sample_potting_lot, config)
+
+    # Count occurrences of key elements that should appear once per label
+    # The QR code data URL will be unique for each label instance
+    qr_code_count = html.count("data:image/png;base64,")
+
+    # Each potting lot should have two labels
+    assert qr_code_count == 2
+
+    # Check for other identifying information that should appear twice
+    assert html.count(str(sample_potting_lot.id)) >= 2
+    assert html.count(sample_potting_lot.naam) >= 2
+
+
+def test_generate_multiple_duplicate_labels(sample_potting_lot):
+    """Test generating duplicate labels for multiple records."""
+    generator = LabelGenerator()
+    config = LabelConfig(width="100mm", height="75mm")
+
+    # Create a second potting lot
+    second_lot = PottingLot(
+        id=1002,
+        naam="Another Plant",
+        bollen_code=54321,
+        oppot_datum=date(2023, 2, 1),
+        productgroep_code=43,
+        bolmaat=17.5,
+        bol_per_pot=2.0,
+        rij_cont=5,
+        olsthoorn_bollen_code="OBC456",
+        aantal_pot=200,
+        aantal_bol=400,
+        aantal_containers_oppotten=Decimal("50.0"),
+        water="Extra",
+        fust="Special",
+        opmerking="Another test remark",
+    )
+
+    # Generate HTML for both potting lots
+    html = generator.generate_labels_html([sample_potting_lot, second_lot], config)
+
+    # Count occurrences of key elements
+    qr_code_count = html.count("data:image/png;base64,")
+
+    # Each potting lot should have two labels (total of 4)
+    assert qr_code_count == 4
+
+    # Check for identifying information from both records
+    assert html.count(str(sample_potting_lot.id)) >= 2
+    assert html.count(sample_potting_lot.naam) >= 2
+    assert html.count(str(second_lot.id)) >= 2
+    assert html.count(second_lot.naam) >= 2

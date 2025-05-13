@@ -8,7 +8,8 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from production_control.bulb_picklist.models import BulbPickList
-from production_control.bulb_picklist.label_generation import LabelGenerator, LabelConfig
+from production_control.bulb_picklist.label_generation import LabelGenerator
+from production_control.data.label_generation import LabelConfig
 
 
 def test_label_config_default_values():

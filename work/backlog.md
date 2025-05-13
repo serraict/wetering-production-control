@@ -4,11 +4,9 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Improve process for bulb picking
+### Print as many labels as required
 
-- sort by oppotweek and then by locatie
-- print more labels if there are more pallets. each pallet takes at most 25 boxes. so: 35 -> 2 pallets, 56 -> 3 pallets etc
-- add locatie2 and locatie3 if not empty
+- bulb: print more labels if there are more pallets. each pallet takes at most 25 boxes. so: 35 -> 2 pallets, 56 -> 3 pallets etc
 
 ## Later
 

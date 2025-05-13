@@ -57,6 +57,7 @@ def create_label_action() -> Dict[str, Any]:
 
     return {
         "icon": "print",
+        "tooltip": "Druk 2 labels af (begin en eind)",
         "handler": handle_label,
     }
 
@@ -92,7 +93,7 @@ def potting_lots_page() -> None:
 
         with ui.row().classes("w-full justify-end mb-4"):
             with ui.button("Labels Afdrukken", icon="print").classes("bg-primary") as button:
-                ui.tooltip("Druk labels af voor alle zichtbare records")
+                ui.tooltip("Druk labels af voor alle zichtbare records (2 labels per partij: begin en eind)")
                 button.on_click(handle_print_all)
 
         display_model_list_page(

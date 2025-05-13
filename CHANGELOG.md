@@ -14,12 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added klant_code field for customer code information
   - Added oppot_week field for potting week information
   - Added all new fields to search functionality
+- Added duplicate label printing for potting lots:
+  - Each potting lot now prints two identical labels (for start and end of lot)
+  - Updated UI tooltips to indicate dual label printing
+  - Added comprehensive test coverage for duplicate label generation
 
 ### Changed
 
 - Improved label generation performance and code quality
 
-## \[0.1.11\] - 2025-05-08
+## [0.1.11] - 2025-05-08
 
 ### Added
 
@@ -67,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed week number display for year-end dates (e.g., 2024-12-30 now correctly shows as 25w01-1)
 - Improved date formatting consistency by moving it to server-side
 
-## \[0.1.5\] - 2024-11-26
+## [0.1.5] - 2024-11-26
 
 ### Added
 
@@ -83,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `get_by_partij_code` method while maintaining backward compatibility
   - Improved error handling for record lookups
 
-## \[0.1.4\] - 2024-11-22
+## [0.1.4] - 2024-11-22
 
 ### Added
 
@@ -105,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed field name mapping for OpTech API integration
 - Improved error handling and display for API interactions
 
-## \[0.1.3\] - 2024-11-21
+## [0.1.3] - 2024-11-21
 
 ### Added
 
@@ -136,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decimal formatting
   - Support for custom field formatting
 
-## \[0.1.2\] - 2024-11-18
+## [0.1.2] - 2024-11-18
 
 ### Added
 
@@ -153,7 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed database connection issue causing 500 error on products page
 
-## \[0.1.0\] - 2024-11-16
+## [0.1.0] - 2024-11-16
 
 ### Added
 
