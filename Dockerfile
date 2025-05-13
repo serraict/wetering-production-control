@@ -1,28 +1,40 @@
-# Stage 1: Dependencies
-FROM python:3.12 as deps
-WORKDIR /deps
-COPY pyproject.toml requirements-dev.txt ./
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
-# Stage 2: Runtime
-FROM python:3.12
+# Stage 1: Base image with system dependencies
+FROM python:3.12-slim as base
 WORKDIR /production_control
 
-# Copy system dependencies setup
+# Install system dependencies
 RUN apt-get update && \
     apt-get install -y curl gnupg2 apt-transport-https cron && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy dependencies from deps stage
-COPY --from=deps /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+# Stage 2: Dependencies only - this can be built and tagged separately
+FROM base as dependencies
+WORKDIR /deps
+
+# Copy only requirements files
+COPY pyproject.toml requirements-dev.txt ./
+
+# Install Python dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# Stage 3: Final image with application code
+FROM base
+WORKDIR /production_control
+
+# Copy dependencies from the dependencies stage
+COPY --from=dependencies /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+COPY --from=dependencies /usr/local/bin/ /usr/local/bin/
 
 # Copy application code
 COPY . .
 RUN pip install --no-cache-dir --upgrade .
 
-# Setup logs and entrypoint
+# Create log files
 RUN touch /var/log/cron.log /var/log/webapp.log
+
+# Make entrypoint script executable
 RUN chmod +x /production_control/docker-entrypoint.sh
 
 EXPOSE 8000
