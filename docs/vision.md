@@ -12,7 +12,7 @@ This tracking information will help to:
 
 ## Target users
 
-Growers (PR, Q) who monitor the crop and guide production operations in the greenhouse.
+Growers who monitor the crop and guide production operations in the greenhouse.
 Growers will access the system through a web interface on their desktop or cell phone.
 
 ## Context
