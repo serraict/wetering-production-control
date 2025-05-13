@@ -4,11 +4,11 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Goals the user can print labels so that she can easily mark the first and last pot in a production lot
+### Improve process for bulb picking
 
-similar tp bulbpicklist, but now for potting lots (table: Productie.Oppotten.oppotlijst).
-similar searchable fields
-use slightly different label (ask for example)
+- sort by oppotweek and then by locatie
+- print more labels if there are more pallets. each pallet takes at most 25 boxes. so: 35 -> 2 pallets, 56 -> 3 pallets etc
+- add locatie2 and locatie3 if not empty
 
 ## Later
 

@@ -15,7 +15,7 @@ from weasyprint import HTML
 from nicegui import ui
 
 # Generic type for record models
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class LabelConfig:
@@ -80,14 +80,14 @@ class BaseLabelGenerator(Generic[T]):
         # Initialize Jinja2 environment with both common and module-specific templates
         # Use a ChoiceLoader with a specific order to prevent recursion issues
         loaders = []
-        
+
         # First, add the module-specific loader if provided
         if self.template_dir:
             loaders.append(jinja2.FileSystemLoader(self.template_dir))
-        
+
         # Then add the common template loader
         loaders.append(jinja2.FileSystemLoader(common_template_dir))
-        
+
         self.jinja_env = jinja2.Environment(
             loader=jinja2.ChoiceLoader(loaders),
             autoescape=jinja2.select_autoescape(["html", "xml"]),

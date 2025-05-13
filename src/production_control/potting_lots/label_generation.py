@@ -52,12 +52,11 @@ class LabelGenerator(BaseLabelGenerator[PottingLot]):
 
             display_url = urljoin(base_url, display_url)
 
-        # Prepare record data for template
-        return {
-            "id": record.id,
-            "bollen_code": record.bollen_code,
-            "naam": record.naam,
-            "qr_code": qr_code_data,
-            "scan_url": display_url,
-            "oppot_datum": "--",
-        }
+        # Get all model fields as a dictionary
+        record_dict = record.model_dump()
+
+        # Add QR code and scan URL
+        record_dict["qr_code"] = qr_code_data
+        record_dict["scan_url"] = display_url
+
+        return record_dict

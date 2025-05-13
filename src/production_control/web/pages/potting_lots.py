@@ -26,9 +26,7 @@ def get_label_config() -> LabelConfig:
     return config
 
 
-def generate_and_download_pdf(
-    records: Union[PottingLot, List[PottingLot]], filename: str
-) -> None:
+def generate_and_download_pdf(records: Union[PottingLot, List[PottingLot]], filename: str) -> None:
     """
     Generate a PDF for records and trigger download.
 
