@@ -119,3 +119,16 @@ classDiagram
 1. Ensure all existing tests pass after refactoring
 2. Add tests for the base module functionality
 3. Verify that both label generators produce identical output before and after refactoring
+
+## Next Steps: Template Duplication
+
+After refactoring the label generation code, we still have duplication in the HTML templates:
+- `src/production_control/bulb_picklist/templates/labels.html.jinja2`
+- `src/production_control/potting_lots/templates/labels.html.jinja2`
+- `src/production_control/bulb_picklist/templates/base.html.jinja2`
+- `src/production_control/potting_lots/templates/base.html.jinja2`
+
+We should consider:
+1. Moving common templates to a shared location
+2. Using template inheritance to handle differences
+3. Creating a common CSS framework for label styling
