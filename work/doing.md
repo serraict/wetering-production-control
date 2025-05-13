@@ -1,6 +1,6 @@
 # Doing
 
-## Implement Label Printing for Potting Lots - COMPLETED
+## Implement Label Printing for Potting Lots
 
 Implementation completed with the following features:
 
@@ -24,4 +24,98 @@ Implementation completed with the following features:
 - Conduct exploratory testing with real data
 - Test search fields (opmerking, oppotweek)
 - Consider adding aflever_datum in future iterations
-- Refactor code: analyze duplication with bulb label generation
+- ✅ Refactor code: analyze duplication with bulb label generation
+
+## Refactoring Label Generation Code
+
+After analyzing the code duplication between the bulb picklist and potting lots label generation, we've identified significant overlap in functionality. Here's a design for refactoring this code to reduce duplication while maintaining all existing functionality.
+
+### Current Structure
+
+Currently, we have two separate label generation modules with nearly identical code:
+- `src/production_control/bulb_picklist/label_generation.py`
+- `src/production_control/potting_lots/label_generation.py`
+
+Both modules contain:
+- Identical `LabelConfig` classes
+- Very similar `LabelGenerator` classes with minor differences for record-specific fields
+- Identical QR code generation logic
+- Identical PDF generation logic
+- Similar template handling
+
+### Proposed Design
+
+```mermaid
+classDiagram
+    class LabelConfig {
+        +width: str
+        +height: str
+        +base_url: str
+        +__init__(width, height, base_url)
+        +from_env() LabelConfig
+    }
+    
+    class BaseLabelGenerator~T~ {
+        +template_dir: Path
+        +jinja_env: Environment
+        +__init__(template_dir)
+        +get_scan_path(record) str
+        +generate_qr_code(record, base_url) str
+        +_prepare_record_data(record, base_url) Dict
+        +generate_labels_html(records, config) str
+        +generate_pdf(records, config, output_path) str
+        +cleanup_pdf(pdf_path, delay) None
+    }
+    
+    class BulbPicklistLabelGenerator {
+        +__init__()
+        +get_scan_path(record) str
+        +_prepare_record_data(record, base_url) Dict
+    }
+    
+    class PottingLotLabelGenerator {
+        +__init__()
+        +get_scan_path(record) str
+        +_prepare_record_data(record, base_url) Dict
+    }
+    
+    BaseLabelGenerator <|-- BulbPicklistLabelGenerator
+    BaseLabelGenerator <|-- PottingLotLabelGenerator
+    BaseLabelGenerator --> LabelConfig : uses
+```
+
+### Key Components
+
+1. **Common Base Module**: Create a new module `src/production_control/data/label_generation.py` containing:
+   - `LabelConfig` class (unchanged)
+   - Generic `BaseLabelGenerator` class with all common functionality
+
+2. **Specialized Generators**: Refactor existing modules to:
+   - Inherit from `BaseLabelGenerator`
+   - Implement only the record-specific methods:
+     - `get_scan_path`: Returns the URL path for a specific record type
+     - `_prepare_record_data`: Prepares record-specific data for templates
+
+3. **Template Handling**: Keep existing templates in their respective modules to maintain separation of concerns.
+
+### Benefits
+
+1. **Reduced Duplication**: Common code is defined once, reducing maintenance overhead
+2. **Improved Extensibility**: Adding new label types becomes easier
+3. **Consistent Behavior**: QR code generation and PDF creation behave consistently across all label types
+4. **Backward Compatibility**: Existing code will continue to work without changes to the API
+5. **Type Safety**: Using generics to ensure type safety across different record types
+
+### Implementation Steps
+
+1. Create the base module with common functionality
+2. Refactor bulb picklist label generation to use the base module
+3. Refactor potting lots label generation to use the base module
+4. Update tests to ensure all functionality works as expected
+5. Verify backward compatibility with existing code
+
+### Testing Strategy
+
+1. Ensure all existing tests pass after refactoring
+2. Add tests for the base module functionality
+3. Verify that both label generators produce identical output before and after refactoring

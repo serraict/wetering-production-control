@@ -275,7 +275,7 @@ def test_generate_pdf_single_record(provide_output_path, tmp_path):
     generator = LabelGenerator()
 
     # Mock the HTML.write_pdf method to avoid actually generating a PDF
-    with patch("production_control.bulb_picklist.label_generation.HTML") as mock_html:
+    with patch("production_control.data.label_generation.HTML") as mock_html:
         mock_html_instance = MagicMock()
         mock_html.return_value = mock_html_instance
 
@@ -321,7 +321,7 @@ def test_generate_pdf_multiple_records(provide_output_path, tmp_path):
     generator = LabelGenerator()
 
     # Mock the HTML.write_pdf method to avoid actually generating a PDF
-    with patch("production_control.bulb_picklist.label_generation.HTML") as mock_html:
+    with patch("production_control.data.label_generation.HTML") as mock_html:
         mock_html_instance = MagicMock()
         mock_html.return_value = mock_html_instance
 
@@ -355,7 +355,7 @@ def test_generate_pdf_with_custom_config(tmp_path):
     config = LabelConfig(width="100mm", height="75mm", base_url="https://example.com")
 
     # Mock the HTML.write_pdf method to avoid actually generating a PDF
-    with patch("production_control.bulb_picklist.label_generation.HTML") as mock_html:
+    with patch("production_control.data.label_generation.HTML") as mock_html:
         mock_html_instance = MagicMock()
         mock_html.return_value = mock_html_instance
 
