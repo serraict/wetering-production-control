@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.14] - 2025-05-13
+
+### Changed
+
+- Optimized Dockerfile with multi-stage builds:
+  - Separated dependencies installation from code copying
+  - Improved layer caching for faster deployments
+  - Reduced build time when only Python code changes
+  - Maintained full rebuild capability when dependencies change
+
 ## [0.1.13] - 2025-05-13
 
 ### Added
