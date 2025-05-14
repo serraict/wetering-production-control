@@ -41,20 +41,39 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-    - name: Build and push Docker image
+    - name: Set image name
+      id: image_name
+      run: echo "IMAGE_NAME=serraict/wetering-production-control" >> $GITHUB_OUTPUT
+
+    - name: Build and push base Docker image
+      id: push_base
+      uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+      with:
+        context: .
+        target: base
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ steps.image_name.outputs.IMAGE_NAME }}:base
+        labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Build and push app Docker image
       id: push
       uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
       with:
         context: .
+        target: app
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: |
+          ${{ env.REGISTRY }}/${{ steps.image_name.outputs.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ steps.image_name.outputs.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
         labels: ${{ steps.meta.outputs.labels }}
+        cache-from: |
+          ${{ env.REGISTRY }}/${{ steps.image_name.outputs.IMAGE_NAME }}:base
         build-args: |
           VERSION=${{ steps.version.outputs.VERSION }}
 
     - name: Generate artifact attestation
       uses: actions/attest-build-provenance@v1
       with:
-        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+        subject-name: ${{ env.REGISTRY }}/${{ steps.image_name.outputs.IMAGE_NAME}}
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true

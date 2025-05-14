@@ -1,6 +1,10 @@
 ## ------------------------------- Base Stage ------------------------------ ##
 FROM python:3.12-slim-bookworm AS base
 
+# Set a fixed version for the base image to ensure caching works
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.1.0.dev0
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PRODUCTION_CONTROL=0.1.0.dev0
+
 # Install all system dependencies including WeasyPrint requirements and runtime tools
 RUN apt-get update && apt-get install --no-install-recommends -y \
     curl \
@@ -21,15 +25,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-## ------------------------------- Builder Stage ------------------------------ ##
-FROM base AS builder
-
-# Accept build argument for version
-ARG VERSION=0.1.0-dev
-ENV SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PRODUCTION_CONTROL=$VERSION
-
-# Download the latest installer, install it and then remove it
+# Download and install uv
 ADD https://astral.sh/uv/install.sh /install.sh
 RUN chmod -R 655 /install.sh && /install.sh && rm /install.sh
 
@@ -38,27 +34,23 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-RUN mkdir -p /app/src
+# Copy only dependency-related files first
 COPY ./pyproject.toml .
+RUN mkdir -p /app/src
 
+# Install dependencies
 RUN uv sync
 
-## ------------------------------- Production Stage ------------------------------ ##
-FROM base AS production
-
+## ------------------------------- App Stage ------------------------------ ##
+FROM base AS app
 
 # Accept build argument for version
-ARG VERSION=0.1.0-dev
+ARG VERSION=0.1.0.dev0
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION
 ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PRODUCTION_CONTROL=$VERSION
 
-# RUN useradd --create-home appuser
-# USER appuser
-
-WORKDIR /app
-
+# Copy application code
 COPY . .
-COPY --from=builder /app/.venv .venv
 
 # Set up environment variables for production
 ENV PATH="/app/.venv/bin:$PATH"

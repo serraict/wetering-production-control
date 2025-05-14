@@ -67,11 +67,26 @@ release: releasable
 	git tag v$(NEW_VERSION) && \
 	git push origin main --tags
 
-docker_image:
-	docker build -t ghcr.io/serraict/production_control:$(VERSION) .
+# Docker build targets with layer caching optimization
+docker_base:
+	docker build --target base -t ghcr.io/serraict/wetering-production-control:base .
+
+docker_image: docker_base
+	docker build --target app \
+		--build-arg VERSION=$(subst v,,$(VERSION)) \
+		--cache-from ghcr.io/serraict/wetering-production-control:base \
+		-t ghcr.io/serraict/wetering-production-control:$(VERSION) \
+		-t ghcr.io/serraict/wetering-production-control:latest \
+		.
+
+docker_push_base: docker_base
+	docker push ghcr.io/serraict/wetering-production-control:base
 
 docker_push: docker_image
-	docker push ghcr.io/serraict/production_control:$(VERSION)
+	docker push ghcr.io/serraict/wetering-production-control:$(VERSION)
+	docker push ghcr.io/serraict/wetering-production-control:latest
+
+docker_push_all: docker_push_base docker_push
 
 docker_compose_debug:
 	docker compose up --build
