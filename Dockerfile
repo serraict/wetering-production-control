@@ -2,7 +2,7 @@
 ARG VERSION
 
 # Stage 1: Base image with system dependencies
-FROM python:3.12 as base
+FROM python:3.12 AS base
 WORKDIR /production_control
 
 # Pass version to this stage
@@ -18,15 +18,14 @@ RUN apt-get update && \
 FROM base as dependencies
 WORKDIR /deps
 
-# Pass version to this stage
-ARG VERSION
-
 # Copy only requirements files
 COPY pyproject.toml requirements-dev.txt ./
 
-# Install Python dependencies
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-dev.txt
+# Install pip-tools to extract dependencies
+RUN pip install --upgrade pip setuptools wheel pip-tools && \
+    pip install --no-cache-dir -r requirements-dev.txt && \
+    pip-compile --no-header --no-annotate --output-file=requirements-app.txt pyproject.toml && \
+    pip install --no-cache-dir -r requirements-app.txt
 
 # Stage 3: Final image with application code
 FROM base
