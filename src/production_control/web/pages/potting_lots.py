@@ -56,16 +56,13 @@ def create_label_action() -> Dict[str, Any]:
 
 
 def handle_print_all() -> None:
-    # Get the current table state
     table_state = ClientStorageTableState.initialize(table_state_key)
 
-    # Create PottingLot items from table state rows
     records = [PottingLot(**visible_row) for visible_row in table_state.rows]
 
     if not records:
         return
 
-    # Create a descriptive filename using today with format %gW%V-%u
     filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
     generate_and_download_pdf(records, filename)
 
