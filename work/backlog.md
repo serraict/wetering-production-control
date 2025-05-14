@@ -6,6 +6,7 @@ This backlog describes the product increments we have to build to realize our pr
 
 ### Switch to uv package manager
 
+- fix the build, ci build is now failing
 - change makefile
 - verify we can run tests
 - benchmark dependency mngmt times
