@@ -50,7 +50,7 @@ def create_label_action() -> Dict[str, Any]:
 
     return {
         "icon": "print",
-        "tooltip": "Druk 2 labels af voor deze partij",
+        "tooltip": "Druk 2 labels af",
         "handler": handle_label,
     }
 
