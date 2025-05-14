@@ -27,33 +27,41 @@ The current setup doesn't properly leverage Docker's layer caching mechanism. Wh
    - Added cache_from configuration to use base image
    - Added version argument handling
 
-4. **Updated GitHub Actions Workflow**
-   - Added step to build and push base image first
-   - Updated app image build to use base image for caching
+4. **Simplified GitHub Actions Workflow**
+   - Removed separate base image build step
+   - Focused on building and pushing only the app image
    - Fixed image naming and tagging
-   - Ensured proper version handling
 
-### Expected Outcome
-- Faster deployments when only code changes
-- Reduced bandwidth usage during pulls
-- Better build caching
-- Proper version management
-- Streamlined CI/CD process
+### Findings and Challenges
 
-### Success Criteria
-- Only final stage layers should be pulled when code changes
-- Base and builder layers should remain cached
-- Build time should be significantly reduced
-- Version information should be correctly embedded
+1. **Local Build Optimization**
+   - The multi-stage build approach works well for local development
+   - When using `make docker_base` followed by `make docker_image`, only the app-specific layers are rebuilt
 
-### Testing
-To test the optimization:
-1. Build the base image: `make docker_base`
-2. Build the app image: `make docker_image`
-3. Make a code change and rebuild: `make docker_image`
-4. Observe that only the app stage is rebuilt, not the base stage
+2. **Docker Pull Behavior**
+   - Direct `docker pull` commands correctly leverage layer caching
+   - When pulling the base image first, then the latest image, only app-specific layers are downloaded
+   - Docker Compose's pull mechanism doesn't leverage layer caching as effectively
+
+3. **Base Image Determinism**
+   - The base image layers change between builds even when dependencies don't change
+   - This is due to non-deterministic elements in the build process (apt-get updates, timestamps, etc.)
+   - For truly deterministic builds, additional optimizations would be needed
+
+### Recommended Deployment Approach
+
+For production deployments, use a script that pulls images directly:
+
+```bash
+#!/bin/bash
+docker pull ghcr.io/serraict/wetering-production-control:base
+docker pull ghcr.io/serraict/wetering-production-control:latest
+docker compose -f production-control-docker-compose.yml up -d
+```
+
+This ensures that Docker properly leverages layer caching between the base and latest images.
 
 ### Next Steps
 - Monitor build times and pull times in production
-- Consider further optimizations if needed
-- Update documentation with the new build process
+- Consider implementing deterministic base image builds if needed
+- Update documentation with the new build and deployment process
