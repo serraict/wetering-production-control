@@ -17,7 +17,7 @@ dependencies = [
     "jinja2",
 ]
 dynamic = ["version"]
-license.file = "LICENCE"
+# license.file = "LICENCE"
 
 [build-system]
 requires = ["setuptools>=64", "setuptools_scm>=8"]

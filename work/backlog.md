@@ -4,6 +4,12 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
+### Switch to uv package manager
+
+- change makefile
+- verify we can run tests
+- benchmark dependency mngmt times
+
 ### Print as many labels as required
 
 - bulb: print more labels if there are more pallets. each pallet takes at most 25 boxes. so: 35 -> 2 pallets, 56 -> 3 pallets etc

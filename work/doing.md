@@ -1,30 +1,54 @@
 # Doing
 
-## ✅ Optimize Dockerfile for Faster Deployments with Multi-stage Builds
+## Optimize Dockerfile with uv Package Manager and Multi-stage Builds
 
-Restructured the Dockerfile to use multi-stage builds for better optimization when pulling updates. This approach is specifically designed for workflows using `docker compose pull`, separating dependencies from code to speed up deployments when only Python code changes.
+Rebuilding the Dockerfile from scratch to leverage uv package manager for improved dependency management and build performance. This approach aims to create a more efficient and maintainable Docker build process.
 
-### Implemented Changes
+### Planned Changes
 
-1. Created a three-stage Dockerfile:
-   - **Base stage**: Contains system dependencies
-   - **Dependencies stage**: Installs Python packages
-   - **Final stage**: Combines base, dependencies, and application code
+1. Create a new three-stage Dockerfile:
+   - **Base stage**: System dependencies and uv installation
+   - **Builder stage**: Dependencies installation and virtual environment setup
+   - **Final stage**: Production runtime with minimal footprint
 
-2. Added comprehensive documentation in `scripts/docker_build_optimization.md` explaining:
-   - How to leverage the multi-stage build
-   - Development workflow
-   - Production deployment optimization
-   - CI/CD integration recommendations
+2. Key improvements:
+   - Proper uv installation and configuration
+   - Separate handling of dev vs prod dependencies
+   - Optimized layer caching
+   - Reduced image size by excluding dev tools in final stage
+   - Proper environment variable handling
 
-3. Updated CHANGELOG.md with version 0.1.14 entry
+3. Implementation steps:
+   a. Base stage:
+      - Use Python 3.12-slim
+      - Install minimal system dependencies
+      - Install uv properly using official installation method
+      
+   b. Builder stage:
+      - Install build dependencies
+      - Create virtual environment with uv
+      - Install production dependencies first
+      - Install dev dependencies separately
+      - Build wheel of our application
+      
+   c. Final stage:
+      - Copy only necessary files from builder
+      - Install runtime system dependencies
+      - Install application wheel
+      - Set up logging and entrypoint
 
-### Benefits
-- Dependencies layer is built and cached separately
-- Only code changes trigger rebuilds of the final stage
-- Faster pulls when only Python code has changed
-- Full rebuilds only happen when dependencies change
+### Expected Benefits
+- More efficient dependency management with uv
+- Cleaner separation of build stages
+- Improved caching for faster builds
+- Smaller final image size
+- Better maintainability
 
 ### Next Steps
-- Implement the recommended CI/CD pipeline changes
-- Monitor deployment times to verify optimization
+1. Create new Dockerfile implementing the planned changes
+2. Test build process and verify improvements
+3. Update documentation with new build process details
+4. Verify all tests pass with new container
+5. Monitor build times and image sizes to confirm optimization
+
+
