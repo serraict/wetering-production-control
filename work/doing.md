@@ -44,11 +44,27 @@ Rebuilding the Dockerfile from scratch to leverage uv package manager for improv
 - Smaller final image size
 - Better maintainability
 
+### Implemented Changes
+
+1. Fixed WeasyPrint dependency issue:
+   - Added required system libraries for WeasyPrint in the base stage:
+     - libcairo2
+     - libpango-1.0-0
+     - libpangocairo-1.0-0
+     - libgdk-pixbuf2.0-0
+     - libffi-dev
+     - shared-mime-info
+     - libgirepository1.0-dev
+     - libglib2.0-0
+
+2. Optimized Docker layer structure:
+   - Moved all system dependencies and runtime tools to the base stage
+   - Changed production stage to inherit from base instead of python:3.12-slim-bookworm
+   - Removed all duplicate system dependency installation from production stage
+   - Production stage now has no apt-get commands, inheriting everything from base
+
 ### Next Steps
-1. Create new Dockerfile implementing the planned changes
-2. Test build process and verify improvements
-3. Update documentation with new build process details
-4. Verify all tests pass with new container
-5. Monitor build times and image sizes to confirm optimization
-
-
+1. Test build process and verify improvements
+2. Update documentation with new build process details
+3. Verify all tests pass with new container
+4. Monitor build times and image sizes to confirm optimization

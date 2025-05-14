@@ -1,10 +1,23 @@
 ## ------------------------------- Base Stage ------------------------------ ##
-FROM python:3.12 AS base
+FROM python:3.12-slim-bookworm AS base
 
-# Install minimal system dependencies
+# Install all system dependencies including WeasyPrint requirements and runtime tools
 RUN apt-get update && apt-get install --no-install-recommends -y \
     curl \
     ca-certificates \
+    # Runtime tools
+    gnupg2 \
+    apt-transport-https \
+    cron \
+    # WeasyPrint dependencies
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libgirepository1.0-dev \
+    libglib2.0-0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,22 +44,7 @@ COPY ./pyproject.toml .
 RUN uv sync
 
 ## ------------------------------- Production Stage ------------------------------ ##
-FROM python:3.12-slim-bookworm AS production
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    curl gnupg2 apt-transport-https cron \
-    ca-certificates \
-    # WeasyPrint dependencies
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
-    libffi-dev \
-    shared-mime-info \
-    libgirepository1.0-dev \
-    libglib2.0-0 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM base AS production
 
 
 # Accept build argument for version
