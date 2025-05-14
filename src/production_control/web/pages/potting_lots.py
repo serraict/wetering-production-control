@@ -20,13 +20,6 @@ table_state_key = "potting_lots_table"
 
 
 def generate_and_download_pdf(records: Union[PottingLot, List[PottingLot]], filename: str) -> None:
-    """
-    Generate a PDF for records and trigger download.
-
-    Args:
-        records: A single PottingLot record or a list of records
-        filename: Name for the downloaded file
-    """
     pdf_path = label_generator.generate_pdf(records)
 
     if not pdf_path:
@@ -79,7 +72,6 @@ def handle_print_all() -> None:
 
 @router.page("/")
 def potting_lots_page() -> None:
-    """Display the potting lots page."""
     repository = PottingLotRepository()
 
     row_actions = {
