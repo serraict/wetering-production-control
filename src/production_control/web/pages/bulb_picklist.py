@@ -22,23 +22,13 @@ table_state_key = "bulb_picklist_table"
 def generate_and_download_pdf(
     records: Union[BulbPickList, List[BulbPickList]], filename: str
 ) -> None:
-    """
-    Generate a PDF for records and trigger download.
-
-    Args:
-        records: A single BulbPickList record or a list of records
-        filename: Name for the downloaded file
-    """
-    # Generate PDF
     pdf_path = label_generator.generate_pdf(records)
 
     if not pdf_path:
         return
 
-    # Download the PDF
     ui.download(pdf_path, filename=filename)
 
-    # Clean up the temporary file after download
     label_generator.cleanup_pdf(pdf_path)
 
 
@@ -46,8 +36,6 @@ def create_label_action() -> Dict[str, Any]:
 
     def handle_label(e: Dict[str, Any]) -> None:
         id_value = e.args.get("key")
-
-        # Get record from table state instead of database
         table_state = ClientStorageTableState.initialize(table_state_key)
         record = next(
             (BulbPickList(**row) for row in table_state.rows if row["id"] == id_value), None
