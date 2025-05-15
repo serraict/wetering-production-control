@@ -12,7 +12,6 @@ This backlog describes the product increments we have to build to realize our pr
   - template rendering?
   - data preparation?
 
-
 ### Switch to uv package manager
 
 - fix the build, ci build is now failing
