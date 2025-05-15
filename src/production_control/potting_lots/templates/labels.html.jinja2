@@ -4,23 +4,21 @@
 
 {% block label_content %}
 <div class="header">
-    {{ record.naam }} <br />
+    {{ record.naam }}
     {{ record.klant_code|default('', true) }}
-    <span class="url-text">{{ record.scan_url }}</span>
     <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
 </div>
 
 <div class="middle-left">
-    {{ record.bollen_code }}
-    <span class="label-text">Bollencode</span>
+    🪴{{ record.id }}
 </div>
 <div class="middle-right">
-    {{ record.id }}
-    <span class="label-text">Oppotpartij</span>
+    🌱{{ record.bollen_code }}
 </div>
 
 <div class="bottom-full">
-    {{ record.oppot_datum }}
-    <span class="label-text">Oppot Datum</span>
+    {{ record.oppot_datum }} |
+    {{ record.bolmaat }} |
+    {{ record.cert_nr|default('', true) }}
 </div>
 {% endblock %}

@@ -16,8 +16,8 @@ def test_label_config_default_values():
     """Test that LabelConfig initializes with default values."""
     config = LabelConfig()
 
-    assert config.width == "151mm"
-    assert config.height == "101mm"
+    assert config.width == "104mm"
+    assert config.height == "77mm"
     assert config.base_url == ""
 
 

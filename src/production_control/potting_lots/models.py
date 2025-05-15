@@ -140,3 +140,10 @@ class PottingLot(SQLModel, table=True):
         description="Week van oppotten",
         sa_column_kwargs={"info": {"ui_sortable": True, "ui_hidden": True}},
     )
+
+    cert_nr: Optional[str] = Field(
+        default=None,
+        title="Certificatie Nummer",
+        description="Certification number",
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_hidden": False}},
+    )
