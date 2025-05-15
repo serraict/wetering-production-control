@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.33] - 2025-05-15
+## [Unreleased]
+
+### Changed
+
+- Updated label layouts with new design requirements:
+  - Set grid rows to 50/30/20 (top/middle/bottom)
+  - Updated default label size to 104x77mm (from 151x101mm)
+  - Set QR code to 30% width
+  - Removed URL text from templates
+  - Added cert_nr field to PottingLot model
+  - Updated potting lot label template to show bolmaat and cert_nr
+
+## \[0.1.33\] - 2025-05-15
 
 ### Added
 
