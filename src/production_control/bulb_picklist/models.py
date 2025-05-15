@@ -65,6 +65,13 @@ class BulbPickList(SQLModel, table=True):
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
 
+    artikel: Optional[str] = Field(
+        default=None,
+        title="Artikel Groep",
+        description="Article group",
+        sa_column_kwargs={"info": {"ui_sortable": True}},
+    )
+
     @property
     def pallet_count(self) -> int:
         """

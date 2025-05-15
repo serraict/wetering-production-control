@@ -22,8 +22,8 @@ class LabelConfig:
     """Configuration for label generation."""
 
     # Default dimensions
-    DEFAULT_WIDTH = "151mm"
-    DEFAULT_HEIGHT = "101mm"
+    DEFAULT_WIDTH = "104mm"
+    DEFAULT_HEIGHT = "77mm"
 
     def __init__(
         self,
@@ -49,8 +49,8 @@ class LabelConfig:
         Create a LabelConfig from environment variables.
 
         Uses the following environment variables:
-        - LABEL_WIDTH: Width of the label (default: 151mm)
-        - LABEL_HEIGHT: Height of the label (default: 101mm)
+        - LABEL_WIDTH: Width of the label (default: 104mm)
+        - LABEL_HEIGHT: Height of the label (default: 77mm)
         - QR_CODE_BASE_URL: Base URL for QR codes (default: "")
 
         Returns:

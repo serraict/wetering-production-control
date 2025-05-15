@@ -12,12 +12,10 @@ justify-content: flex-start;
 align-items: flex-start;
 }
 
+/* Each label should be on a single page */
 .label {
-page-break-after: always;
-}
-
-.label:last-child {
-page-break-after: avoid;
+page-break-inside: avoid;
+page-break-after: auto;
 }
 
 /* Additional module-specific styles */

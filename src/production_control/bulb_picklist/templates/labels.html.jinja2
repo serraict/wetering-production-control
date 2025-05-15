@@ -7,27 +7,21 @@
 <div class="header">
     {{ record.ras }} <br />
     {{ record.oppot_week }}
-    <span class="url-text">{{ record.scan_url }}</span>
     <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
 </div>
 
 <div class="middle-left">
-    {{ record.bollen_code }}
-    <span class="label-text">Bollencode</span>
+    {{ record.id }} - {{ record.artikel }}
 </div>
 <div class="middle-right">
-    {{ record.id }}
-    <span class="label-text">Oppotpartij</span>
+    {{ record.bollen_code }}
 </div>
 
 <div class="bottom-left">
     {{ record.locatie }}
-    <span class="label-text">Locatie</span>
 </div>
 <div class="bottom-right">
-    {{ record.aantal_bakken|int }} kratten <br />
-    {{ record.pallet_info }}
-    <span class="label-text">Aantal</span>
+    {{ record.pallet_info }} - {{ record.aantal_bakken|int }} kratten totaal
 </div>
 
 {% endblock %}
