@@ -1,5 +1,6 @@
 """Bulb picklist data models."""
 
+import math
 from datetime import date
 from typing import Optional
 
@@ -63,3 +64,18 @@ class BulbPickList(SQLModel, table=True):
         description="The planting week",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
+
+    @property
+    def pallet_count(self) -> int:
+        """
+        Calculate the number of pallets needed for the boxes.
+
+        Each pallet can hold a maximum of 25 boxes.
+        Returns 0 if aantal_bakken is 0 or negative.
+
+        Returns:
+            int: Number of pallets needed
+        """
+        if self.aantal_bakken <= 0:
+            return 0
+        return math.ceil(self.aantal_bakken / 25)
