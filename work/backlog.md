@@ -4,6 +4,15 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
+### speed up label generation
+
+- now we block the ui (e.g. 20+labels) and then we cannot download the labels
+- time what is causing the the delay
+  - qr code generation?
+  - template rendering?
+  - data preparation?
+
+
 ### Switch to uv package manager
 
 - fix the build, ci build is now failing
