@@ -5,19 +5,6 @@
 {% block styles %}
 {% include "label_styles.html.jinja2" %}
 
-.label-container {
-display: flex;
-flex-wrap: wrap;
-justify-content: flex-start;
-align-items: flex-start;
-}
-
-/* Each label should be on a single page */
-.label {
-page-break-inside: avoid;
-page-break-after: auto;
-}
-
 /* Additional module-specific styles */
 {% block additional_styles %}{% endblock %}
 {% endblock %}
@@ -27,25 +14,30 @@ page-break-after: auto;
     {% for record in records %}
     <div class="label">
         {% block label_content scoped %}
-        <div class="header">
-            {{ record.naam|default("") }}
-            <span class="url-text">{{ record.scan_url }}</span>
-            <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
-        </div>
-        
-        <div class="middle-left">
-            {{ record.bollen_code|default("") }}
-            <span class="label-text">Bollencode</span>
-        </div>
-        <div class="middle-right">
-            {{ record.id|default("") }}
-            <span class="label-text">ID</span>
-        </div>
-        
-        <div class="bottom-full">
-            {{ record.oppot_datum|default("") }}
-            <span class="label-text">Datum</span>
-        </div>
+        <!-- Default label content - should be overridden by specific templates -->
+        <table class="label-table">
+            <tr class="header-row">
+                <td class="header-cell" colspan="3">
+                    {{ record.naam|default("") }}
+                </td>
+                <td class="header-cell">
+                    <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
+                </td>
+            </tr>
+            <tr class="middle-row">
+                <td class="middle-cell" colspan="2">
+                    {{ record.id|default("") }}
+                </td>
+                <td class="middle-cell" colspan="2">
+                    {{ record.bollen_code|default("") }}
+                </td>
+            </tr>
+            <tr class="bottom-row">
+                <td class="bottom-cell" colspan="4">
+                    {{ record.oppot_datum|default("") }}
+                </td>
+            </tr>
+        </table>
         {% endblock %}
     </div>
     {% endfor %}

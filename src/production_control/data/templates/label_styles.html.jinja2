@@ -1,99 +1,82 @@
+/* Label container */
+.label-container {
+width: 100%;
+}
+
+/* Label styling */
 .label {
-    width: {{ label_width }};
-    height: {{ label_height }};
-    box-sizing: border-box;
-    padding: 2mm;
-    display: grid;
-    grid-template-rows: 50% 30% 20%;
-    grid-template-columns: 50% 50%;
-    page-break-inside: avoid;
+width: {{ label_width }};
+height: {{ label_height }};
+box-sizing: border-box;
+padding: 1mm;
+page-break-inside: avoid;
+page-break-after: always;
 }
 
-.header {
-    grid-column: 1 / 3;
-    grid-row: 1;
-    font-size: 200%;
-    font-weight: 600;
-    padding: 2mm;
-    position: relative;
-    padding-right: 30mm; /* Make room for QR code */
-    border: 1px solid #ccc;
+/* Table styling */
+.label-table {
+width: 100%;
+height: 100%;
+border-collapse: collapse;
+table-layout: fixed;
 }
 
-.middle-left {
-    grid-column: 1;
-    grid-row: 2;
-    font-size: 170%;
-    font-weight: 600;
-    padding: 3mm;
-    position: relative;
-    border: 1px solid #ccc;
+.label-table td {
+border: 1px solid #ccc;
+padding: 1mm;
+position: relative;
 }
 
-.middle-right {
-    grid-column: 2;
-    grid-row: 2;
-    font-size: 170%;
-    font-weight: 600;    
-    padding: 3mm;
-    position: relative;
-    border: 1px solid #ccc;
+/* Header row - 50% height */
+.header-row {
+height: 50%;
 }
 
+.header-cell {
+font-size: 200%;
+font-weight: 600;
+position: relative;
+valign: top;
+}
+
+/* Middle row - 40% height */
+.middle-row {
+height: 40%;
+}
+
+.middle-cell {
+font-size: 170%;
+font-weight: 600;
+position: relative;
+}
+
+/* Bottom row - 10% height */
+.bottom-row {
+height: 10%;
+}
+
+.bottom-cell {
+font-size: 70%;
+position: relative;
+}
+
+/* QR code styling */
 .qr-code {
-    position: absolute;
-    top: 1mm;
-    right: 1mm;
-    width: 30%;
-    height: auto;
-    z-index: 10;
-    background-color: white;
-    padding: 2px;
+width: 100%;
+height: auto;
+z-index: 10;
+background-color: white;
+padding: 0;
+margin: 0;
+border: none;
+box-sizing: border-box;
 }
-
-.label-text {
-    display: block;
-    font-size:70%;
-    color: #999;
-    margin-top: 2mm;
-}
-
-/* Bottom row styles - these will be extended by specific templates */
-.bottom-full {
-    grid-column: 1 / 3;
-    grid-row: 3;
-    font-size: 70%;
-    padding: 3mm;
-    position: relative;
-    border: 1px solid #ccc;
-}
-
-.bottom-left {
-    grid-column: 1;
-    grid-row: 3;
-    font-size: 70%;
-    padding: 3mm;
-    position: relative;
-    border: 1px solid #ccc;
-}
-
-.bottom-right {
-    grid-column: 2;
-    grid-row: 3;
-    font-size: 70%;
-    padding: 3mm;
-    position: relative;
-    border: 1px solid #ccc;
-}
-
-/* Additional styles for specific label types can be added in the extending templates */
 
 /* SVG icon styling */
-.middle-left .icon-svg,
-.middle-right .icon-svg {
-    position: absolute;
-    top: 1mm;
-    right: 1mm;
-    width: 20px;
-    height: 20px;
+.icon-svg {
+position: absolute;
+top: 1mm;
+right: 1mm;
+width: 20px;
+height: 20px;
 }

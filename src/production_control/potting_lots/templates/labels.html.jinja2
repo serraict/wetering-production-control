@@ -4,24 +4,32 @@
 {% block title %}Potting Lot Labels{% endblock %}
 
 {% block label_content %}
-<div class="header">
-    {{ record.naam }} <br />
-    {{ record.klant_code|default('', true) }}
-    <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
-</div>
-
-<div class="middle-left">
-    {{ svg.lily_pot() }}
-    {{ record.id }}
-</div>
-<div class="middle-right">
-    {{ svg.lily_bulb() }}
-    {{ record.bollen_code }}
-</div>
-
-<div class="bottom-full">
-    {{ record.oppot_datum }} |
-    {{ record.bolmaat }} |
-    {{ record.cert_nr|default('', true) }}
-</div>
+<table class="label-table">
+    <tr class="header-row">
+        <td class="header-cell" colspan="3">
+            {{ record.naam }}
+            ~{{ record.klant_code|default('', true) }}
+        </td>
+        <td class="header-cell">
+            <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
+        </td>
+    </tr>
+    <tr class="middle-row">
+        <td class="middle-cell" colspan="2">
+            {{ svg.lily_pot() }}
+            {{ record.id }}
+        </td>
+        <td class="middle-cell" colspan="2">
+            {{ svg.lily_bulb() }}
+            {{ record.bollen_code }}
+        </td>
+    </tr>
+    <tr class="bottom-row">
+        <td class="bottom-cell" colspan="4">
+            {{ record.oppot_datum }} |
+            {{ record.bolmaat }} |
+            {{ record.cert_nr|default('', true) }}
+        </td>
+    </tr>
+</table>
 {% endblock %}

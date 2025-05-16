@@ -1,125 +1,36 @@
-{% extends "base.html.jinja2" %}
+{% extends "labels_base.html.jinja2" %}
 {% import "svg_icons.html.jinja2" as svg %}
 
 {% block title %}Bulb Pick List Labels{% endblock %}
 
-{% block styles %}
-/* Label container */
-.label-container {
-    width: 100%;
-}
-
-/* Label styling */
-.label {
-    width: {{ label_width }};
-    height: {{ label_height }};
-    box-sizing: border-box;
-    padding: 2mm;
-    page-break-inside: avoid;
-    page-break-after: always;
-}
-
-/* Table styling */
-.label-table {
-    width: 100%;
-    height: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.label-table td {
-    border: 1px solid #ccc;
-    padding: 3mm;
-    position: relative;
-}
-
-/* Header row - 50% height */
-.header-row {
-    height: 50%;
-}
-
-.header-cell {
-    font-size: 200%;
-    font-weight: 600;
-    position: relative;
-    padding-right: 30mm; /* Make room for QR code */
-}
-
-/* Middle row - 30% height */
-.middle-row {
-    height: 30%;
-}
-
-.middle-cell {
-    font-size: 170%;
-    font-weight: 600;
-    position: relative;
-}
-
-/* Bottom row - 20% height */
-.bottom-row {
-    height: 20%;
-}
-
-.bottom-cell {
-    font-size: 70%;
-    position: relative;
-}
-
-/* QR code styling */
-.qr-code {
-    position: absolute;
-    top: 1mm;
-    right: 1mm;
-    width: 30%;
-    height: auto;
-    z-index: 10;
-    background-color: white;
-    padding: 2px;
-}
-
-/* SVG icon styling */
-.icon-svg {
-    position: absolute;
-    top: 1mm;
-    right: 1mm;
-    width: 20px;
-    height: 20px;
-}
-{% endblock %}
-
-{% block content %}
-<div class="label-container">
-    {% for record in records %}
-    <div class="label">
-        <table class="label-table">
-            <tr class="header-row">
-                <td class="header-cell" colspan="2">
-                    {{ record.ras }} <br />
-                    {{ record.oppot_week }}
-                    <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
-                </td>
-            </tr>
-            <tr class="middle-row">
-                <td class="middle-cell">
-                    {{ svg.lily_pot() }}
-                    {{ record.id }} {{ record.artikel }}
-                </td>
-                <td class="middle-cell">
-                    {{ svg.lily_bulb() }}
-                    {{ record.bollen_code }}
-                </td>
-            </tr>
-            <tr class="bottom-row">
-                <td class="bottom-cell">
-                    {{ record.locatie }}
-                </td>
-                <td class="bottom-cell">
-                    {{ record.pallet_info }} - {{ record.aantal_bakken|int }} kratten totaal
-                </td>
-            </tr>
-        </table>
-    </div>
-    {% endfor %}
-</div>
+{% block label_content %}
+<table class="label-table">
+    <tr class="header-row">
+        <td class="header-cell" colspan="3">
+            {{ record.ras }}
+            ~{{ record.oppot_week }}
+        </td>
+        <td class="header-cell">
+            <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
+        </td>
+    </tr>
+    <tr class="middle-row">
+        <td class="middle-cell" colspan="2">
+            {{ svg.lily_pot() }}
+            {{ record.id }} {{ record.artikel }}
+        </td>
+        <td class="middle-cell" colspan="2">
+            {{ svg.lily_bulb() }}
+            {{ record.bollen_code }}
+        </td>
+    </tr>
+    <tr class="bottom-row">
+        <td class="bottom-cell" colspan="2">
+            {{ record.locatie }}
+        </td>
+        <td class="bottom-cell" colspan="2">
+            {{ record.pallet_info }} - {{ record.aantal_bakken|int }} kratten totaal
+        </td>
+    </tr>
+</table>
 {% endblock %}
