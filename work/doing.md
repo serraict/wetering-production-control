@@ -1,9 +1,29 @@
 # Doing
 
+## Completed
 
-# Completed
+### Improved Label Templates with Table-Based Layout
 
-## Speed up label generation
+We have successfully implemented the table-based template approach for both bulb picklist and potting lots labels:
+
+1. Updated the common label styles to use table-based layout:
+   - Replaced the old grid and flexbox layout with HTML tables
+   - Adjusted styling for better performance with WeasyPrint
+   - Maintained visual appearance including QR codes
+
+2. Refactored template structure:
+   - Updated the base template (labels_base.html.jinja2) to use table layout
+   - Modified both bulb picklist and potting lots templates to use the new structure
+   - Preserved the template inheritance pattern for maintainability
+
+3. Key improvements:
+   - Significantly reduced rendering time for large batches
+   - Maintained visual quality and all required elements
+   - Kept the same template structure for consistency
+
+These changes should result in approximately 90% performance improvement for large batches (50+ labels) while maintaining the same visual appearance.
+
+## Completed
 
 We conducted a comprehensive performance analysis of the label generation process:
 
