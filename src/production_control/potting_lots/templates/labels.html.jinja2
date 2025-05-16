@@ -1,19 +1,22 @@
 {% extends "labels_base.html.jinja2" %}
+{% import "svg_icons.html.jinja2" as svg %}
 
 {% block title %}Potting Lot Labels{% endblock %}
 
 {% block label_content %}
 <div class="header">
-    {{ record.naam }}
+    {{ record.naam }} <br />
     {{ record.klant_code|default('', true) }}
     <img src="{{ record.qr_code }}" alt="QR Code" class="qr-code">
 </div>
 
 <div class="middle-left">
-    🪴{{ record.id }}
+    {{ svg.lily_pot() }}
+    {{ record.id }}
 </div>
 <div class="middle-right">
-    🌱{{ record.bollen_code }}
+    {{ svg.lily_bulb() }}
+    {{ record.bollen_code }}
 </div>
 
 <div class="bottom-full">

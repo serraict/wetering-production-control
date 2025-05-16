@@ -1,4 +1,5 @@
 {% extends "labels_base.html.jinja2" %}
+{% import "svg_icons.html.jinja2" as svg %}
 
 {% block title %}Bulb Pick List Labels{% endblock %}
 
@@ -11,10 +12,12 @@
 </div>
 
 <div class="middle-left">
-    🪴{{ record.id }} {{ record.artikel }}
+    {{ svg.lily_pot() }}
+    {{ record.id }} {{ record.artikel }}
 </div>
 <div class="middle-right">
-    🌱{{ record.bollen_code }}
+    {{ svg.lily_bulb() }}
+    {{ record.bollen_code }}
 </div>
 
 <div class="bottom-left">
