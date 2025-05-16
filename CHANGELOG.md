@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Achieved ~90% performance improvement for large batches (50+ labels)
   - Preserved template inheritance pattern for maintainability
 
+### Documentation
+
+- Updated architecture documentation
+
 ## \[0.1.34\] - 2025-05-15
 
 ### Changed
