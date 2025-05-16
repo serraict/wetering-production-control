@@ -1,9 +1,9 @@
 """Bulb picklist page implementation."""
 
-from typing import Dict, Any, List, Union
+from typing import Dict, Any
 from datetime import date
 
-from nicegui import APIRouter, ui
+from nicegui import APIRouter, ui, run
 
 from ...bulb_picklist.repositories import BulbPickListRepository
 from ...bulb_picklist.models import BulbPickList
@@ -19,22 +19,14 @@ label_generator = LabelGenerator()
 table_state_key = "bulb_picklist_table"
 
 
-def generate_and_download_pdf(
-    records: Union[BulbPickList, List[BulbPickList]], filename: str
-) -> None:
-    pdf_path = label_generator.generate_pdf(records)
-
-    if not pdf_path:
-        return
-
-    ui.download(pdf_path, filename=filename)
-
-    label_generator.cleanup_pdf(pdf_path)
+def generate_labels(records, filename=None) -> str:
+    label_generator = LabelGenerator()
+    return label_generator.generate_pdf(records)
 
 
 def create_label_action() -> Dict[str, Any]:
 
-    def handle_label(e: Dict[str, Any]) -> None:
+    async def handle_label(e: Dict[str, Any]) -> None:
         id_value = e.args.get("key")
         table_state = ClientStorageTableState.initialize(table_state_key)
         record = next(
@@ -42,8 +34,18 @@ def create_label_action() -> Dict[str, Any]:
         )
 
         if record:
+            # Create a descriptive filename, this is used for the downloaded file for the user
             filename = f"label_{record.id}_{record.ras.replace(' ', '_')}.pdf"
-            generate_and_download_pdf(record, filename)
+            ui.notify("Generating label...")
+
+            try:
+                pdf_path = await run.cpu_bound(generate_labels, record)
+                ui.download(pdf_path, filename=filename)
+                label_generator.cleanup_pdf(pdf_path)
+            except Exception as e:
+                msg = f"Error generating label: {str(e)}"
+                print(msg)
+                ui.notify(msg)
 
     return {
         "icon": "print",
@@ -51,19 +53,32 @@ def create_label_action() -> Dict[str, Any]:
     }
 
 
-def handle_print_all() -> None:
+async def handle_print_all() -> None:
     table_state = ClientStorageTableState.initialize(table_state_key)
     records = [BulbPickList(**visible_row) for visible_row in table_state.rows]
 
     if not records:
         return
 
-    filename = f"labels_{date.today():%gW%V-%u}.pdf"
-    generate_and_download_pdf(records, filename)
+    ui.notify("Generating labels...")
+
+    try:
+        # Generate labels in background process
+        pdf_path = await run.cpu_bound(generate_labels, records)
+
+        # Download and cleanup
+        filename = f"labels_{date.today():%gW%V-%u}.pdf"
+        ui.download(pdf_path, filename=filename)
+        label_generator.cleanup_pdf(pdf_path)
+
+    except Exception as e:
+        msg = f"Error generating labels: {str(e)}"
+        print(msg)
+        ui.notify(msg)
 
 
 @router.page("/")
-def bulb_picklist_page() -> None:
+async def bulb_picklist_page() -> None:
     """Display the bulb picklist page."""
     repository = BulbPickListRepository()
 
@@ -77,9 +92,24 @@ def bulb_picklist_page() -> None:
     with frame("Bollen Picklist"):
 
         with ui.row().classes("w-full justify-end mb-4"):
-            with ui.button("Labels Afdrukken", icon="print").classes("bg-primary") as button:
+            print_all_caption = "Labels Afdrukken"
+            print_all_icon = "print"
+            with ui.button(print_all_caption, icon=print_all_icon).classes(
+                "bg-primary"
+            ) as print_all_button:
                 ui.tooltip("Druk labels af voor alle zichtbare records")
-                button.on_click(handle_print_all)
+
+                async def handle_print_with_feedback():
+                    print_all_button.disable()
+                    print_all_button.icon = "hourglass_top"
+                    try:
+                        await handle_print_all()
+                    finally:
+                        print_all_button.text = print_all_caption
+                        print_all_button.icon = print_all_icon
+                        print_all_button.enable()
+
+                print_all_button.on_click(handle_print_with_feedback)
 
         display_model_list_page(
             repository=repository,
