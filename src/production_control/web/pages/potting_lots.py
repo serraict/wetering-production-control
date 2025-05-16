@@ -1,6 +1,6 @@
 """Potting lots page implementation."""
 
-from typing import Dict, Any, List, Union
+from typing import Dict, Any
 from datetime import date
 
 from nicegui import APIRouter, ui, run
@@ -19,34 +19,28 @@ label_generator = LabelGenerator()
 table_state_key = "potting_lots_table"
 
 
-def generate_and_download_pdf(records: Union[PottingLot, List[PottingLot]], filename: str) -> None:
-    pdf_path = label_generator.generate_pdf(records)
-
-    if not pdf_path:
-        return
-
-    # Download the PDF
-    ui.download(pdf_path, filename=filename)
-
-    # Clean up the temporary file after download
-    label_generator.cleanup_pdf(pdf_path)
-
-
 def create_label_action() -> Dict[str, Any]:
 
-    def handle_label(e: Dict[str, Any]) -> None:
+    async def handle_label(e: Dict[str, Any]) -> None:
         id_value = e.args.get("key")
-
-        # Get record from table state instead of database
         table_state = ClientStorageTableState.initialize(table_state_key)
         record = next(
             (PottingLot(**row) for row in table_state.rows if row["id"] == id_value), None
         )
 
         if record:
-            # Create a descriptive filename
+            # Create a descriptive filename, this is used for the downloaded file for the user
             filename = f"oppotpartij_{record.id}_{record.naam.replace(' ', '_')}.pdf"
-            generate_and_download_pdf(record, filename)
+            ui.notify("Generating label...")
+
+            try:
+                pdf_path = await run.cpu_bound(generate_labels, record)
+                ui.download(pdf_path, filename=filename)
+                label_generator.cleanup_pdf(pdf_path)
+            except Exception as e:
+                msg = f"Error generating label: {str(e)}"
+                print(msg)
+                ui.notify(msg)
 
     return {
         "icon": "print",
@@ -66,7 +60,7 @@ def generate_labels(records, filename=None) -> str:
         Path to the generated PDF file
     """
     label_generator = LabelGenerator()
-    return label_generator.generate_pdf(records, filename)
+    return label_generator.generate_pdf(records)
 
 
 async def handle_print_all() -> None:
@@ -81,15 +75,17 @@ async def handle_print_all() -> None:
 
     try:
         # Generate labels in background process
-        filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
-        pdf_path = await run.cpu_bound(generate_labels, records, filename)
+        pdf_path = await run.cpu_bound(generate_labels, records)
 
         # Download and cleanup
-        ui.download(pdf_path)
+        filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
+        ui.download(pdf_path, filename=filename)
         label_generator.cleanup_pdf(pdf_path)
 
     except Exception as e:
-        ui.notify(f"Error generating labels: {str(e)}", type="error")
+        msg = f"Error generating labels: {str(e)}"
+        print(msg)
+        ui.notify(msg)
 
 
 @router.page("/")
@@ -106,9 +102,24 @@ async def potting_lots_page() -> None:
     with frame("Oppotlijst"):
 
         with ui.row().classes("w-full justify-end mb-4"):
-            with ui.button("Labels Afdrukken", icon="print").classes("bg-primary") as button:
+            print_all_caption = "Labels Afdrukken"
+            print_all_icon = "print"
+            with ui.button(print_all_caption, icon=print_all_icon).classes(
+                "bg-primary"
+            ) as print_all_button:
                 ui.tooltip("Druk labels af voor alle zichtbare regels")
-                button.on_click(handle_print_all)
+
+                async def handle_print_with_feedback():
+                    print_all_button.disable()
+                    print_all_button.icon = "hourglass_top"
+                    try:
+                        await handle_print_all()
+                    finally:
+                        print_all_button.text = print_all_caption
+                        print_all_button.icon = print_all_icon
+                        print_all_button.enable()
+
+                print_all_button.on_click(handle_print_with_feedback)
 
         display_model_list_page(
             repository=repository,
