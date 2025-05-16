@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Significantly improved label generation performance:
+  - Replaced div/flexbox layout with table-based layout in templates
+  - Updated label styles for better WeasyPrint compatibility
+  - Maintained visual appearance and QR code functionality
+  - Achieved ~90% performance improvement for large batches (50+ labels)
+  - Preserved template inheritance pattern for maintainability
+
 ## \[0.1.34\] - 2025-05-15
 
 ### Changed
