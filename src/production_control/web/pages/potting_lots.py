@@ -3,7 +3,7 @@
 from typing import Dict, Any, List, Union
 from datetime import date
 
-from nicegui import APIRouter, ui
+from nicegui import APIRouter, ui, run
 
 from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
@@ -55,7 +55,21 @@ def create_label_action() -> Dict[str, Any]:
     }
 
 
-def handle_print_all() -> None:
+def generate_labels(records, filename=None) -> str:
+    """Generate PDF labels for records in a background process.
+
+    Args:
+        records: List of PottingLot records
+        filename: Optional name for the output file
+
+    Returns:
+        Path to the generated PDF file
+    """
+    label_generator = LabelGenerator()
+    return label_generator.generate_pdf(records, filename)
+
+
+async def handle_print_all() -> None:
     table_state = ClientStorageTableState.initialize(table_state_key)
 
     records = [PottingLot(**visible_row) for visible_row in table_state.rows]
@@ -63,12 +77,23 @@ def handle_print_all() -> None:
     if not records:
         return
 
-    filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
-    generate_and_download_pdf(records, filename)
+    ui.notify("Generating labels...")
+
+    try:
+        # Generate labels in background process
+        filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
+        pdf_path = await run.cpu_bound(generate_labels, records, filename)
+
+        # Download and cleanup
+        ui.download(pdf_path)
+        label_generator.cleanup_pdf(pdf_path)
+
+    except Exception as e:
+        ui.notify(f"Error generating labels: {str(e)}", type="error")
 
 
 @router.page("/")
-def potting_lots_page() -> None:
+async def potting_lots_page() -> None:
     repository = PottingLotRepository()
 
     row_actions = {
