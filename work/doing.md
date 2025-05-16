@@ -1,78 +1,54 @@
 # Doing
 
+# Completed
+
 ## Speed up label generation
 
-Current issue: UI blocks when downloading many labels (20+), connection drops, and labels can't be downloaded after reconnect.
+Issue: UI blocks when downloading many labels (20+), connection drops, and labels can't be downloaded after reconnect.
 
-### Phase 1: Move to Background Task
+### Solution: Move to Background Task
 
-1. Update potting lots page to use background task:
-   - Move entire label generation process to a CPU-bound background task
-   - Add progress notification
-   - Keep UI responsive
-   - Handle errors gracefully
+We implemented the following improvements:
 
-Implementation in `src/production_control/web/pages/potting_lots.py`:
+1. Moved label generation to background tasks:
 
-```python
-def generate_labels(records, filename) -> str:
-    """Generate PDF labels for records in a background process.
-    
-    Args:
-        records: List of PottingLot records
-        filename: Name for the output file
-        
-    Returns:
-        Path to the generated PDF file
-    """
-    label_generator = LabelGenerator()
-    return label_generator.generate_pdf(records, filename)
+   - Used `run.cpu_bound` to process labels in a separate process
+   - Added progress notifications
+   - Kept UI responsive during generation
+   - Added proper error handling
 
-async def handle_print_all():
-    table_state = ClientStorageTableState.initialize(table_state_key)
-    records = [PottingLot(**visible_row) for visible_row in table_state.rows]
-    
-    if not records:
-        return
-        
-    ui.notify('Generating labels...')
-    
-    try:
-        # Generate labels in background process
-        filename = f"oppotpartijen_{date.today():%gW%V-%u}.pdf"
-        pdf_path = await run.cpu_bound(generate_labels, records, filename)
-        
-        # Download and cleanup
-        ui.download(pdf_path)
-        label_generator.cleanup_pdf(pdf_path)
-        
-    except Exception as e:
-        ui.notify(f'Error generating labels: {str(e)}', type='error')
-```
+1. Enhanced user feedback:
 
-Success Criteria:
-1. UI remains responsive during label generation
-2. No connection drops
-3. Clear progress indication
-4. Graceful error handling
+   - Disabled buttons during processing
+   - Changed button icon to show processing state
+   - Added notifications for generation start and errors
+   - Re-enabled buttons after completion
 
-Implementation Steps:
-1. Update potting lots page with background task implementation
-2. Test with various batch sizes
-3. Verify UI responsiveness
-4. Test error scenarios
+1. Fixed parameter handling:
 
-Git Commits:
-```bash
-git add src/production_control/web/pages/potting_lots.py
-git commit -m "Move label generation to background task to prevent UI blocking"
-```
+   - Corrected filename parameter usage
+   - Removed unused imports
+   - Simplified code structure
 
-### Next Steps
+Implementation details:
 
-After this is working well for the client, we can:
-1. Gather usage data and feedback
-2. Profile the process if needed
-3. Implement targeted optimizations based on actual bottlenecks
+- Used NiceGUI's `run.cpu_bound` for CPU-intensive operations
+- Added async handlers for both single and multi-label generation
+- Implemented proper button state management
+- Added comprehensive error handling
 
-But first, let's get the background task working to solve the immediate issue for our client.
+Applied to both:
+
+- Potting lots page
+- Bulb picklist page
+
+### Future Improvements
+
+If needed, we can further optimize the process by:
+
+1. Profiling to identify specific bottlenecks
+1. Implementing caching for frequently used labels
+1. Optimizing QR code generation
+1. Adding more detailed progress tracking
+
+But the current implementation solves the immediate issue for our client by preventing UI blocking and connection drops.

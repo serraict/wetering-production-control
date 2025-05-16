@@ -4,21 +4,6 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### speed up label generation
-
-now we block the ui when we download many (e.g. 20+labels), 
-then the connection to the backend is dropped becuase th ui loop is busye
-and then once the connection is restored
-then we can np longer download the labels
-this needs to be solved first
-
-- first move the task to a background job
-  - see the nicegui documentation on running background tasks
-- time what is causing the the delay
-  - qr code generation?
-  - template rendering?
-  - data preparation?
-
 ### Switch to uv package manager
 
 - fix the build, ci build is now failing
