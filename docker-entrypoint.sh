@@ -2,7 +2,7 @@
 set -x  # Print commands as they are executed
 
 # Print version info
-cliapp version
+production_control version
 echo "Started Production Control container."
 
 echo "Starting web server..."

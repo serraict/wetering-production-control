@@ -1,13 +1,6 @@
 services:
   production_control:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: app
-      args:
-        VERSION: ${VERSION:-0.1.0.dev0}
-      cache_from:
-        - ghcr.io/serraict/wetering-production-control:base
+    image: ghcr.io/serraict/wetering-production-control:latest
     ports:
       - "7901:8080"
     env_file:

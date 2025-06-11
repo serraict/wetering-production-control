@@ -6,8 +6,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
-RUN pip install uv
+# Install uv and setuptools_scm (needed for version detection during package install)
+RUN pip install uv setuptools_scm>=8.0.0
 
 WORKDIR /app
 
