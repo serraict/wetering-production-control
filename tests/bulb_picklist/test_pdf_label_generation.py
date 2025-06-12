@@ -92,7 +92,7 @@ def test_generate_labels_html_single_record():
     assert str(record.id) in html
     assert record.locatie in html
     assert str(int(record.aantal_bakken)) in html
-    assert "kratten" in html
+    assert f"{int(record.aantal_bakken)}x" in html
     assert record.oppot_week in html
 
     # We no longer check for specific dimensions as they may not be directly in the HTML

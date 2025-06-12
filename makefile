@@ -36,7 +36,7 @@ test:
 	pytest --cov=src/production_control --cov-report=term -m "not integration"
 
 test-integration:
-	pytest --cov=src/production_control --cov-report=term -m "integration"
+	pytest --cov=src/production_control --cov-report=term
 
 coverage:
 	pytest --cov=src/production_control --cov-report=term --cov-report=html

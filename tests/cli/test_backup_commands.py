@@ -105,6 +105,7 @@ def test_backup_query_with_name(tmp_path, mock_engine, mock_session, runner):
         assert rows[1:] == [["1", "test1"]]  # Data
 
 
+@pytest.mark.integration
 def test_backup_query_db_error(tmp_path, mock_engine, mock_session, runner):
     """Test handling of database errors."""
     # Mock database error
@@ -124,6 +125,7 @@ def test_backup_query_db_error(tmp_path, mock_engine, mock_session, runner):
     assert "Database error: Connection failed" in result.stdout
 
 
+@pytest.mark.integration
 def test_backup_query_filesystem_error(tmp_path, mock_engine, mock_session, runner):
     """Test handling of filesystem errors."""
     # Mock query result

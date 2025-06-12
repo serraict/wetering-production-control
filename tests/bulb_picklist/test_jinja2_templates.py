@@ -63,7 +63,7 @@ def test_render_single_label_with_jinja():
     assert str(record.id) in html
     assert record.locatie in html
     assert str(int(record.aantal_bakken)) in html
-    assert "kratten" in html
+    assert f"{int(record.aantal_bakken)}x" in html
 
 
 def test_generate_multiple_labels():

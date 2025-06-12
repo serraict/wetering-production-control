@@ -39,6 +39,7 @@ def mock_record():
     )
 
 
+@pytest.mark.integration
 def test_correct_spacing_requires_partij_code(cli_runner):
     """Test that correct-spacing command requires partij_code."""
     result = cli_runner.invoke(app, ["correct-spacing"])
@@ -63,6 +64,7 @@ def test_correct_spacing_dry_run(cli_runner, mock_record):
         mock_repo.update.assert_not_called()
 
 
+@pytest.mark.integration
 def test_correct_spacing_invalid_partij(cli_runner):
     """Test correct-spacing command with invalid partij code."""
     mock_repo = MagicMock()
@@ -87,6 +89,7 @@ def test_correct_spacing_no_changes(cli_runner, mock_record):
         assert "No changes specified" in result.stdout
 
 
+@pytest.mark.integration
 def test_correct_spacing_negative_tables(cli_runner, mock_record):
     """Test correct-spacing command with negative table counts."""
     mock_repo = MagicMock()
@@ -99,6 +102,7 @@ def test_correct_spacing_negative_tables(cli_runner, mock_record):
         assert "must be positive" in result.stdout.lower()
 
 
+@pytest.mark.integration
 def test_correct_spacing_wdz2_requires_wdz1(cli_runner, mock_record):
     """Test that setting wdz2 requires wdz1 to be set."""
     mock_repo = MagicMock()
@@ -133,6 +137,7 @@ def test_correct_spacing_actual_correction(cli_runner, mock_record):
         assert mock_optech.send_correction.called
 
 
+@pytest.mark.integration
 def test_correct_spacing_api_error(cli_runner, mock_record):
     """Test handling of API errors during correction."""
     mock_repo = MagicMock()
@@ -154,6 +159,7 @@ def test_correct_spacing_api_error(cli_runner, mock_record):
         assert "Invalid data" in result.stdout
 
 
+@pytest.mark.integration
 def test_correct_spacing_connection_error(cli_runner, mock_record):
     """Test handling of connection errors during correction."""
     mock_repo = MagicMock()

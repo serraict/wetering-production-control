@@ -134,6 +134,7 @@ def test_fix_spacing_errors_actual_fix(cli_runner, mock_repo):
         assert correction.aantal_tafels_na_wdz2 == 0  # Should be 0 for API compatibility
 
 
+@pytest.mark.integration
 def test_fix_spacing_errors_api_error(cli_runner, mock_repo):
     """Test fix-spacing-errors command handling API errors."""
     with (
