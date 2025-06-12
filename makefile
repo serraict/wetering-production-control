@@ -67,12 +67,18 @@ release: releasable
 	git tag v$(NEW_VERSION) && \
 	git push origin main --tags
 
+docker_base:
+	docker build -f Dockerfile.base -t ghcr.io/serraict/wetering-production-control-base:latest .
+
 docker_image:
 	docker build --target app \
 		--build-arg VERSION=$(subst v,,$(VERSION)) \
 		-t ghcr.io/serraict/wetering-production-control:$(VERSION) \
 		-t ghcr.io/serraict/wetering-production-control:latest \
 		.
+
+docker_push_base: docker_base
+	docker push ghcr.io/serraict/wetering-production-control-base:latest
 
 docker_push: docker_image
 	docker push ghcr.io/serraict/wetering-production-control:$(VERSION)

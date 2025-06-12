@@ -1,0 +1,50 @@
+# Base image for Wetering production control applications
+# This image contains all common system dependencies and tools
+# to reduce download times for individual applications
+
+FROM python:3.12-slim-bookworm
+
+# Set labels for the base image
+LABEL maintainer="Marijn vander Zee <marijn@serraict.com>"
+LABEL description="Base image for Wetering production control applications"
+LABEL version="1.0"
+
+# Install all common system dependencies in a single layer
+# This includes build tools, runtime dependencies, and WeasyPrint requirements
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    # Build dependencies
+    git \
+    build-essential \
+    # Runtime tools
+    curl \
+    ca-certificates \
+    gnupg2 \
+    apt-transport-https \
+    cron \
+    # WeasyPrint dependencies
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libgirepository1.0-dev \
+    libglib2.0-0 \
+    # Additional common dependencies that might be needed
+    pkg-config \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/archives/*
+
+# Install common Python tools
+RUN pip install --no-cache-dir uv setuptools_scm>=8.0.0
+
+# Create common directories and files
+RUN mkdir -p /app
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1

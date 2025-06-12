@@ -1,13 +1,5 @@
 ## ------------------------------- Build Stage ------------------------------ ##
-FROM python:3.12-slim-bookworm AS builder
-
-# Install build dependencies including git for version detection
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install uv and setuptools_scm (needed for version detection during package install)
-RUN pip install uv setuptools_scm>=8.0.0
+FROM ghcr.io/serraict/wetering-production-control-base:latest AS builder
 
 WORKDIR /app
 
@@ -18,27 +10,7 @@ COPY . .
 RUN uv sync --no-dev && uv pip install .
 
 ## ------------------------------- App Stage ------------------------------ ##
-FROM python:3.12-slim-bookworm AS app
-
-# Install runtime dependencies including WeasyPrint requirements and runtime tools
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    curl \
-    ca-certificates \
-    # Runtime tools
-    gnupg2 \
-    apt-transport-https \
-    cron \
-    # WeasyPrint dependencies
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
-    libffi-dev \
-    shared-mime-info \
-    libgirepository1.0-dev \
-    libglib2.0-0 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM ghcr.io/serraict/wetering-production-control-base:latest AS app
 
 WORKDIR /app
 
