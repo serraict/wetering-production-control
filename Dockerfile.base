@@ -9,8 +9,6 @@ LABEL maintainer="Marijn vander Zee <marijn@serraict.com>"
 LABEL description="Base image for Wetering production control applications"
 LABEL version="1.0"
 
-# Install all common system dependencies in a single layer
-# This includes build tools, runtime dependencies, and WeasyPrint requirements
 RUN apt-get update && apt-get install --no-install-recommends -y \
     # Build dependencies
     git \
@@ -36,7 +34,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/archives/*
 
-# Install common Python tools
 RUN pip install --no-cache-dir uv setuptools_scm>=8.0.0
 
 # Create common directories and files
