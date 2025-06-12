@@ -92,11 +92,11 @@ NOT NEEDED (YET)
 - Document new workflow in `docs/docker-base-image.md`
 - Explain when to rebuild base vs app
 
-#### Phase 6: Future Enhancement - Lock File Support
+#### ✅ Phase 6: Lock File Support
 
 - Add uv lock file generation and usage
 - Automate base image rebuilds when dependencies change
-- This will be implemented after the core optimization is working
+- Enhanced GitHub Actions workflow to trigger on dependency changes
 
 ### Expected Results
 

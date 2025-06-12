@@ -163,3 +163,30 @@ make docker_push_all
 - **App image**: Rebuild frequently (every code change, multiple times per day)
 
 This separation ensures that the heavy Python dependencies are downloaded once, while code changes deploy quickly with minimal data transfer.
+
+## Lock File Support
+
+The project now includes uv lock file support for deterministic dependency management:
+
+### Lock File Generation
+
+```bash
+# Generate/update the lock file
+make lock
+```
+
+### Automated Base Image Rebuilds
+
+The base image will automatically rebuild when:
+- `uv.lock` file changes (dependency updates)
+- `pyproject.toml` changes (new dependencies)
+- `Dockerfile.base` changes (base image modifications)
+
+This automation is handled by the GitHub Actions workflow, which monitors these files and triggers base image rebuilds automatically when changes are pushed to the main branch.
+
+### Benefits of Lock File Support
+
+1. **Deterministic Builds**: Exact dependency versions locked across environments
+2. **Automated Rebuilds**: Base image automatically updates when dependencies change
+3. **Version Control**: Lock file changes are tracked in git
+4. **Consistency**: Same dependency versions in development and production

@@ -8,6 +8,12 @@ on:
         required: true
         default: 'latest'
         type: string
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - 'Dockerfile.base'
 
 env:
   REGISTRY: ghcr.io
@@ -42,7 +48,8 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.BASE_IMAGE_NAME }}
         tags: |
-          type=raw,value=${{ inputs.tag }}
+          type=raw,value=${{ inputs.tag || 'latest' }}
+          type=sha,prefix={{branch}}-,enable=${{ github.event_name == 'push' }}
 
     - name: Build and push base Docker image
       id: push
@@ -60,3 +67,15 @@ jobs:
         subject-name: ${{ env.REGISTRY }}/${{ env.BASE_IMAGE_NAME }}
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true
+
+    - name: Comment on automatic rebuild
+      if: github.event_name == 'push'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.repos.createCommitComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            commit_sha: context.sha,
+            body: `🐳 **Base image automatically rebuilt** due to dependency changes.\n\n**New base image:** \`${{ env.REGISTRY }}/${{ env.BASE_IMAGE_NAME }}:latest\`\n\n**Trigger:** Changes detected in: \`uv.lock\`, \`pyproject.toml\`, or \`Dockerfile.base\``
+          })
