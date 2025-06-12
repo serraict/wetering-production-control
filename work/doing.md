@@ -7,9 +7,9 @@ With large texts, label text might overflow, which leads to missing information 
 
 ## Actions
 
-### Use the new url scheme
+### ✅ Use the new url scheme
 
-### Fix the label overflow issue
+### ✅ Fix the label overflow issue
 
 ### Fix the CI build
 
