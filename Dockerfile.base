@@ -45,6 +45,14 @@ RUN mkdir -p /app
 # Set working directory
 WORKDIR /app
 
+# Copy dependency files
+COPY pyproject.toml README.md ./
+
+# Create virtual environment and install all production dependencies
+RUN uv venv && uv pip install -r pyproject.toml
+
+# The .venv is now at /app/.venv with all dependencies installed
+
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
