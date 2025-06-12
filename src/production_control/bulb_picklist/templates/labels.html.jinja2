@@ -25,11 +25,9 @@
         </td>
     </tr>
     <tr class="bottom-row">
-        <td class="bottom-cell" colspan="2">
-            {{ record.locatie }}
-        </td>
-        <td class="bottom-cell" colspan="2">
-            {{ record.pallet_info }} - {{ record.aantal_bakken|int }} kratten totaal
+        <td class="bottom-cell" colspan="4">
+            {{ record.locatie }} |
+            {{ record.pallet_info }} | {{ record.aantal_bakken|int }}x
         </td>
     </tr>
 </table>
