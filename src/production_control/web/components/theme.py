@@ -7,36 +7,38 @@ from nicegui import ui, app
 import os
 
 
-def get_current_user_name():
-    """Get the current authenticated user's name from Authelia headers."""
+def get_current_user():
+    """Get the current authenticated user information from Authelia headers.
+
+    Returns:
+        dict: User information with keys 'name', 'roles', and 'email'
+    """
+    user_info = {"name": "Guest", "roles": [], "email": ""}
+
     try:
         request = app.request
         if request and hasattr(request, "headers"):
-            # Try display name first, fallback to username
+            # Get user name (try display name first, fallback to username)
             user_name = request.headers.get("remote-name") or request.headers.get("remote-user")
             if user_name:
-                return user_name
-    except Exception:
-        # Fallback if headers are not available
-        pass
+                user_info["name"] = user_name
 
-    return "Guest"
+            # Get user email
+            email = request.headers.get("remote-email")
+            if email:
+                user_info["email"] = email
 
-
-def get_current_user_groups():
-    """Get the current authenticated user's groups/roles from Authelia headers."""
-    try:
-        request = app.request
-        if request and hasattr(request, "headers"):
+            # Get user groups/roles
             groups = request.headers.get("remote-groups")
             if groups:
                 # Groups are typically comma-separated
-                return [group.strip() for group in groups.split(",")]
+                user_info["roles"] = [group.strip() for group in groups.split(",")]
+
     except Exception:
         # Fallback if headers are not available
         pass
 
-    return []
+    return user_info
 
 
 @contextmanager
@@ -75,12 +77,13 @@ def frame(navigation_title: str):
         # Right section: User name and page title
         with ui.row().classes("items-center gap-4"):
             # User display
-            user_name = get_current_user_name()
-            user_groups = get_current_user_groups()
+            user = get_current_user()
+            user_name = user["name"]
+            user_roles = user["roles"]
 
             # Create tooltip text with groups/roles
-            if user_groups:
-                tooltip_text = f"Roles: {', '.join(user_groups)}"
+            if user_roles:
+                tooltip_text = f"Roles: {', '.join(user_roles)}"
             else:
                 tooltip_text = "No roles assigned"
 
