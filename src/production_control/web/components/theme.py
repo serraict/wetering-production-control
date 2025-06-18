@@ -3,8 +3,10 @@
 from contextlib import contextmanager
 from .menu import menu
 from .message import message
-from nicegui import ui, app
+from nicegui import ui
 import os
+from fastapi import Request
+from nicegui import context
 
 
 def get_current_user():
@@ -16,27 +18,22 @@ def get_current_user():
     user_info = {"name": "Guest", "roles": [], "email": ""}
 
     try:
-        request = app.request
-        if request and hasattr(request, "headers"):
-            # Get user name (try display name first, fallback to username)
-            user_name = request.headers.get("Remote-user") or request.headers.get("Remote-Name")
-            if user_name:
-                user_info["name"] = user_name
+        request: Request = context.client.request
+        print(request.headers)
+        user_name = request.headers.get("remote-user") or request.headers.get("remote-name")
+        if user_name:
+            user_info["name"] = user_name
 
-            # Get user email
-            email = request.headers.get("Remote-Email")
-            if email:
-                user_info["email"] = email
+        email = request.headers.get("remote-email")
+        if email:
+            user_info["email"] = email
 
-            # Get user groups/roles
-            groups = request.headers.get("Remote-Groups")
-            if groups:
-                # Groups are typically comma-separated
-                user_info["roles"] = [group.strip() for group in groups.split(",")]
+        groups = request.headers.get("remote-groups")
+        if groups:
+            user_info["roles"] = [group.strip() for group in groups.split(",")]
 
-    except Exception:
-        # Fallback if headers are not available
-        pass
+    except Exception as e:
+        print(f"Error getting user info: {e}")
 
     return user_info
 
@@ -48,6 +45,7 @@ def frame(navigation_title: str):
     Args:
         navigation_title: The title to display in the navigation bar
     """
+
     ui.colors(
         brand="#009279",
         primary="#009279",
