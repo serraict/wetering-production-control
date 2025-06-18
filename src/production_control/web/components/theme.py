@@ -19,17 +19,17 @@ def get_current_user():
         request = app.request
         if request and hasattr(request, "headers"):
             # Get user name (try display name first, fallback to username)
-            user_name = request.headers.get("remote-name") or request.headers.get("remote-user")
+            user_name = request.headers.get("Remote-user") or request.headers.get("Remote-Name")
             if user_name:
                 user_info["name"] = user_name
 
             # Get user email
-            email = request.headers.get("remote-email")
+            email = request.headers.get("Remote-Email")
             if email:
                 user_info["email"] = email
 
             # Get user groups/roles
-            groups = request.headers.get("remote-groups")
+            groups = request.headers.get("Remote-Groups")
             if groups:
                 # Groups are typically comma-separated
                 user_info["roles"] = [group.strip() for group in groups.split(",")]
