@@ -3,8 +3,40 @@
 from contextlib import contextmanager
 from .menu import menu
 from .message import message
-from nicegui import ui
+from nicegui import ui, app
 import os
+
+
+def get_current_user_name():
+    """Get the current authenticated user's name from Authelia headers."""
+    try:
+        request = app.request
+        if request and hasattr(request, "headers"):
+            # Try display name first, fallback to username
+            user_name = request.headers.get("remote-name") or request.headers.get("remote-user")
+            if user_name:
+                return user_name
+    except Exception:
+        # Fallback if headers are not available
+        pass
+
+    return "Guest"
+
+
+def get_current_user_groups():
+    """Get the current authenticated user's groups/roles from Authelia headers."""
+    try:
+        request = app.request
+        if request and hasattr(request, "headers"):
+            groups = request.headers.get("remote-groups")
+            if groups:
+                # Groups are typically comma-separated
+                return [group.strip() for group in groups.split(",")]
+    except Exception:
+        # Fallback if headers are not available
+        pass
+
+    return []
 
 
 @contextmanager
@@ -40,8 +72,21 @@ def frame(navigation_title: str):
                 ui.icon("eco", color="white").classes("text-lg -ml-1")
             menu()
 
-        # Right section: Page title
-        ui.label(navigation_title).classes("text-lg text-white/90")
+        # Right section: User name and page title
+        with ui.row().classes("items-center gap-4"):
+            # User display
+            user_name = get_current_user_name()
+            user_groups = get_current_user_groups()
+
+            # Create tooltip text with groups/roles
+            if user_groups:
+                tooltip_text = f"Roles: {', '.join(user_groups)}"
+            else:
+                tooltip_text = "No roles assigned"
+
+            ui.label(user_name).classes("text-lg text-white/90").tooltip(tooltip_text)
+            # Page title
+            ui.label(navigation_title).classes("text-lg text-white/90")
 
     # Main content with error handling
     with ui.element("main").classes("w-full flex-grow"):
