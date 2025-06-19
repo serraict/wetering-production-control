@@ -33,12 +33,6 @@ def index_page() -> None:
 
                 # Navigation cards
                 with ui.row().classes("w-full gap-4 justify-center mt-4"):
-                    with ui.card().classes(NAV_CARD_CLASSES):
-                        ui.label("Products").classes(HEADER_CLASSES + " mb-2")
-                        ui.label("View and manage your products").classes(
-                            SUBHEADER_CLASSES + " mb-4"
-                        )
-                        ui.link("View Products", "/products").classes(LINK_CLASSES)
 
                     with ui.card().classes(NAV_CARD_CLASSES):
                         ui.label("About").classes(HEADER_CLASSES + " mb-2")

@@ -2,4 +2,4 @@
 
 from .startup import startup
 
-__all__ = ["startup"]
+__all__ = ["startup", "auth"]
