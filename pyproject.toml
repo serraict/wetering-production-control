@@ -1,6 +1,6 @@
 [project]
 name = "production_control"
-description = "Application to help track prodcution information at Wetering Potlilium"
+description = "Application to help track production information at Wetering Potlilium"
 authors = [{ name = "Marijn vander Zee", email = "marijn@serraict.com" }]
 requires-python = ">=3.10"
 urls = { project = "https://github.com/serraict/wetering_production_control", docs = "https://github.com/serraict/wetering_production_control/blob/main/README.md" }
