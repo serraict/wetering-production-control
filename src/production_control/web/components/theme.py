@@ -13,13 +13,12 @@ def get_current_user():
     """Get the current authenticated user information from Authelia headers.
 
     Returns:
-        dict: User information with keys 'name', 'roles', and 'email'
+        dict: User information with keys 'name', 'roles', 'email', and 'profile_page'
     """
-    user_info = {"name": "Guest", "roles": [], "email": ""}
+    user_info = {"name": "Guest", "roles": [], "email": "", "profile_page": ""}
 
     try:
         request: Request = context.client.request
-        print(request.headers)
         user_name = request.headers.get("remote-user") or request.headers.get("remote-name")
         if user_name:
             user_info["name"] = user_name
@@ -31,6 +30,11 @@ def get_current_user():
         groups = request.headers.get("remote-groups")
         if groups:
             user_info["roles"] = [group.strip() for group in groups.split(",")]
+
+        # Check for profile page URL from environment variable
+        profile_url = os.getenv("PROFILE_PAGE_URL")
+        if profile_url:
+            user_info["profile_page"] = profile_url
 
     except Exception as e:
         print(f"Error getting user info: {e}")
@@ -78,6 +82,7 @@ def frame(navigation_title: str):
             user = get_current_user()
             user_name = user["name"]
             user_roles = user["roles"]
+            profile_page = user["profile_page"]
 
             # Create tooltip text with groups/roles
             if user_roles:
@@ -85,7 +90,14 @@ def frame(navigation_title: str):
             else:
                 tooltip_text = "No roles assigned"
 
-            ui.label(user_name).classes("text-lg text-white/90").tooltip(tooltip_text)
+            # Display user name as link or label
+            if profile_page:
+                ui.link(user_name, profile_page).classes(
+                    "text-lg text-white/90 no-underline"
+                ).tooltip(tooltip_text)
+            else:
+                ui.label(user_name).classes("text-lg text-white/90").tooltip(tooltip_text)
+
             # Page title
             ui.label(navigation_title).classes("text-lg text-white/90")
 
