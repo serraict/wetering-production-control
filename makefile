@@ -11,13 +11,12 @@ NEW_VERSION := 0.0.1
 endif
 
 bootstrap:
-	python -m venv venv
-	@echo "Run 'source venv/bin/activate' to activate the virtual environment followed by 'make update' to install dependencies."
+	uv venv
+	@echo "Run 'source .venv/bin/activate' to activate the virtual environment followed by 'make update' to install dependencies."
 
 update:
-	python -m pip install --upgrade pip build
-	python -m pip install -r requirements-dev.txt
-	pip install -e .
+	uv sync --frozen
+	uv pip install -r requirements-dev.txt
 
 lock:
 	uv lock
