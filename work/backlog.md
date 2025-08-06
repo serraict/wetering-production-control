@@ -4,13 +4,6 @@ This backlog describes the product increments we have to build to realize our pr
 
 ## Next
 
-### Switch to uv package manager
-
-- fix the build, ci build is now failing
-- change makefile
-- verify we can run tests
-- benchmark dependency mngmt times
-
 ## Later
 
 ### Goal: Get Paul to use this app
