@@ -5,7 +5,7 @@ ifeq ($(strip $(VERSION)),)
 VERSION := v0.0.1
 endif
 
-NEW_VERSION := $(shell python -m setuptools_scm --strip-dev 2>/dev/null || echo "")
+NEW_VERSION := $(shell uv run python -m setuptools_scm --strip-dev 2>/dev/null || echo "")
 ifeq ($(strip $(NEW_VERSION)),)
 NEW_VERSION := 0.0.1
 endif
@@ -41,7 +41,9 @@ coverage:
 	uv run pytest --cov=src/production_control --cov-report=term --cov-report=html
 
 build:
-	uv run python -m build
+	# NOTE: Use system python, not 'uv run python'
+	# python -m build creates its own isolated environment and manages dependencies
+	python -m build
 
 printversion:
 	@uv run python -m setuptools_scm
