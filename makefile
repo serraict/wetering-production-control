@@ -107,10 +107,10 @@ server:
 
 check-ci:
 	@echo "Checking CI workflow..."
-	./scripts/check_workflow.py ci.yml --watch
+	uv run python scripts/check_workflow.py CI --watch
 
 check-package:
 	@echo "Checking package workflow..."
-	./scripts/check_workflow.py package.yml --watch
+	uv run python scripts/check_workflow.py package.yml --watch
 
 check-workflows: check-ci check-package
