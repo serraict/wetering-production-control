@@ -26,6 +26,7 @@ console = Console()
 
 # Field mapping from GitHub CLI to display labels
 FIELDS = [
+    ("databaseId", "Run ID"),
     ("status", "Status"),
     ("conclusion", "Conclusion"),
     ("headBranch", "Branch"),
@@ -78,7 +79,35 @@ def get_workflow_run(workflow_name: str) -> Dict[str, Any]:
         raise typer.Exit(code=1)
 
 
-def create_status_table(run: Dict[str, Any], runtime: str | None = None) -> Table:
+def get_workflow_jobs(run_id: str) -> list[Dict[str, Any]]:
+    """Fetch job information for a workflow run."""
+    try:
+        result = subprocess.run(
+            [
+                "gh",
+                "run",
+                "view",
+                run_id,
+                "--json",
+                "jobs",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        data = json.loads(result.stdout)
+        return data.get("jobs", [])
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]Error fetching jobs: {e}")
+        return []
+    except json.JSONDecodeError as e:
+        console.print(f"[red]Error parsing job data: {e}")
+        return []
+
+
+def create_status_table(
+    run: Dict[str, Any], runtime: str | None = None, jobs: list[Dict[str, Any]] | None = None
+) -> Table:
     """Create a Rich table displaying workflow run information."""
     table = Table(show_header=False, box=None)
 
@@ -93,19 +122,65 @@ def create_status_table(run: Dict[str, Any], runtime: str | None = None) -> Tabl
         runtime = calculate_runtime(run["createdAt"], run["updatedAt"], is_completed)
     table.add_row("Total Runtime", f"[bold]{runtime}[/bold]")
 
+    # Add job information if available
+    if jobs:
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold]Jobs:", "")
+        for job in jobs:
+            job_name = job.get("name", "Unknown")
+            job_id = job.get("databaseId", "N/A")
+            job_status = job.get("status", "unknown")
+            job_conclusion = job.get("conclusion", "N/A")
+
+            # Color-code the status
+            if job_status == "completed":
+                if job_conclusion == "success":
+                    status_display = "[green]✓ completed (success)[/green]"
+                elif job_conclusion == "failure":
+                    status_display = "[red]✗ completed (failure)[/red]"
+                else:
+                    status_display = f"[yellow]completed ({job_conclusion})[/yellow]"
+            elif job_status == "in_progress":
+                status_display = "[blue]⚙ in progress[/blue]"
+            else:
+                status_display = f"[dim]{job_status}[/dim]"
+
+            table.add_row(f"  • {job_name}", f"ID: {job_id} | {status_display}")
+
     return table
 
 
 def display_status(workflow_name: str, run: Dict[str, Any], runtime: str | None = None) -> None:
     """Display current workflow status."""
     console.clear()
+
+    # Fetch job information
+    run_id = str(run.get("databaseId", ""))
+    jobs = get_workflow_jobs(run_id) if run_id else []
+
     console.print(
         Panel(
-            create_status_table(run, runtime),
+            create_status_table(run, runtime, jobs),
             title=f"Workflow: {workflow_name}",
             border_style="blue",
         )
     )
+
+    # Show troubleshooting tip for failed workflows
+    if run.get("status") == "completed" and run.get("conclusion") == "failure":
+        console.print()
+        console.print("[dim]💡 Troubleshooting tip:[/dim]")
+        console.print(
+            f"[dim]   Get detailed logs: [bold]gh run view {run_id} --log-failed[/bold][/dim]"
+        )
+        if jobs:
+            failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
+            if failed_jobs:
+                for job in failed_jobs:
+                    job_id = job.get("databaseId")
+                    console.print(
+                        f"[dim]   Job-specific logs: [bold]gh run view {job_id} --log-failed[/bold][/dim]"
+                    )
 
 
 def watch_workflow(workflow_name: str, interval: int = 10) -> None:

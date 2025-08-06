@@ -24,7 +24,7 @@ lock:
 console:
 
 format-python:
-	black src tests scripts
+	uv run black src tests scripts
 
 format-markdown:
 	mdformat .
@@ -32,19 +32,19 @@ format-markdown:
 format: format-python format-markdown
 
 test:
-	pytest --cov=src/production_control --cov-report=term -m "not integration"
+	uv run pytest --cov=src/production_control --cov-report=term -m "not integration"
 
 test-integration:
-	pytest --cov=src/production_control --cov-report=term
+	uv run pytest --cov=src/production_control --cov-report=term
 
 coverage:
-	pytest --cov=src/production_control --cov-report=term --cov-report=html
+	uv run pytest --cov=src/production_control --cov-report=term --cov-report=html
 
 build:
-	python -m build
+	uv run python -m build
 
 printversion:
-	@python -m setuptools_scm
+	@uv run python -m setuptools_scm
 
 releasable:
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -93,15 +93,15 @@ docker_compose_debug:
 
 quality:
 	@echo "Running code quality checks..."
-	flake8 src tests
-	black --check src tests
+	uv run flake8 src tests
+	uv run black --check src tests
 	@echo "Running tests with coverage..."
-	pytest --cov=src/production_control --cov-report=term --cov-report=xml  -m "not integration"
+	uv run pytest --cov=src/production_control --cov-report=term --cov-report=xml  -m "not integration"
 	@echo "Code quality checks completed."
 
 server:
 	@echo "Starting web server..."
-	python -m production_control.__web__
+	uv run python -m production_control.__web__
 
 check-ci:
 	@echo "Checking CI workflow..."
