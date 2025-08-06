@@ -5,7 +5,7 @@ ifeq ($(strip $(VERSION)),)
 VERSION := v0.0.1
 endif
 
-NEW_VERSION := $(shell uv run python -m setuptools_scm --strip-dev 2>/dev/null || echo "")
+NEW_VERSION := $(shell python -m setuptools_scm --strip-dev 2>/dev/null || echo "")
 ifeq ($(strip $(NEW_VERSION)),)
 NEW_VERSION := 0.0.1
 endif
@@ -46,7 +46,7 @@ build:
 	python -m build
 
 printversion:
-	@uv run python -m setuptools_scm
+	@python -m setuptools_scm
 
 releasable:
 	@if [ -n "$$(git status --porcelain)" ]; then \
