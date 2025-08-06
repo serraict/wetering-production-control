@@ -47,7 +47,7 @@ Code, comments, and documentation should be in English.
 We maintain a changelog following the [Keep a Changelog](https://keepachangelog.com/) format.
 Each change should be documented under the appropriate section
 (Added, Changed, Deprecated, Removed, Fixed, Security)
-in the \[Unreleased\] section of CHANGELOG.md.
+in the [Unreleased] section of CHANGELOG.md.
 
 ## Way of Working
 
@@ -83,7 +83,7 @@ Our test coverage should not drop between commits.
 
 ```shell
 make bootstrap
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 2. Install dependencies and development tools:
@@ -103,6 +103,9 @@ make test
 ```shell
 make server
 ```
+
+The project uses [uv](https://docs.astral.sh/uv/) for fast dependency management.
+Development dependencies are defined in `pyproject.toml` under `[project.optional-dependencies]` and automatically installed with `make update`.
 
 ### Dremio CLI Access
 

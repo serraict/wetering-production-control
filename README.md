@@ -8,7 +8,37 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## Installation
 
-### From Repository Checkout using venv
+### From Repository Checkout using uv (Recommended)
+
+1. Install [uv](https://docs.astral.sh/uv/) if you haven't already:
+
+   ```bash
+   # On macOS/Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # On Windows
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+1. Create a virtual environment and install dependencies:
+
+   ```bash
+   uv venv
+   source .venv/bin/activate  # On Unix
+   # or
+   .venv\Scripts\activate  # On Windows
+
+   uv sync --extra dev  # Install project + development dependencies
+   ```
+
+1. Copy and configure environment variables:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+### From Repository Checkout using venv (Alternative)
 
 1. Create and activate a virtual environment:
 
@@ -22,7 +52,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 1. Install the package in editable mode:
 
    ```bash
-   pip install -e .
+   pip install -e .[dev]
    ```
 
 1. Copy and configure environment variables:

@@ -15,8 +15,7 @@ bootstrap:
 	@echo "Run 'source .venv/bin/activate' to activate the virtual environment followed by 'make update' to install dependencies."
 
 update:
-	uv sync --frozen
-	uv pip install -r requirements-dev.txt
+	uv sync --frozen --extra dev
 
 lock:
 	uv lock

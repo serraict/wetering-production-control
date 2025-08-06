@@ -131,13 +131,13 @@ graph TD
 ## Data Flow
 
 1. **Web Interface**: Users interact with the system through web pages
-2. **Data Access**: Repositories retrieve and store data via SQLModel and Dremio
-3. **Label Generation**: HTML templates are rendered and converted to PDF
-4. **Integration**: Changes to spacing data are sent to OpTech API
+1. **Data Access**: Repositories retrieve and store data via SQLModel and Dremio
+1. **Label Generation**: HTML templates are rendered and converted to PDF
+1. **Integration**: Changes to spacing data are sent to OpTech API
 
 ## Performance Considerations
 
-- Label generation for large batches uses table-based templates for better performance 
+- Label generation for large batches uses table-based templates for better performance
   (see work directory in commit 75c79d41b6ef6d69bd4296c4d01cd305869366cd for performance tests and report)
 - Background processing for CPU-intensive operations like PDF generation
 - Pagination for large data sets

@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated architecture documentation
 
-## \[0.1.34\] - 2025-05-15
+## [0.1.34] - 2025-05-15
 
 ### Changed
 
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added cert_nr field to PottingLot model
   - Updated potting lot label template to show bolmaat and cert_nr
 
-## \[0.1.33\] - 2025-05-15
+## [0.1.33] - 2025-05-15
 
 ### Added
 
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Generate separate label for each pallet with "Pallet X/Y" indicator
   - Added comprehensive test coverage for pallet calculation and label generation
 
-## \[0.1.14\] - 2025-05-13
+## [0.1.14] - 2025-05-13
 
 ### Changed
 
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduced build time when only Python code changes
   - Maintained full rebuild capability when dependencies change
 
-## \[0.1.13\] - 2025-05-13
+## [0.1.13] - 2025-05-13
 
 ### Added
 
@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improved label generation performance and code quality
 
-## \[0.1.11\] - 2025-05-08
+## [0.1.11] - 2025-05-08
 
 ### Added
 
@@ -117,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed week number display for year-end dates (e.g., 2024-12-30 now correctly shows as 25w01-1)
 - Improved date formatting consistency by moving it to server-side
 
-## \[0.1.5\] - 2024-11-26
+## [0.1.5] - 2024-11-26
 
 ### Added
 
@@ -133,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `get_by_partij_code` method while maintaining backward compatibility
   - Improved error handling for record lookups
 
-## \[0.1.4\] - 2024-11-22
+## [0.1.4] - 2024-11-22
 
 ### Added
 
@@ -155,7 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed field name mapping for OpTech API integration
 - Improved error handling and display for API interactions
 
-## \[0.1.3\] - 2024-11-21
+## [0.1.3] - 2024-11-21
 
 ### Added
 
@@ -186,7 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decimal formatting
   - Support for custom field formatting
 
-## \[0.1.2\] - 2024-11-18
+## [0.1.2] - 2024-11-18
 
 ### Added
 
@@ -203,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed database connection issue causing 500 error on products page
 
-## \[0.1.0\] - 2024-11-16
+## [0.1.0] - 2024-11-16
 
 ### Added
 
