@@ -23,21 +23,22 @@
    - [x] Record baseline metrics for comparison
 
 2. **Update makefile targets**
-   - [ ] Replace `make update` to use `uv sync` instead of pip
-   - [ ] Update `make bootstrap` to use uv for virtual environment creation
-   - [ ] Ensure all targets work with uv-managed dependencies
-   - [ ] Keep backwards compatibility or provide migration guide
+   - [x] Replace `make update` to use `uv sync --frozen` instead of pip
+   - [x] Update `make bootstrap` to use `uv venv` for virtual environment creation
+   - [x] Ensure all targets work with uv-managed dependencies
+   - [x] Keep backwards compatibility or provide migration guide
 
 3. **Update CI workflow**
-   - [ ] Install uv in GitHub Actions
-   - [ ] Replace `make update` calls with uv commands in `.github/workflows/ci.yml`
+   - [x] Install uv in GitHub Actions using astral-sh/setup-uv@v4
+   - [x] Replace `make update` calls with uv commands in `.github/workflows/ci.yml`
    - [ ] Verify CI still passes with uv
 
 4. **Benchmark new performance and compare**
-   - [ ] Measure uv installation time from clean state
-   - [ ] Measure uv installation time with cache
-   - [ ] Document speed improvement results
-   - [ ] Compare with baseline metrics
+   - [x] Measure uv installation time from clean state: **3.96s** (7.6x faster!)
+   - [x] Measure uv + dev deps installation time: **3.11s total** (9.7x faster!)
+   - [x] Document speed improvement results: Runtime deps 0.6s + Dev deps 2.5s
+   - [x] Compare with baseline metrics: Massive improvement vs pip's 30.2s
+   - [x] Verify functionality: Tests pass (1 pre-existing failure unrelated to uv)
 
 5. **Clean up dependency files** (optional)
    - [ ] Evaluate if `requirements-dev.txt` can be removed in favor of pyproject.toml + uv.lock

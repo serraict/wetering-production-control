@@ -39,6 +39,14 @@ Migrate from pip to uv for dependency management to improve installation speed a
 - [x] Current dependency count: ~52 packages installed (dev deps) + ~64 packages total (including runtime)
 - [x] Current wheel cache behavior: Most packages cached from previous installs, significant speed improvement
 
+**uv Installation Metrics:**
+
+- [x] uv clean install time (cache cleared): **3.96 seconds** ✅ 
+- [x] Performance improvement: **7.6x faster** than pip (30.2s → 3.96s) 🚀
+- [x] All 82 packages installed successfully
+- [x] uv creates virtual environment at `.venv` automatically
+- [x] Command used: `uv sync --frozen` (respects lockfile, no modifications)
+
 ## Implementation Notes
 
 ### Observations
@@ -46,14 +54,35 @@ Migrate from pip to uv for dependency management to improve installation speed a
 - Tests currently pass: 154 passed, 1 skipped (83% coverage)
 - CI is passing (not failing as originally thought in backlog)
 - Virtual environment is properly set up and being used
+- **uv provides massive speed improvement even with cold cache**
+- uv.lock file is comprehensive (2373 lines) and well-maintained
 
 ### Next Steps
 
-1. ✅ Benchmark current pip performance - **COMPLETED**
-2. 🔄 **NEXT:** Plan makefile migration strategy  
-3. Test uv equivalent commands
-4. Update makefile targets
-5. Update CI workflow
+1. ✅ Verified uv sync performance vs pip baseline
+2. ✅ Test that applications still work with uv-installed dependencies  
+3. ✅ Update makefile targets to use uv sync instead of pip install
+4. ✅ Update CI workflow to use uv
+5. Test CI workflow passes
+6. Update documentation to reflect new dependency management approach
+
+### Implementation Details
+
+**Makefile Changes:**
+- `bootstrap`: Changed from `python -m venv venv` to `uv venv` (creates `.venv` directory)
+- `update`: Changed from pip-based installation to `uv sync --frozen && uv pip install -r requirements-dev.txt`
+- Used `--frozen` flag to ensure reproducible builds (same behavior in dev and CI)
+- Removed redundant `update-frozen` target for consistency
+
+**CI Workflow Changes:**
+- Added `astral-sh/setup-uv@v4` action with caching enabled
+- Kept existing `make update` call (now uses uv internally)
+- No other workflow files needed changes
+
+**Key Decisions:**
+- Use `--frozen` everywhere for consistency and safety
+- Dependency updates require explicit `make lock` first
+- Maintain dev dependencies in requirements-dev.txt for now
 
 ## Issues & Decisions
 
