@@ -79,33 +79,41 @@ Our test coverage should not drop between commits.
 
 ### Development Environment
 
-1. Create and activate a virtual environment:
+1. Create virtual environment and install dependencies and tools:
 
-```shell
-make bootstrap
-source .venv/bin/activate
-```
+    ```shell
+    make bootstrap
+    make update
+    ```
 
-2. Install dependencies and development tools:
+1. Run tests to verify setup:
 
-```shell
-make update
-```
+    ```shell
+    make test
+    ```
 
-3. Run tests to verify setup:
+1. Activate the virtual environment
 
-```shell
-make test
-```
+    ```shell
+    source .venv/bin/activate
+    ```
 
-4. Start the development server:
+1. Run the development server:
 
-```shell
-make server
-```
+    ```shell
+    make dev-server
+    ```
+
+1. Run the tests:
+
+    ```shell
+    make dev-tests
+    ```
 
 The project uses [uv](https://docs.astral.sh/uv/) for fast dependency management.
 Development dependencies are defined in `pyproject.toml` under `[project.optional-dependencies]` and automatically installed with `make update`.
+
+Since `uv run ...` will update `uv.lock`, we prefer developing in a virtual environment.
 
 ### Dremio CLI Access
 

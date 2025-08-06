@@ -113,3 +113,13 @@ check-package:
 	uv run python scripts/check_workflow.py package.yml --watch
 
 check-workflows: check-ci check-package
+
+dev-server:
+	@echo "Starting web server..."
+	python -m production_control.__web__
+
+dev-test:
+	pytest --cov=src/production_control --cov-report=term -m "not integration"
+
+dev-test-integration:
+	pytest --cov=src/production_control --cov-report=term

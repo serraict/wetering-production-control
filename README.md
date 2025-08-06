@@ -6,97 +6,12 @@ Application to help track production information at Wetering Potlilium.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-## Installation
-
-### From Repository Checkout using uv (Recommended)
-
-1. Install [uv](https://docs.astral.sh/uv/) if you haven't already:
-
-   ```bash
-   # On macOS/Linux
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-
-   # On Windows
-   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
-
-1. Create a virtual environment and install dependencies:
-
-   ```bash
-   uv venv
-   source .venv/bin/activate  # On Unix
-   # or
-   .venv\Scripts\activate  # On Windows
-
-   uv sync --extra dev  # Install project + development dependencies
-   ```
-
-1. Copy and configure environment variables:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-### From Repository Checkout using venv (Alternative)
-
-1. Create and activate a virtual environment:
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Unix
-   # or
-   .\venv\Scripts\activate  # On Windows
-   ```
-
-1. Install the package in editable mode:
-
-   ```bash
-   pip install -e .[dev]
-   ```
-
-1. Copy and configure environment variables:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-### Production Deployment using Docker Compose
-
-1. Create a `docker-compose.yml` file:
-
-   ```yaml
-   services:
-     production_control:
-       image: ghcr.io/serraict/wetering-production-control:latest
-       ports:
-         - "7903:8080"
-       env_file:
-         - .env
-       networks:
-         - serra-vine
-       restart: unless-stopped
-
-   networks:
-     serra-vine:
-       external: true
-   ```
-
-1. Create `.env` file with your configuration:
-
-   ```bash
-   # Copy from .env.example and adjust settings
-   cp .env.example .env
-   ```
-
-1. Start the service:
-
-   ```bash
-   docker compose up -d
-   ```
-
 ## Features
+
+- List potting jobs and print potting labels
+- List spacing job results
+- List bulb picking jobs and print labels
+- backup information from Dremio to csv
 
 ### Configurable Label Sizes
 
