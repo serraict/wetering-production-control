@@ -8,6 +8,7 @@ from nicegui import APIRouter, ui, run
 from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
 from ...potting_lots.label_generation import LabelGenerator
+from ...potting_lots.active_service import ActivePottingLotService
 from ..components import frame
 from ..components.model_detail_page import display_model_detail_page, create_model_view_action
 from ..components.model_list_page import display_model_list_page
@@ -91,6 +92,7 @@ async def handle_print_all() -> None:
 @router.page("/")
 async def potting_lots_page() -> None:
     repository = PottingLotRepository()
+    active_service = ActivePottingLotService(repository)
 
     row_actions = {
         "view": create_model_view_action(
@@ -133,6 +135,7 @@ async def potting_lots_page() -> None:
 @router.page("/{id}")
 def potting_lot_detail(id: int) -> None:
     repository = PottingLotRepository()
+    active_service = ActivePottingLotService(repository)
     record = repository.get_by_id(id)
 
     with frame("Oppotlijst Details"):
