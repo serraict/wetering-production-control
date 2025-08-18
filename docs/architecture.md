@@ -46,6 +46,10 @@ The system consists of the following main components:
 - **OpTech Client**: Integration with OpTech API for spacing control
 - **Dremio Connection**: Access to production data in Dremio
 
+### Python libraries
+
+- Prefer Pydantic over Python's `dataclass`
+
 ## Component Diagram
 
 ```mermaid

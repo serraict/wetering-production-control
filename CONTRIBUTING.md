@@ -81,34 +81,34 @@ Our test coverage should not drop between commits.
 
 1. Create virtual environment and install dependencies and tools:
 
-    ```shell
-    make bootstrap
-    make update
-    ```
+   ```shell
+   make bootstrap
+   make update
+   ```
 
 1. Run tests to verify setup:
 
-    ```shell
-    make test
-    ```
+   ```shell
+   make test
+   ```
 
 1. Activate the virtual environment
 
-    ```shell
-    source .venv/bin/activate
-    ```
+   ```shell
+   source .venv/bin/activate
+   ```
 
 1. Run the development server:
 
-    ```shell
-    make dev-server
-    ```
+   ```shell
+   make dev-server
+   ```
 
 1. Run the tests:
 
-    ```shell
-    make dev-tests
-    ```
+   ```shell
+   make dev-tests
+   ```
 
 The project uses [uv](https://docs.astral.sh/uv/) for fast dependency management.
 Development dependencies are defined in `pyproject.toml` under `[project.optional-dependencies]` and automatically installed with `make update`.
