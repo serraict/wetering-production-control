@@ -2,17 +2,24 @@
 
 from typing import Dict, Optional
 
+from nicegui import binding
+
 from .repositories import PottingLotRepository
 from .active_models import ActivePottingLot
 
 
 class ActivePottingLotService:
-    """In-memory service for managing active potting lots."""
+    """In-memory service for managing active potting lots with reactive binding."""
+
+    # Use bindable property for reactive updates across all UI instances
+    active_lots_state = binding.BindableProperty()
 
     def __init__(self, potting_lot_repository: PottingLotRepository):
         """Initialize the service with a potting lot repository."""
-        self._active_lots: Dict[int, ActivePottingLot] = {}  # line -> active lot
         self._potting_lot_repository = potting_lot_repository
+        # Initialize with both the bindable property and the internal storage
+        self._active_lots: Dict[int, ActivePottingLot] = {}  # line -> active lot
+        self.active_lots_state = {}  # This will trigger UI updates when changed
 
     def get_active_lot_for_line(self, line: int) -> Optional[ActivePottingLot]:
         """Get the currently active lot for a specific line."""
@@ -31,11 +38,16 @@ class ActivePottingLotService:
         # Store it (automatically replaces any existing active lot for this line)
         self._active_lots[line] = active_lot
 
+        # Update bindable property to trigger UI updates
+        self.active_lots_state = dict(self._active_lots)  # Create new dict to trigger change
+
         return active_lot
 
     def deactivate_lot(self, line: int) -> bool:
         """Deactivate the currently active lot on a specific line."""
         if line in self._active_lots:
             del self._active_lots[line]
+            # Update bindable property to trigger UI updates
+            self.active_lots_state = dict(self._active_lots)  # Create new dict to trigger change
             return True
         return False

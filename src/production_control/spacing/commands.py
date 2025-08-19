@@ -56,7 +56,7 @@ class CorrectSpacingRecord(BaseModel):
         """Get list of editable field names."""
         return [
             name
-            for name, field in self.model_fields.items()
+            for name, field in self.__class__.model_fields.items()
             if field.json_schema_extra and field.json_schema_extra.get("ui_editable", False)
         ]
 
@@ -64,7 +64,7 @@ class CorrectSpacingRecord(BaseModel):
         """Get list of read-only field names."""
         return [
             name
-            for name, field in self.model_fields.items()
+            for name, field in self.__class__.model_fields.items()
             if not (field.json_schema_extra and field.json_schema_extra.get("ui_editable", False))
         ]
 

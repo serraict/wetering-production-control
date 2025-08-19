@@ -19,6 +19,10 @@ router = APIRouter(prefix="/potting-lots")
 label_generator = LabelGenerator()
 table_state_key = "potting_lots_table"
 
+# Global service instances to maintain state across the application
+_repository = PottingLotRepository()
+_active_service = ActivePottingLotService(_repository)
+
 
 def create_label_action() -> Dict[str, Any]:
 
@@ -89,14 +93,74 @@ async def handle_print_all() -> None:
         ui.notify(msg)
 
 
+def create_popup_display_with_activation(active_service: ActivePottingLotService):
+    """Create a custom display function for the popup that includes activation buttons."""
+
+    def popup_display_with_activation(lot: PottingLot) -> None:
+        """Custom display for popup with activation functionality."""
+        from ..components.model_card import display_model_card
+
+        with ui.column():
+
+            for line in [1, 2]:
+                with ui.row().classes("gap-2"):
+                    ui.button(
+                        f"Activeren op Lijn {line}",
+                        icon="play_arrow",
+                        color="positive",
+                        on_click=lambda line=line, lot=lot: activate_lot_simple(
+                            active_service, line, lot
+                        ),
+                    )
+
+        # Add separator and show the standard model details
+        ui.separator().classes("my-4")
+        display_model_card(lot, title=f"Oppotpartij: {lot.naam}")
+
+    return popup_display_with_activation
+
+
+def activate_lot_simple(
+    active_service: ActivePottingLotService, line: int, lot: PottingLot
+) -> None:
+    """Simple activation function."""
+    active_service.activate_lot(line=line, potting_lot_id=lot.id)
+    ui.notify(f"Partij {lot.naam} geactiveerd op lijn {line}")
+
+
+def get_activation_status_text(active_lots_state: dict, line: int) -> str:
+    """Helper function to get activation status text for a line."""
+    active_lot = active_lots_state.get(line)
+    return active_lot.potting_lot.naam if active_lot else "--"
+
+
+def get_activation_button_text(active_lots_state: dict, line: int) -> str:
+    """Helper function to get activation button text for a line."""
+    active_lot = active_lots_state.get(line)
+    return f"{line}: {active_lot.potting_lot.naam if active_lot else '--'}"
+
+
+def get_tool_tip_text(active_lots_state: dict, line: int) -> str:
+    """Helper function to get tooltip text for a line showing name and id of the active lot."""
+    active_lot = active_lots_state.get(line)
+    if active_lot:
+        lot = active_lot.potting_lot
+        return f"{lot.id}: {lot.naam}"
+    return "Geen actieve partij"
+
+
+def deactivate_lot(active_service: ActivePottingLotService, line: int) -> None:
+    _active_service.deactivate_lot(line)
+    ui.notify(f"Lijn {line} gedeactiveerd")
+
+
 @router.page("/")
 async def potting_lots_page() -> None:
-    repository = PottingLotRepository()
-    active_service = ActivePottingLotService(repository)
 
     row_actions = {
         "view": create_model_view_action(
-            repository=repository,
+            repository=_repository,
+            custom_display_function=create_popup_display_with_activation(_active_service),
         ),
         "label": create_label_action(),
     }
@@ -104,6 +168,33 @@ async def potting_lots_page() -> None:
     with frame("Oppotlijst"):
 
         with ui.row().classes("w-full justify-end mb-4"):
+            # Display active potting lots:
+            for line in [1, 2]:
+                with (
+                    ui.button(
+                        f"{line}",
+                        icon="info",
+                        color="info",
+                        on_click=lambda line=line: deactivate_lot(_active_service, line),
+                    )
+                    .bind_text_from(
+                        _active_service,
+                        "active_lots_state",
+                        backward=lambda state, line=line: get_activation_button_text(state, line),
+                    )
+                    .bind_icon_from(
+                        _active_service,
+                        "active_lots_state",
+                        backward=lambda state, line=line: "stop" if state.get(line) else "info",
+                    )
+                ):
+                    ui.tooltip(line).bind_text_from(
+                        _active_service,
+                        "active_lots_state",
+                        backward=lambda state, line=line: get_tool_tip_text(state, line),
+                    )
+
+            # print button
             print_all_caption = "Labels Afdrukken"
             print_all_icon = "print"
             with ui.button(print_all_caption, icon=print_all_icon).classes(
@@ -124,7 +215,7 @@ async def potting_lots_page() -> None:
                 print_all_button.on_click(handle_print_with_feedback)
 
         display_model_list_page(
-            repository=repository,
+            repository=_repository,
             model_cls=PottingLot,
             table_state_key=table_state_key,
             title="Oppotlijst",
@@ -134,9 +225,27 @@ async def potting_lots_page() -> None:
 
 @router.page("/{id}")
 def potting_lot_detail(id: int) -> None:
-    repository = PottingLotRepository()
-    active_service = ActivePottingLotService(repository)
-    record = repository.get_by_id(id)
+    record = _repository.get_by_id(id)
+
+    def custom_display(lot: PottingLot) -> None:
+        """Custom display for potting lot detail with activation button."""
+        from ..components.model_card import display_model_card
+
+        # Show activation status and button
+        with ui.row().classes("w-full justify-between items-center mb-4"):
+            for line in [1, 2]:
+                with ui.row().classes("gap-2"):
+                    ui.button(
+                        f"Activeren op Lijn {line}",
+                        icon="play_arrow",
+                        color="positive",
+                        on_click=lambda line=line, lot=lot: activate_lot_simple(
+                            _active_service, line, lot
+                        ),
+                    )
+
+        # Show the standard model details
+        display_model_card(lot, title=f"Oppotpartij: {lot.naam}")
 
     with frame("Oppotlijst Details"):
         display_model_detail_page(
@@ -144,6 +253,7 @@ def potting_lot_detail(id: int) -> None:
             title="Oppotlijst Details",
             back_link_text="← Terug naar Oppotlijst",
             back_link_url="/potting-lots",
+            custom_display_function=custom_display,
         )
 
 

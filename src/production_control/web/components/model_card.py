@@ -34,7 +34,7 @@ def display_model_card(
 
         with ui.column().classes("gap-4"):
             # Display regular fields
-            for field_name, field in model.model_fields.items():
+            for field_name, field in model.__class__.model_fields.items():
                 # Skip the description field if it's already shown as header
                 if field_name == description_field:
                     continue

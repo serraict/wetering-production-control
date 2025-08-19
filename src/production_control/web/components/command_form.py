@@ -55,7 +55,7 @@ def create_command_form(
     # Read-only fields
     with ui.column().classes("gap-2 mb-4"):
         for field_name in command.get_readonly_fields():
-            field = command.model_fields[field_name]
+            field = command.__class__.model_fields[field_name]
             value = getattr(command, field_name)
             if value is not None:
                 label = format_field_label(field_name, field.description)
@@ -66,7 +66,7 @@ def create_command_form(
     editors: dict[str, Any] = {}
     with ui.column().classes("w-full gap-4"):
         for field_name in command.get_editable_fields():
-            field = command.model_fields[field_name]
+            field = command.__class__.model_fields[field_name]
             value = getattr(command, field_name)
             with ui.row().classes("items-center gap-4"):
                 editor = (
