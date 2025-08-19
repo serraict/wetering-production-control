@@ -93,31 +93,25 @@ async def handle_print_all() -> None:
         ui.notify(msg)
 
 
-def create_popup_display_with_activation(active_service: ActivePottingLotService):
-    """Create a custom display function for the popup that includes activation buttons."""
+def custom_display(lot: PottingLot) -> None:
+    """Custom display for potting lot detail with activation button."""
+    from ..components.model_card import display_model_card
 
-    def popup_display_with_activation(lot: PottingLot) -> None:
-        """Custom display for popup with activation functionality."""
-        from ..components.model_card import display_model_card
+    # Show activation status and button
+    with ui.row().classes("w-full justify-between items-center mb-4"):
+        for line in [1, 2]:
+            with ui.row().classes("gap-2"):
+                ui.button(
+                    f"Activeren op Lijn {line}",
+                    icon="play_arrow",
+                    color="positive",
+                    on_click=lambda line=line, lot=lot: activate_lot_simple(
+                        _active_service, line, lot
+                    ),
+                )
 
-        with ui.column():
-
-            for line in [1, 2]:
-                with ui.row().classes("gap-2"):
-                    ui.button(
-                        f"Activeren op Lijn {line}",
-                        icon="play_arrow",
-                        color="positive",
-                        on_click=lambda line=line, lot=lot: activate_lot_simple(
-                            active_service, line, lot
-                        ),
-                    )
-
-        # Add separator and show the standard model details
-        ui.separator().classes("my-4")
-        display_model_card(lot, title=f"Oppotpartij: {lot.naam}")
-
-    return popup_display_with_activation
+    # Show the standard model details
+    display_model_card(lot, title=f"Oppotpartij: {lot.naam}")
 
 
 def activate_lot_simple(
@@ -160,7 +154,7 @@ async def potting_lots_page() -> None:
     row_actions = {
         "view": create_model_view_action(
             repository=_repository,
-            custom_display_function=create_popup_display_with_activation(_active_service),
+            custom_display_function=custom_display,
         ),
         "label": create_label_action(),
     }
@@ -226,26 +220,6 @@ async def potting_lots_page() -> None:
 @router.page("/{id}")
 def potting_lot_detail(id: int) -> None:
     record = _repository.get_by_id(id)
-
-    def custom_display(lot: PottingLot) -> None:
-        """Custom display for potting lot detail with activation button."""
-        from ..components.model_card import display_model_card
-
-        # Show activation status and button
-        with ui.row().classes("w-full justify-between items-center mb-4"):
-            for line in [1, 2]:
-                with ui.row().classes("gap-2"):
-                    ui.button(
-                        f"Activeren op Lijn {line}",
-                        icon="play_arrow",
-                        color="positive",
-                        on_click=lambda line=line, lot=lot: activate_lot_simple(
-                            _active_service, line, lot
-                        ),
-                    )
-
-        # Show the standard model details
-        display_model_card(lot, title=f"Oppotpartij: {lot.naam}")
 
     with frame("Oppotlijst Details"):
         display_model_detail_page(
