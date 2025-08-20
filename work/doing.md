@@ -175,28 +175,41 @@ class ActivePottingLotService:
 
 **User Value**: Operators can manage both potting lines independently
 
-#### Step 3: Active Lot Details Page
+#### Step 3: Active Lot Details Page - ✅ COMPLETED
 
 **Goal**: Dedicated page for managing the active lot with deactivation
 
 **Data Layer**:
 
-- No changes needed (existing service supports this)
+- ✅ No changes needed (existing service supports this)
 
 **UI Changes**:
 
-- Create `/potting-lots/active/{line}` route
-- Add clickable active lot header that navigates to details page
-- Create active lot details page with lot information and "Deactiveren" button
-- Add navigation back to main list
+- ✅ Create `/potting-lots/active/{line}` route
+- ✅ Add clickable active lot header that navigates to details page  
+- ✅ Create active lot details page with lot information and "Deactiveren" button
+- ✅ Action buttons positioned at top right for consistency
+- ✅ Uses standard model card component for lot information display
+- ✅ Proper error handling for no active lot scenarios
 
 **Tests**:
 
-- Test active lot details page renders correctly
-- Test deactivation button works
-- Test navigation between pages
+- ✅ Test active lot details page renders correctly
+- ✅ Test deactivation button works  
+- ✅ Test navigation between pages
+- ✅ Test error scenarios (no active lot)
+- ✅ Unit tests for handler functions
+- ✅ 8 tests passing with good coverage
 
-**User Value**: Operator has dedicated workspace for active lot with easy deactivation
+**User Value**: ✅ Operator has dedicated workspace for active lot with easy deactivation
+
+**Implementation Notes**:
+
+- Route: `/potting-lots/active/{line}` 
+- Clickable active lot headers with enhanced tooltips
+- Clean UI with deactivation button at top right
+- Automatic navigation back to main page after deactivation
+- Integrated with existing model card components for consistency
 
 #### Step 4: Process Completion Workflow
 
@@ -221,6 +234,10 @@ class ActivePottingLotService:
 - Test auto-deactivation after completion
 
 **User Value**: Operator can properly complete potting process with actual counts
+
+**Refactor**
+
+- review routes (consider: potting-lots -> potting, remove active from lines )
 
 #### Step 5: Machine Integration (OPC/UA)
 

@@ -167,9 +167,8 @@ async def potting_lots_page() -> None:
                 with (
                     ui.button(
                         f"{line}",
-                        icon="info",
                         color="info",
-                        on_click=lambda line=line: deactivate_lot(_active_service, line),
+                        on_click=lambda line=line: handle_active_lot_click(line),
                     )
                     .bind_text_from(
                         _active_service,
@@ -179,13 +178,13 @@ async def potting_lots_page() -> None:
                     .bind_icon_from(
                         _active_service,
                         "active_lots_state",
-                        backward=lambda state, line=line: "stop" if state.get(line) else "info",
+                        backward=lambda state, line=line: "edit" if state.get(line) else "info",
                     )
                 ):
                     ui.tooltip(line).bind_text_from(
                         _active_service,
                         "active_lots_state",
-                        backward=lambda state, line=line: get_tool_tip_text(state, line),
+                        backward=lambda state, line=line: get_active_lot_tooltip_text(state, line),
                     )
 
             # print button
@@ -229,6 +228,58 @@ def potting_lot_detail(id: int) -> None:
             back_link_url="/potting-lots",
             custom_display_function=custom_display,
         )
+
+
+@router.page("/active/{line}")
+def active_lot_details(line: int) -> None:
+    """Show details page for the currently active lot on the specified line."""
+    active_lot = _active_service.get_active_lot_for_line(line)
+
+    if not active_lot:
+        with frame(f"Lijn {line} - Geen Actieve Partij"):
+            ui.label("Er is momenteel geen actieve partij op deze lijn.")
+            ui.button("← Terug naar Oppotlijst", on_click=lambda: ui.navigate.to("/potting-lots"))
+        return
+
+    with frame(f"Lijn {line} - Actieve Partij: {active_lot.potting_lot.naam}"):
+        from ..components.model_card import display_model_card
+
+        # Action buttons at top right
+        with ui.row().classes("w-full justify-end mb-4"):
+            ui.button("Deactiveren", color="red", on_click=lambda: handle_deactivation(line)).props(
+                "icon=stop"
+            )
+
+        # Display lot details using standard model card
+        display_model_card(active_lot.potting_lot, title=f"Actieve Oppotpartij - Lijn {line}")
+
+
+def handle_deactivation(line: int) -> None:
+    """Handle deactivation of the active lot on the specified line."""
+    active_lot = _active_service.get_active_lot_for_line(line)
+    if active_lot:
+        deactivate_lot(_active_service, line)
+        ui.navigate.to("/potting-lots")
+    else:
+        ui.notify("Geen actieve partij gevonden op deze lijn")
+
+
+def handle_active_lot_click(line: int) -> None:
+    """Handle click on active lot header button - navigate to details if active, show info if not."""
+    active_lot = _active_service.get_active_lot_for_line(line)
+    if active_lot:
+        # Navigate to active lot details page
+        ui.navigate.to(f"/potting-lots/active/{line}")
+    else:
+        # Show info about no active lot
+        ui.notify(f"Geen actieve partij op lijn {line}")
+
+
+def get_active_lot_tooltip_text(state: dict, line: int) -> str:
+    """Get tooltip text for active lot button."""
+    if active_lot := state.get(line):
+        return f"Klik om details te bekijken van actieve partij: {active_lot.potting_lot.naam}"
+    return f"Lijn {line}: Geen actieve partij"
 
 
 @router.page("/scan/{id}")

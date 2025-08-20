@@ -39,3 +39,124 @@ async def test_potting_lots_page_shows_active_header(user: User) -> None:
         # buttons for the potting lines
         await user.should_see("1:")
         await user.should_see("2:")
+
+
+async def test_active_lot_details_page_no_active_lot(user: User) -> None:
+    """Test active lot details page when no lot is active."""
+    await user.open("/potting-lots/active/1")
+    
+    await user.should_see("Lijn 1 - Geen Actieve Partij")
+    await user.should_see("Er is momenteel geen actieve partij op deze lijn.")
+    await user.should_see("← Terug naar Oppotlijst")
+
+
+async def test_active_lot_details_page_with_active_lot(user: User) -> None:
+    """Test active lot details page when a lot is active."""
+    from production_control.potting_lots.models import PottingLot
+    from production_control.potting_lots.active_models import ActivePottingLot
+    from datetime import date
+    
+    with patch("production_control.web.pages.potting_lots._active_service") as mock_service:
+        test_lot = PottingLot(
+            id=123, 
+            naam="Test Actieve Partij", 
+            bollen_code=456, 
+            oppot_datum=date(2024, 3, 15)
+        )
+        active_lot = ActivePottingLot(line=1, potting_lot_id=123, potting_lot=test_lot)
+        mock_service.get_active_lot_for_line.return_value = active_lot
+        
+        await user.open("/potting-lots/active/1")
+        
+        await user.should_see("Lijn 1 - Actieve Partij: Test Actieve Partij")
+        await user.should_see("Actieve Oppotpartij")
+        await user.should_see("ID:")
+        await user.should_see("123")
+        await user.should_see("Naam:")
+        await user.should_see("Test Actieve Partij")
+        await user.should_see("Bollen Code:")
+        await user.should_see("456")
+        await user.should_see("Oppot Datum:")
+        await user.should_see("15-03-2024")
+        await user.should_see("Lijn:")
+        await user.should_see("Lijn 1")
+        await user.should_see("Deactiveren")
+        await user.should_see("← Terug naar Oppotlijst")
+
+
+async def test_active_lot_details_deactivation(user: User) -> None:
+    """Test deactivation from active lot details page shows correct elements."""
+    from production_control.potting_lots.models import PottingLot
+    from production_control.potting_lots.active_models import ActivePottingLot
+    
+    with patch("production_control.web.pages.potting_lots._active_service") as mock_service:
+        test_lot = PottingLot(id=123, naam="Test Partij", bollen_code=456, oppot_datum=None)
+        active_lot = ActivePottingLot(line=2, potting_lot_id=123, potting_lot=test_lot)
+        mock_service.get_active_lot_for_line.return_value = active_lot
+        
+        await user.open("/potting-lots/active/2")
+        
+        # Verify deactivation button is present
+        await user.should_see("Deactiveren")
+        
+        # Note: We can't easily simulate button clicks in the current test framework,
+        # but we can verify the UI elements are present and the handler function exists
+
+
+def test_handle_deactivation_function() -> None:
+    """Test the handle_deactivation function logic."""
+    from production_control.web.pages.potting_lots import handle_deactivation
+    from production_control.potting_lots.models import PottingLot
+    from production_control.potting_lots.active_models import ActivePottingLot
+    from unittest.mock import Mock, patch
+    
+    with patch("production_control.web.pages.potting_lots._active_service") as mock_service, \
+         patch("production_control.web.pages.potting_lots.deactivate_lot") as mock_deactivate, \
+         patch("nicegui.ui.navigate") as mock_navigate, \
+         patch("nicegui.ui.notify") as mock_notify:
+        
+        # Test with active lot
+        test_lot = PottingLot(id=123, naam="Test Partij", bollen_code=456, oppot_datum=None)
+        active_lot = ActivePottingLot(line=1, potting_lot_id=123, potting_lot=test_lot)
+        mock_service.get_active_lot_for_line.return_value = active_lot
+        
+        handle_deactivation(1)
+        
+        mock_deactivate.assert_called_once_with(mock_service, 1)
+        mock_navigate.to.assert_called_once_with("/potting-lots")
+        mock_notify.assert_not_called()
+        
+        # Test with no active lot
+        mock_service.reset_mock()
+        mock_deactivate.reset_mock()
+        mock_navigate.reset_mock()
+        mock_service.get_active_lot_for_line.return_value = None
+        
+        handle_deactivation(2)
+        
+        mock_deactivate.assert_not_called()
+        mock_navigate.to.assert_not_called()
+        mock_notify.assert_called_once_with("Geen actieve partij gevonden op deze lijn")
+
+
+async def test_active_lot_header_navigation(user: User) -> None:
+    """Test that clicking active lot header navigates to details page."""
+    from production_control.potting_lots.models import PottingLot
+    from production_control.potting_lots.active_models import ActivePottingLot
+    
+    with patch("production_control.web.pages.potting_lots._repository") as mock_repo, \
+         patch("production_control.web.pages.potting_lots._active_service") as mock_service:
+        
+        mock_repo.get_paginated.return_value = ([], 0)
+        
+        # Mock active lot on line 1
+        test_lot = PottingLot(id=123, naam="Test Partij", bollen_code=456, oppot_datum=None)
+        active_lot = ActivePottingLot(line=1, potting_lot_id=123, potting_lot=test_lot)
+        mock_service.get_active_lot_for_line.return_value = active_lot
+        
+        await user.open("/potting-lots")
+        
+        # Click on the line 1 button should navigate to active lot details
+        # Note: We can't easily test the navigation in the test environment,
+        # but we can verify the button exists and is clickable
+        await user.should_see("1:")
