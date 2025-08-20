@@ -44,7 +44,7 @@ def test_correct_spacing_requires_partij_code(cli_runner):
     """Test that correct-spacing command requires partij_code."""
     result = cli_runner.invoke(app, ["correct-spacing"])
     assert result.exit_code == 2  # Typer's error exit code
-    assert "Missing argument 'PARTIJ_CODE'" in result.stdout
+    assert "Missing argument 'PARTIJ_CODE'" in result.stderr
 
 
 def test_correct_spacing_dry_run(cli_runner, mock_record):
@@ -74,7 +74,7 @@ def test_correct_spacing_invalid_partij(cli_runner):
         result = cli_runner.invoke(app, ["correct-spacing", "INVALID", "--wdz1", "25"])
 
         assert result.exit_code == 1
-        assert "not found" in result.stdout.lower()
+        assert "not found" in result.stderr.lower()
 
 
 def test_correct_spacing_no_changes(cli_runner, mock_record):
@@ -99,7 +99,7 @@ def test_correct_spacing_negative_tables(cli_runner, mock_record):
         result = cli_runner.invoke(app, ["correct-spacing", "TEST-001", "--wdz1", "-5"])
 
         assert result.exit_code == 1
-        assert "must be positive" in result.stdout.lower()
+        assert "must be positive" in result.stderr.lower()
 
 
 @pytest.mark.integration
@@ -112,7 +112,7 @@ def test_correct_spacing_wdz2_requires_wdz1(cli_runner, mock_record):
         result = cli_runner.invoke(app, ["correct-spacing", "TEST-001", "--wdz2", "30"])
 
         assert result.exit_code == 1
-        assert "wdz1 must be set" in result.stdout.lower()
+        assert "wdz1 must be set" in result.stderr.lower()
 
 
 def test_correct_spacing_actual_correction(cli_runner, mock_record):
@@ -155,8 +155,8 @@ def test_correct_spacing_api_error(cli_runner, mock_record):
         )
 
         assert result.exit_code == 1
-        assert "Failed to update" in result.stdout
-        assert "Invalid data" in result.stdout
+        assert "Failed to update" in result.stderr
+        assert "Invalid data" in result.stderr
 
 
 @pytest.mark.integration
@@ -179,5 +179,5 @@ def test_correct_spacing_connection_error(cli_runner, mock_record):
         )
 
         assert result.exit_code == 1
-        assert "Failed to connect" in result.stdout
-        assert "Connection failed" in result.stdout
+        assert "Failed to connect" in result.stderr
+        assert "Connection failed" in result.stderr

@@ -122,7 +122,7 @@ def test_backup_query_db_error(tmp_path, mock_engine, mock_session, runner):
 
     # Verify error handling
     assert result.exit_code == 1
-    assert "Database error: Connection failed" in result.stdout
+    assert "Database error: Connection failed" in result.stderr
 
 
 @pytest.mark.integration
@@ -148,7 +148,7 @@ def test_backup_query_filesystem_error(tmp_path, mock_engine, mock_session, runn
 
     # Verify error handling
     assert result.exit_code == 1
-    assert "File system error" in result.stdout
+    assert "File system error" in result.stderr
 
 
 def test_backup_query_env_var_precedence(tmp_path, mock_engine, mock_session, runner):

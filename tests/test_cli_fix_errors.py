@@ -163,7 +163,7 @@ def test_fix_spacing_errors_api_error(cli_runner, mock_repo):
 
         # Verify output
         assert result.exit_code == 0
-        assert "Failed to update" in result.stdout
+        assert "Failed to update" in result.stderr
         assert "Manual review needed: 2" in result.stdout  # Original + failed fix
 
         # Verify log file
