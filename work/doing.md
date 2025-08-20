@@ -205,35 +205,49 @@ class ActivePottingLotService:
 
 **Implementation Notes**:
 
-- Route: `/potting-lots/active/{line}` 
+- Route: `/potting-lots/active/{line}`
 - Clickable active lot headers with enhanced tooltips
 - Clean UI with deactivation button at top right
 - Automatic navigation back to main page after deactivation
 - Integrated with existing model card components for consistency
 
-#### Step 4: Process Completion Workflow
+#### Step 4: Process Completion Workflow - ✅ COMPLETED
 
 **Goal**: Mark potting as completed with actual pot count
 
 **Data Layer**:
 
-- Add completion method to service
-- Track completion state (for future audit/reporting)
+- ✅ Add completion method to service (`complete_lot()` with logging)
+- ✅ Log completion method call with completed datetime
+- ✅ NO need to update opdac just yet
+- ✅ NO need to write anything to the potting machines just yet
 
 **UI Changes**:
 
-- Add "Oppotten Voltooid" button to active lot details page
-- Create completion modal form for entering actual pot count
-- Auto-deactivate lot after completion
-- Show completion confirmation
+- ✅ Add "Oppotten Voltooid" button to active lot details page (green, positioned at top right)
+- ✅ Create completion modal form for entering actual pot count (with validation)
+- ✅ Auto-deactivate lot after completion
+- ✅ Show completion confirmation (positive notification + navigation back)
 
 **Tests**:
 
-- Test completion workflow end-to-end
-- Test actual pot count validation
-- Test auto-deactivation after completion
+- ✅ Test completion workflow end-to-end (service and UI tests)
+- ✅ Test actual pot count validation (UI validation for invalid input)
+- ✅ Test auto-deactivation after completion (verified in service tests)
+- ✅ Test error scenarios and edge cases
+- ✅ 3 new service tests, 2 new UI tests, all passing
 
-**User Value**: Operator can properly complete potting process with actual counts
+**User Value**: ✅ Operator can properly complete potting process with actual counts
+
+**Implementation Notes**:
+
+- Green "Oppotten Voltooid" button with check_circle icon positioned before deactivation button
+- Modal dialog with number input (min=1, integer format) and Cancel/Complete buttons
+- Input validation prevents completion with invalid/empty values
+- Completion logging includes lot ID, name, line, actual pots, and timestamp
+- Automatic deactivation and navigation back to main page after successful completion
+- Proper error handling and user feedback for all scenarios
+- Future-ready with TODO markers for technison database integration
 
 **Refactor**
 
@@ -284,3 +298,9 @@ class ActivePottingLotService:
 - Test UI responsiveness during operations
 
 **User Value**: Clearer visual feedback makes it easier to understand current state
+
+#### Later enhancements
+
+- Write potted count to technison database
+- When there is no lot active on a potting line add a button or scan control to activate one, either by typing a the number or scanning the label.
+- re-evaluate our routes

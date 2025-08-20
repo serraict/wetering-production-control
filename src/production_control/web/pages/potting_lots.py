@@ -245,10 +245,13 @@ def active_lot_details(line: int) -> None:
         from ..components.model_card import display_model_card
 
         # Action buttons at top right
-        with ui.row().classes("w-full justify-end mb-4"):
-            ui.button("Deactiveren", color="red", on_click=lambda: handle_deactivation(line)).props(
-                "icon=stop"
-            )
+        with ui.row().classes("w-full justify-end mb-4 gap-2"):
+            ui.button(
+                "Oppotten Voltooid", color="positive", on_click=lambda: show_completion_dialog(line)
+            ).props("icon=check_circle")
+            ui.button(
+                "Deactiveren", color="negative", on_click=lambda: handle_deactivation(line)
+            ).props("icon=stop")
 
         # Display lot details using standard model card
         display_model_card(active_lot.potting_lot, title=f"Actieve Oppotpartij - Lijn {line}")
@@ -280,6 +283,54 @@ def get_active_lot_tooltip_text(state: dict, line: int) -> str:
     if active_lot := state.get(line):
         return f"Klik om details te bekijken van actieve partij: {active_lot.potting_lot.naam}"
     return f"Lijn {line}: Geen actieve partij"
+
+
+def show_completion_dialog(line: int) -> None:
+    """Show modal dialog for completing a potting lot with actual pot count."""
+    active_lot = _active_service.get_active_lot_for_line(line)
+    if not active_lot:
+        ui.notify("Geen actieve partij gevonden op deze lijn")
+        return
+
+    with ui.dialog() as dialog, ui.card():
+        ui.label(f"Oppotten Voltooid - {active_lot.potting_lot.naam}").classes(
+            "text-xl font-bold mb-4"
+        )
+
+        with ui.row():
+            actual_pots_input = ui.number(
+                "Aantal", placeholder="Voer aantal potten in", min=1, step=1, format="%.0f"
+            ).classes("w-40")
+
+        with ui.row().classes("gap-2 justify-end"):
+            ui.button("Annuleren", on_click=dialog.close)
+            ui.button(
+                "Voltooid",
+                color="positive",
+                icon="check",
+                on_click=lambda: handle_completion(line, actual_pots_input.value, dialog),
+            )
+
+    dialog.open()
+
+
+def handle_completion(line: int, actual_pots: float, dialog) -> None:
+    """Handle the completion of a potting lot."""
+    if actual_pots is None or actual_pots <= 0:
+        ui.notify("Voer een geldig aantal potten in", type="negative")
+        return
+
+    # Convert to integer
+    actual_pots_int = int(actual_pots)
+
+    # Complete the lot using the service
+    if _active_service.complete_lot(line, actual_pots_int):
+        ui.notify(f"Oppotten voltooid! {actual_pots_int} potten gerealiseerd", type="positive")
+        dialog.close()
+        # Navigate back to main page
+        ui.navigate.to("/potting-lots")
+    else:
+        ui.notify("Fout bij voltooien van oppotten", type="negative")
 
 
 @router.page("/scan/{id}")

@@ -1,11 +1,15 @@
 """Active potting lot service."""
 
+import logging
+from datetime import datetime
 from typing import Dict, Optional
 
 from nicegui import binding
 
 from .repositories import PottingLotRepository
 from .active_models import ActivePottingLot
+
+logger = logging.getLogger(__name__)
 
 
 class ActivePottingLotService:
@@ -51,3 +55,35 @@ class ActivePottingLotService:
             self.active_lots_state = dict(self._active_lots)  # Create new dict to trigger change
             return True
         return False
+
+    def complete_lot(self, line: int, actual_pots: int) -> bool:
+        """Mark the active lot as completed and deactivate it.
+        
+        Args:
+            line: The potting line number
+            actual_pots: The actual number of pots that were planted
+            
+        Returns:
+            True if completion was successful, False if no active lot found
+        """
+        active_lot = self.get_active_lot_for_line(line)
+        if not active_lot:
+            logger.warning(f"No active lot found on line {line} for completion")
+            return False
+            
+        completion_time = datetime.now()
+        
+        # Log the completion
+        logger.info(
+            f"Completed potting lot {active_lot.potting_lot_id} "
+            f"({active_lot.potting_lot.naam}) on line {line}. "
+            f"Actual pots: {actual_pots}, Completed at: {completion_time}"
+        )
+        
+        # TODO: In future iterations, write to technison database here
+        # TODO: Update potting lot status in main database if needed
+        
+        # Auto-deactivate the lot after completion
+        self.deactivate_lot(line)
+        
+        return True
