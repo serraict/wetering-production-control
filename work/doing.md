@@ -131,13 +131,14 @@ class ActivePottingLotService:
 
 - ✅ Test model creation and validation
 - ✅ Test service activation/deactivation logic
-- ⚠️ UI tests created but need test data setup refinement
+- ✅ UI tests created but need test data setup refinement
 
 **Code improvements**
 
-- Use a bindable property for the service state to propagate changes correctly across tabs
-- use app.storage instead of a global service variable  
-- fix the UI unit tests
+- ✅ Use a bindable property for the service state to propagate changes correctly across tabs
+- ❌ use app.storage instead of a global service variable  
+- ✅ fix the UI unit tests
+- review code
 
 **User Value**: ✅ Operator can activate a lot via popup and see which lot is currently active on each line with deactivation buttons
 
@@ -153,7 +154,7 @@ class ActivePottingLotService:
 
 #### Step 2: Dual Line Support
 
-**Goal**: Support independent operation of Line 1 and Line 2
+**Goal**: ✅ Support independent operation of Line 1 and Line 2
 
 **Data Layer**:
 
@@ -162,15 +163,15 @@ class ActivePottingLotService:
 
 **UI Changes**:
 
-- Add line selection tabs ("Lijn 1" and "Lijn 2")
-- Show active lot header per selected line
-- Update activation button to activate on current line
+- ✅ Add line selection tabs ("Lijn 1" and "Lijn 2")
+- ✅ Show active lot header per selected line
+- ✅ Update activation button to activate on specific line
 
 **Tests**:
 
-- Test independent line operation
-- Test same lot can be active on both lines
-- Test UI tab switching and line-specific activation
+- ✅ Test independent line operation
+- ✅ Test same lot can be active on both lines
+- ✅ Test UI tab switching and line-specific activation
 
 **User Value**: Operators can manage both potting lines independently
 
