@@ -1,6 +1,5 @@
 """Potting line controller for OPC/UA machine communication."""
 
-import asyncio
 import logging
 from datetime import datetime
 from enum import Enum

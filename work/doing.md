@@ -303,7 +303,229 @@ class ActivePottingLotService:
 - Connection status tracking with detailed error reporting
 - Automatic connection retry logic in controller
 
-#### Step 6: Enhanced Visual Feedback
+#### Step 6: Production Readiness & Robustness
+
+**Goal**: Make OPC integration production-ready with proper error handling, configuration, and testing
+
+**Issues Identified**:
+
+- ❌ Test coverage dropped from 84% to 76% (need comprehensive OPC integration tests)
+- ❌ Hardcoded configuration (OPC endpoint, node names, timeouts)
+- ❌ Missing error scenario tests (OPC server down, network issues, partial failures)
+- ❌ No graceful degradation when machine communication fails
+- ❌ **CRITICAL**: Improper asyncua usage - manual threading instead of built-in sync interface
+- ❌ **CRITICAL**: Creating new connections per operation instead of connection pooling
+- ❌ **CRITICAL**: No High Availability support (asyncua.client.ha.HaClient available)
+- ❌ **CRITICAL**: Not using context managers for automatic resource cleanup
+- ❌ **PERFORMANCE**: Inefficient node lookup using get_child() instead of NodeId caching
+- ❌ **RELIABILITY**: No built-in retry logic or automatic reconnection
+- ❌ No monitoring/alerting for OPC communication health
+
+**AsyncUA Best Practices Analysis**:
+
+Based on inspection of asyncua documentation and production usage patterns:
+
+**❌ Current Issues**:
+
+- Manual event loop creation in threads instead of using `asyncua.sync.Client`
+- Connection-per-operation pattern causing resource waste and potential leaks
+- Missing HA client features: automatic failover, health monitoring, subscription management  
+- No watchdog intervals or timeout configuration for connection health
+- Path-based node traversal (`get_child()`) instead of efficient NodeId caching
+- Missing OPC UA specific exception handling (`asyncua.ua.uaerrors`)
+
+**✅ Should Use**:
+
+- `asyncua.sync.Client` - proper synchronous interface designed for threading contexts
+- `asyncua.client.ha.HaClient` - high availability with automatic reconnection and failover
+- Context managers (`async with client:`) for guaranteed resource cleanup
+- Client configuration (timeout, watchdog_interval, connection pooling)
+- NodeId caching (`client.get_node(ua.NodeId())`) for performance
+- Built-in retry logic and reconnection handling
+
+**Data Layer**:
+
+- Add configuration management for OPC settings (endpoint, timeouts, retry attempts)
+- Implement proper connection pool management for OPC clients
+- Add comprehensive error handling with fallback strategies
+- Create OPC communication health monitoring
+
+**Service Layer Improvements**:
+
+- Add retry logic with exponential backoff for failed OPC operations
+- Implement circuit breaker pattern for OPC communication
+- Add graceful degradation (UI still works when OPC fails)
+- Create OPC connection status service with real-time monitoring
+- Proper resource cleanup and connection lifecycle management
+
+**Testing**:
+
+- Add unit tests for OPC integration error scenarios
+- Test network failure, server unavailable, timeout scenarios  
+- Test concurrent access and threading safety
+- Test configuration edge cases and validation
+- Integration tests with mock OPC server for CI/CD
+- Load testing for multiple simultaneous activations
+- Recovery testing after OPC server restart
+
+**Configuration Management**:
+
+- Externalize OPC endpoint, node structure, timeouts to config files
+- Environment-specific settings (dev/test/prod)
+- Runtime configuration updates without restart
+- Configuration validation on startup
+
+**Monitoring & Observability**:
+
+- OPC communication metrics and health checks
+- Error rate monitoring and alerting
+- Connection status dashboard
+- Performance metrics (response times, success rates)
+- Structured logging for troubleshooting
+
+**Error Handling & User Experience**:
+
+- Clear user feedback when machine communication fails
+- Option to retry failed operations manually
+- Offline mode when OPC server unavailable
+- Graceful error messages instead of technical exceptions
+- Recovery workflows for common failure scenarios
+
+**Tests Required**:
+
+- OPC server unavailable during activation
+- Network timeout during write operation
+- Partial failure scenarios (one line succeeds, other fails)
+- Concurrent activation attempts
+- Server restart during operation
+- Invalid configuration scenarios
+- Resource leak testing (connections, threads)
+
+**User Value**: Reliable, production-ready system that handles real-world network and machine issues gracefully
+
+#### Step 6.5: Replace Custom OPC Scripts with AsyncUA Built-in Tools
+
+**Goal**: Replace our custom OPC monitoring and testing scripts with professional asyncua built-in tools
+
+**Current Custom Scripts Analysis**:
+
+Our current scripts in `./scripts/` include:
+
+- ✅ `opc_monitor.py` - Custom monitoring with real-time display
+- ✅ `opc_write_test.py` - Custom write testing script  
+- ✅ `test_multiple_writes.py` - Custom concurrent write testing
+- ✅ `test_webapp_approach.py` - Custom threading approach testing
+- ✅ `test_run_io_bound.py` - Custom run.io_bound testing
+
+**AsyncUA Built-in Tools Available**:
+
+Based on asyncua documentation, the following professional tools are available:
+
+- **`uabrowse`** - Browse OPC-UA nodes and print results
+- **`uaclient`** - Connect to server and start Python shell with root/objects nodes
+- **`uadiscover`** - Perform OPC UA discovery and print server/endpoint information  
+- **`uals`** - Browse OPC-UA nodes (alternative interface)
+- **`uaread`/`uawrite`** - Read/write node attributes and values
+- **`uaserver`** - Run example OPC-UA server with XML definition support
+- **`uasubscribe`** - Subscribe to nodes and print real-time results
+- **`uahistoryread`** - Read historical data from nodes
+- **`uacall`** - Call methods on nodes
+- **`opcua-client-gui`** - Full-featured GUI client (separate package)
+
+**Replacement Strategy**:
+
+**OPC Test Server Analysis**:
+
+**❌ REPLACE Custom Server** with **✅ `uaserver` + XML Nodeset** (Industry Standard Approach):
+
+**Why Replace Our Custom Server:**
+- ❌ **Custom Maintenance**: We maintain server infrastructure instead of focusing on domain logic
+- ❌ **Missing Features**: Lacks professional features (security, caching, performance optimizations)
+- ❌ **Non-Standard**: Custom approach instead of OPC UA industry standard (NodeSet2.xml)
+- ❌ **Limited Tooling**: Can't leverage standard OPC UA development ecosystem
+
+**✅ Benefits of `uaserver` + XML Nodeset:**
+- ✅ **Industry Standard**: Uses NodeSet2.xml format - official OPC UA standard
+- ✅ **Professional Infrastructure**: Production-ready server with security, caching, error handling
+- ✅ **Zero Maintenance**: No custom server code to maintain
+- ✅ **Interoperability**: XML nodesets work with UaExpert, UaModeler, other OPC UA tools
+- ✅ **Self-Documenting**: Structure defined in standardized, shareable XML format
+- ✅ **Flexibility**: Modify structure without code changes
+
+**Implementation Plan:**
+1. **Export Current Structure**: Use asyncua `XmlExporter` to generate `potting-lines.xml` nodeset
+2. **Replace Server**: Use `uaserver --import potting-lines.xml` instead of custom server
+3. **Update Makefile**: Replace `make opc-server` with `uaserver` + our nodeset
+4. **Delete Custom Server**: Remove `opc_test_server.py` after successful migration
+
+**Technical Details:**
+- AsyncUA supports `server.import_xml("path/to/nodeset.xml")` for nodeset loading
+- NodeSet2.xml format preserves our domain structure: `Lijn1/PC/nr_actieve_partij`
+- Built-in `uaserver` provides `--certificate`, `--private_key`, `--populate` options
+
+**✅ Keep Custom Scripts** (provide unique value):
+
+- `opc_monitor.py` - Our custom real-time dashboard format is valuable for development  
+- `test_multiple_writes.py` - Stress testing specific to our threading approach
+
+- `opc_test_server.py` → **REPLACE** with `uaserver` + `potting-lines.xml` nodeset
+
+**❌ Replace with Built-in Tools**:
+
+- `opc_write_test.py` → Replace with `uawrite` + `uaread` combination
+- `test_webapp_approach.py` → Replace with `uaclient` interactive testing
+- `test_run_io_bound.py` → No longer needed after proper asyncua.sync implementation
+
+**✅ Add Professional Tools**:
+
+- Use `uadiscover` for server discovery and endpoint validation
+- Use `uasubscribe` for real-time monitoring during development
+- Use `uaclient` for interactive debugging and exploration
+- Add `opcua-client-gui` as development tool (pip install opcua-client)
+
+**Implementation**:
+
+1. **Document AsyncUA Tools**: Add usage examples to development documentation
+2. **Create Make Targets**: Add makefile targets for common asyncua tool operations
+3. **Replace Simple Scripts**: Remove redundant custom scripts, document tool alternatives
+4. **Keep Specialized Scripts**: Maintain scripts that provide unique functionality
+5. **Add GUI Client**: Install and document opcua-client-gui for advanced debugging
+
+**Makefile Additions**:
+
+```makefile
+# OPC UA development tools
+opc-discover:
+ uadiscover opc.tcp://127.0.0.1:4840/potting-lines/
+
+opc-browse:
+ uabrowse opc.tcp://127.0.0.1:4840/potting-lines/
+
+opc-read-line1:
+ uaread opc.tcp://127.0.0.1:4840/potting-lines/ "ns=2;s=Lijn1.PC.nr_actieve_partij"
+
+opc-write-line1:
+ uawrite opc.tcp://127.0.0.1:4840/potting-lines/ "ns=2;s=Lijn1.PC.nr_actieve_partij" 12345
+
+opc-subscribe:
+ uasubscribe opc.tcp://127.0.0.1:4840/potting-lines/ "ns=2;s=Lijn1.PC.nr_actieve_partij"
+
+opc-client:
+ uaclient opc.tcp://127.0.0.1:4840/potting-lines/
+```
+
+**Benefits**:
+
+- Professional-grade tools with comprehensive error handling
+- Standardized command-line interface following OPC UA best practices  
+- Better maintenance (maintained by asyncua team, not us)
+- Comprehensive functionality (browse, discover, subscribe, history, etc.)
+- Interactive debugging capabilities
+- GUI client for visual inspection and testing
+
+**User Value**: Professional OPC UA development environment with standardized tools, reducing maintenance burden while providing more comprehensive functionality
+
+#### Step 7: Enhanced Visual Feedback
 
 **Goal**: Better visual indicators for active lots and process status
 
