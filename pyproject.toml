@@ -15,6 +15,7 @@ dependencies = [
     "weasyprint",
     "qrcode[pil]",
     "jinja2",
+    "asyncua",
 ]
 dynamic = ["version"]
 # license.file = "LICENCE"

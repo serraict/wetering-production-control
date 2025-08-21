@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all opc-server opc-monitor
 
 VERSION := $(shell git describe --tags 2>/dev/null || echo "")
 ifeq ($(strip $(VERSION)),)
@@ -123,3 +123,11 @@ dev-test:
 
 dev-test-integration:
 	pytest --cov=src/production_control --cov-report=term
+
+opc-server:
+	@echo "Starting OPC/UA test server..."
+	uv run python -m production_control.potting_lots.opc_test_server
+
+opc-monitor:
+	@echo "Starting OPC/UA server monitor..."
+	uv run python scripts/opc_monitor.py
