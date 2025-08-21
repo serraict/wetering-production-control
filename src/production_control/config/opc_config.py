@@ -14,7 +14,7 @@ class OPCConfig:
     """OPC/UA configuration settings."""
 
     # Connection settings
-    endpoint: str = "opc.tcp://127.0.0.1:4840/potting-lines/"
+    endpoint: str = "opc.tcp://127.0.0.1:4840"
     connection_timeout: int = 10
     watchdog_interval: int = 30
 

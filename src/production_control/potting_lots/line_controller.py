@@ -50,9 +50,9 @@ class PottingLineController:
 
         # Cache NodeIds for performance (instead of path-based lookup)
         self._node_ids: Dict[str, ua.NodeId] = {
-            "line1_active": ua.NodeId(4, 1),  # ns=1;i=4 from XML nodeset
-            "line2_active": ua.NodeId(7, 1),  # ns=1;i=7 from XML nodeset
-            "last_updated": ua.NodeId(8, 1),  # ns=1;i=8 from XML nodeset
+            "line1_active": ua.NodeId(4, 2),  # ns=2;i=4 from XML nodeset
+            "line2_active": ua.NodeId(7, 2),  # ns=2;i=7 from XML nodeset
+            "last_updated": ua.NodeId(8, 2),  # ns=2;i=8 from XML nodeset
         }
 
         logger.info(f"Initialized OPC controller for environment: {self.config.environment}")
@@ -70,11 +70,17 @@ class PottingLineController:
                     f"Connecting to OPC/UA server at {self.endpoint} (attempt {attempt + 1}/{self.retry_attempts})"
                 )
 
-                # Use async context manager for guaranteed cleanup
-                async with self.client:
-                    # Test connection by reading server status
-                    server_status = await self.client.get_server_status()
-                    logger.debug(f"Server status: {server_status}")
+                # Connect and test basic functionality
+                await self.client.connect()
+
+                # Test connection by reading a basic server node
+                try:
+                    # Just test that we can read the server's root node
+                    root = self.client.get_objects_node()
+                    logger.debug(f"Successfully connected - root node: {root}")
+                finally:
+                    # Always disconnect after connection test
+                    await self.client.disconnect()
 
                 self.status = ConnectionStatus.CONNECTED
                 self.last_error = None
@@ -116,15 +122,19 @@ class PottingLineController:
     @asynccontextmanager
     async def _get_connected_client(self):
         """Get a connected client with automatic connection management."""
-        if self.status != ConnectionStatus.CONNECTED:
-            if not await self.connect():
-                raise ConnectionError("Unable to establish OPC/UA connection")
+        # Create a fresh client for this operation to avoid threading issues
+        client = Client(url=self.endpoint)
+        client.request_timeout = self.connection_timeout * 1000
+        client.secure_channel_timeout = self.watchdog_interval * 1000
 
         try:
-            yield self.client
+            await client.connect()
+            yield client
         finally:
-            # HA client manages connection lifecycle automatically
-            pass
+            try:
+                await client.disconnect()
+            except Exception as e:
+                logger.debug(f"Error during client disconnect: {e}")
 
     async def set_active_lot(self, line: int, lot_id: int) -> bool:
         """Set the active lot number for a potting line with retry logic.
