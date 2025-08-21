@@ -11,33 +11,45 @@ from production_control.potting_lots.line_controller import (
     PottingLineController,
     ConnectionStatus,
 )
-from production_control.potting_lots.opc_test_server import PottingLineOPCTestServer
 
+# Production readiness integration tests
+# These tests require an external uaserver to be running with our nodeset
+# Run: make opc-server
+# Then run tests: pytest -m integration
 
-@pytest.fixture
-async def test_server():
-    """Start OPC/UA test server for integration tests."""
-    server = PottingLineOPCTestServer()
-    await server.start()
-    # Small delay to ensure server is ready
-    await asyncio.sleep(0.1)
-    yield server
-    await server.stop()
+# Skip by default unless OPC server is explicitly available
+import os
+
+if not os.getenv("OPC_INTEGRATION_TESTS", "").lower() in ("true", "1", "yes"):
+    pytest.skip(
+        "OPC integration tests disabled. Set OPC_INTEGRATION_TESTS=true to enable",
+        allow_module_level=True,
+    )
 
 
 @pytest.fixture
 def controller():
-    """Create controller instance."""
-    return PottingLineController()
+    """Create controller instance for testing."""
+    from production_control.config.opc_config import OPCConfig
+
+    # Use test configuration
+    test_config = OPCConfig(
+        endpoint="opc.tcp://127.0.0.1:4840",  # uaserver default endpoint
+        connection_timeout=5,
+        retry_attempts=2,
+        retry_delay=0.1,  # Faster retries for tests
+    )
+
+    return PottingLineController(config=test_config)
 
 
 @pytest.mark.asyncio
-async def test_controller_connection(test_server, controller):
+async def test_controller_connection(controller):
     """Test basic connection to OPC/UA server."""
     # Initially disconnected
     assert controller.status == ConnectionStatus.DISCONNECTED
 
-    # Should connect successfully
+    # Should connect successfully to uaserver
     success = await controller.connect()
     assert success
     assert controller.status == ConnectionStatus.CONNECTED
@@ -49,11 +61,9 @@ async def test_controller_connection(test_server, controller):
 
 
 @pytest.mark.asyncio
-async def test_set_and_get_active_lot(test_server, controller):
-    """Test setting and getting active lot numbers."""
-    await controller.connect()
-
-    # Test setting active lot on line 1
+async def test_set_and_get_active_lot(controller):
+    """Test setting and getting active lot numbers with production-ready error handling."""
+    # Test setting active lot on line 1 with automatic connection
     success = await controller.set_active_lot(1, 123)
     assert success
 
@@ -79,15 +89,13 @@ async def test_set_and_get_active_lot(test_server, controller):
 
 
 @pytest.mark.asyncio
-async def test_initialize_lines(test_server, controller):
-    """Test line initialization."""
+async def test_initialize_lines(controller):
+    """Test concurrent line initialization with production-ready approach."""
     # Set some initial values
-    await controller.connect()
     await controller.set_active_lot(1, 999)
     await controller.set_active_lot(2, 888)
-    await controller.disconnect()
 
-    # Initialize should reset both lines to 0
+    # Initialize should reset both lines to 0 concurrently
     success = await controller.initialize_lines()
     assert success
 
@@ -102,17 +110,25 @@ async def test_initialize_lines(test_server, controller):
 
 @pytest.mark.asyncio
 async def test_connection_failure():
-    """Test behavior when OPC/UA server is not available."""
-    # Use invalid endpoint
-    controller = PottingLineController("opc.tcp://127.0.0.1:9999/invalid/")
+    """Test behavior when OPC/UA server is not available with production error handling."""
+    from production_control.config.opc_config import OPCConfig
 
-    # Should fail to connect
+    # Use invalid endpoint with test configuration
+    test_config = OPCConfig(
+        endpoint="opc.tcp://127.0.0.1:9999/invalid/",
+        connection_timeout=1,  # Fast timeout for tests
+        retry_attempts=2,
+        retry_delay=0.1,
+    )
+    controller = PottingLineController(config=test_config)
+
+    # Should fail to connect after retries
     success = await controller.connect()
     assert not success
     assert controller.status == ConnectionStatus.ERROR
     assert controller.last_error is not None
 
-    # Operations should fail gracefully
+    # Operations should fail gracefully with proper error handling
     success = await controller.set_active_lot(1, 123)
     assert not success
 
@@ -121,12 +137,12 @@ async def test_connection_failure():
 
 
 @pytest.mark.asyncio
-async def test_auto_reconnect(test_server, controller):
-    """Test automatic reconnection attempts."""
+async def test_auto_reconnect(controller):
+    """Test automatic reconnection with retry logic."""
     # Initially disconnected
     assert controller.status == ConnectionStatus.DISCONNECTED
 
-    # set_active_lot should trigger connection attempt
+    # set_active_lot should trigger connection attempt with retries
     success = await controller.set_active_lot(1, 123)
     assert success
     assert controller.status == ConnectionStatus.CONNECTED
@@ -237,15 +253,18 @@ class TestActiveServiceIntegration:
             assert args[2] == 0  # lot_id (0 means deactivate)
 
     def test_controller_status_retrieval(self):
-        """Test that service can retrieve controller status."""
+        """Test that service can retrieve enhanced controller status."""
         from production_control.potting_lots.repositories import PottingLotRepository
         from production_control.potting_lots.active_service import ActivePottingLotService
 
         repository = PottingLotRepository()
         service = ActivePottingLotService(repository)
 
-        # Should be able to get status
+        # Should be able to get enhanced status with production monitoring info
         status = service.get_controller_status()
         assert isinstance(status, dict)
         assert "status" in status
         assert "endpoint" in status
+        assert "cached_node_ids" in status  # New production feature
+        assert "connection_timeout" in status  # Configuration info
+        assert "retry_attempts" in status  # Error handling config

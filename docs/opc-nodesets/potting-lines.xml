@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+    <NamespaceUris>
+        <Uri>http://wetering.potlilium.nl/potting-lines</Uri>
+    </NamespaceUris>
+    
+    <!-- Root PottingLines Object -->
+    <UAObject NodeId="ns=1;i=1" BrowseName="1:PottingLines">
+        <DisplayName>PottingLines</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">i=85</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 1 Object -->
+    <UAObject NodeId="ns=1;i=2" BrowseName="1:Lijn1">
+        <DisplayName>Lijn1</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=1</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 1 PC Object -->
+    <UAObject NodeId="ns=1;i=3" BrowseName="1:PC">
+        <DisplayName>PC</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=2</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 1 Active Variable -->
+    <UAVariable NodeId="ns=1;i=4" BrowseName="1:nr_actieve_partij" DataType="i=6" AccessLevel="3">
+        <DisplayName>nr_actieve_partij</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=3</Reference>
+        </References>
+        <Value>
+            <uax:Int32>0</uax:Int32>
+        </Value>
+    </UAVariable>
+    
+    <!-- Line 2 Object -->
+    <UAObject NodeId="ns=1;i=5" BrowseName="1:Lijn2">
+        <DisplayName>Lijn2</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=1</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 2 PC Object -->
+    <UAObject NodeId="ns=1;i=6" BrowseName="1:PC">
+        <DisplayName>PC</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=5</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 2 Active Variable -->
+    <UAVariable NodeId="ns=1;i=7" BrowseName="1:nr_actieve_partij" DataType="i=6" AccessLevel="3">
+        <DisplayName>nr_actieve_partij</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=6</Reference>
+        </References>
+        <Value>
+            <uax:Int32>0</uax:Int32>
+        </Value>
+    </UAVariable>
+    
+    <!-- Timestamp Variable -->
+    <UAVariable NodeId="ns=1;i=8" BrowseName="1:last_updated" DataType="i=294" AccessLevel="3">
+        <DisplayName>last_updated</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1</Reference>
+        </References>
+        <Value>
+            <uax:DateTime>2025-08-21T09:30:00Z</uax:DateTime>
+        </Value>
+    </UAVariable>
+</UANodeSet>

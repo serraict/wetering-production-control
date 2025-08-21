@@ -112,11 +112,11 @@ class ActivePottingLotService:
         try:
             import asyncio
 
-            # Create a fresh connection for this operation to avoid threading issues
+            # Create a fresh event loop for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-            success = loop.run_until_complete(self._write_to_opc_server(line, lot_id))
+            success = loop.run_until_complete(self._controller.set_active_lot(line, lot_id))
 
             if success:
                 action = "activated" if lot_id > 0 else "deactivated"
@@ -128,41 +128,6 @@ class ActivePottingLotService:
             logger.error(f"Error communicating with OPC/UA controller: {e}")
         finally:
             loop.close()
-
-    async def _write_to_opc_server(self, line: int, lot_id: int) -> bool:
-        """Write to OPC server using a dedicated connection."""
-        from asyncua import Client, ua
-
-        endpoint = "opc.tcp://127.0.0.1:4840/potting-lines/"
-        client = Client(url=endpoint)
-
-        try:
-            await client.connect()
-
-            # Get node reference
-            root = client.get_objects_node()
-            potting_lines = await root.get_child("2:PottingLines")
-
-            if line == 1:
-                line_obj = await potting_lines.get_child("2:Lijn1")
-            elif line == 2:
-                line_obj = await potting_lines.get_child("2:Lijn2")
-            else:
-                logger.error(f"Invalid line number: {line}")
-                return False
-
-            line_pc = await line_obj.get_child("2:PC")
-            active_node = await line_pc.get_child("2:nr_actieve_partij")
-
-            # Write the value
-            await active_node.write_value(lot_id, ua.VariantType.Int32)
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to write to OPC server: {e}")
-            return False
-        finally:
-            await client.disconnect()
 
     async def initialize_machine_communication(self) -> bool:
         """Initialize machine communication at application startup.

@@ -125,9 +125,50 @@ dev-test-integration:
 	pytest --cov=src/production_control --cov-report=term
 
 opc-server:
-	@echo "Starting OPC/UA test server..."
-	uv run python -m production_control.potting_lots.opc_test_server
+	@echo "Starting OPC/UA server with potting lines nodeset..."
+	uv run uaserver -u opc.tcp://127.0.0.1:4840 -x docs/opc-nodesets/potting-lines.xml
 
 opc-monitor:
 	@echo "Starting OPC/UA server monitor..."
 	uv run python scripts/opc_monitor.py
+
+# OPC UA development tools using asyncua built-ins
+opc-discover:
+	@echo "Discovering OPC/UA servers and endpoints..."
+	uv run uadiscover
+
+opc-browse:
+	@echo "Browsing OPC/UA server nodes..."
+	uv run uabrowse -u opc.tcp://127.0.0.1:4840
+
+opc-browse-potting:
+	@echo "Browsing potting lines structure..."
+	uv run uabrowse -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=1"
+
+opc-read-line1:
+	@echo "Reading Line 1 active lot..."
+	uv run uaread -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=4"
+
+opc-read-line2:
+	@echo "Reading Line 2 active lot..."
+	uv run uaread -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=7"
+
+opc-write-line1:
+	@echo "Writing test value to Line 1..."
+	uv run uawrite -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=4" -t int32 12345
+
+opc-write-line2:
+	@echo "Writing test value to Line 2..."
+	uv run uawrite -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=7" -t int32 67890
+
+opc-subscribe-line1:
+	@echo "Subscribing to Line 1 changes..."
+	uv run uasubscribe -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=4"
+
+opc-subscribe-line2:
+	@echo "Subscribing to Line 2 changes..."
+	uv run uasubscribe -u opc.tcp://127.0.0.1:4840 -n "ns=2;i=7"
+
+opc-client:
+	@echo "Starting interactive OPC/UA client shell..."
+	uv run uaclient -u opc.tcp://127.0.0.1:4840

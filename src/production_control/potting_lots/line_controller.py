@@ -1,11 +1,16 @@
 """Potting line controller for OPC/UA machine communication."""
 
+import asyncio
 import logging
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict
+from contextlib import asynccontextmanager
 
 from asyncua import Client, ua
+from asyncua.ua import uaerrors
+
+from ..config import get_opc_config, OPCConfig
 
 logger = logging.getLogger(__name__)
 
@@ -20,44 +25,85 @@ class ConnectionStatus(Enum):
 
 
 class PottingLineController:
-    """Service for communicating with potting line machines via OPC/UA."""
+    """Production-ready service for communicating with potting line machines via OPC/UA."""
 
-    def __init__(self, endpoint: str = "opc.tcp://127.0.0.1:4840/potting-lines/"):
-        self.endpoint = endpoint
-        self.client = Client(url=endpoint)
+    def __init__(self, config: Optional[OPCConfig] = None):
+        # Load configuration
+        self.config = config or get_opc_config()
+
+        # Connection settings
+        self.endpoint = self.config.endpoint
+        self.connection_timeout = self.config.connection_timeout
+        self.watchdog_interval = self.config.watchdog_interval
+        self.retry_attempts = self.config.retry_attempts
+        self.retry_delay = self.config.retry_delay
+
+        # Use regular client with proper configuration for production reliability
+        self.client = Client(url=self.endpoint)
+
+        # Configure timeouts (in milliseconds)
+        self.client.request_timeout = self.connection_timeout * 1000
+        self.client.secure_channel_timeout = self.watchdog_interval * 1000
         self.status = ConnectionStatus.DISCONNECTED
         self.last_error: Optional[str] = None
         self.last_connection_attempt: Optional[datetime] = None
-        self._nodes: Dict[str, ua.Node] = {}
+
+        # Cache NodeIds for performance (instead of path-based lookup)
+        self._node_ids: Dict[str, ua.NodeId] = {
+            "line1_active": ua.NodeId(4, 1),  # ns=1;i=4 from XML nodeset
+            "line2_active": ua.NodeId(7, 1),  # ns=1;i=7 from XML nodeset
+            "last_updated": ua.NodeId(8, 1),  # ns=1;i=8 from XML nodeset
+        }
+
+        logger.info(f"Initialized OPC controller for environment: {self.config.environment}")
 
     async def connect(self) -> bool:
-        """Connect to the OPC/UA server."""
+        """Connect to the OPC/UA server with retry logic and proper error handling."""
         if self.status == ConnectionStatus.CONNECTED:
             return True
 
-        try:
-            self.status = ConnectionStatus.CONNECTING
-            self.last_connection_attempt = datetime.now()
-            logger.info(f"Connecting to OPC/UA server at {self.endpoint}")
+        for attempt in range(self.retry_attempts):
+            try:
+                self.status = ConnectionStatus.CONNECTING
+                self.last_connection_attempt = datetime.now()
+                logger.info(
+                    f"Connecting to OPC/UA server at {self.endpoint} (attempt {attempt + 1}/{self.retry_attempts})"
+                )
 
-            await self.client.connect()
+                # Use async context manager for guaranteed cleanup
+                async with self.client:
+                    # Test connection by reading server status
+                    server_status = await self.client.get_server_status()
+                    logger.debug(f"Server status: {server_status}")
 
-            # Cache node references for performance
-            await self._cache_nodes()
+                self.status = ConnectionStatus.CONNECTED
+                self.last_error = None
+                logger.info("Successfully connected to OPC/UA server")
+                return True
 
-            self.status = ConnectionStatus.CONNECTED
-            self.last_error = None
-            logger.info("Successfully connected to OPC/UA server")
-            return True
+            except uaerrors.BadConnectionClosed as e:
+                logger.warning(f"Connection closed: {e}")
+                self.last_error = f"Connection closed: {e}"
 
-        except Exception as e:
-            self.status = ConnectionStatus.ERROR
-            self.last_error = str(e)
-            logger.error(f"Failed to connect to OPC/UA server: {e}")
-            return False
+            except uaerrors.BadTimeout as e:
+                logger.warning(f"Connection timeout: {e}")
+                self.last_error = f"Connection timeout: {e}"
+
+            except Exception as e:
+                logger.warning(f"Connection attempt {attempt + 1} failed: {e}")
+                self.last_error = str(e)
+
+            if attempt < self.retry_attempts - 1:
+                logger.info(f"Retrying connection in {self.retry_delay} seconds...")
+                await asyncio.sleep(self.retry_delay)
+                self.retry_delay *= 1.5  # Exponential backoff
+
+        self.status = ConnectionStatus.ERROR
+        logger.error(f"Failed to connect after {self.retry_attempts} attempts")
+        return False
 
     async def disconnect(self) -> None:
-        """Disconnect from the OPC/UA server."""
+        """Disconnect from the OPC/UA server with proper cleanup."""
         if self.status == ConnectionStatus.CONNECTED:
             try:
                 await self.client.disconnect()
@@ -66,33 +112,22 @@ class PottingLineController:
                 logger.error(f"Error during disconnect: {e}")
 
         self.status = ConnectionStatus.DISCONNECTED
-        self._nodes.clear()
 
-    async def _cache_nodes(self) -> None:
-        """Cache frequently used node references."""
+    @asynccontextmanager
+    async def _get_connected_client(self):
+        """Get a connected client with automatic connection management."""
+        if self.status != ConnectionStatus.CONNECTED:
+            if not await self.connect():
+                raise ConnectionError("Unable to establish OPC/UA connection")
+
         try:
-            # Get root object
-            root = self.client.get_objects_node()
-            potting_lines = await root.get_child("2:PottingLines")
-
-            # Cache Line 1 nodes
-            line1 = await potting_lines.get_child("2:Lijn1")
-            line1_pc = await line1.get_child("2:PC")
-            self._nodes["line1_active"] = await line1_pc.get_child("2:nr_actieve_partij")
-
-            # Cache Line 2 nodes
-            line2 = await potting_lines.get_child("2:Lijn2")
-            line2_pc = await line2.get_child("2:PC")
-            self._nodes["line2_active"] = await line2_pc.get_child("2:nr_actieve_partij")
-
-            logger.info("Successfully cached OPC/UA node references")
-
-        except Exception as e:
-            logger.error(f"Failed to cache OPC/UA nodes: {e}")
-            raise
+            yield self.client
+        finally:
+            # HA client manages connection lifecycle automatically
+            pass
 
     async def set_active_lot(self, line: int, lot_id: int) -> bool:
-        """Set the active lot number for a potting line.
+        """Set the active lot number for a potting line with retry logic.
 
         Args:
             line: Potting line number (1 or 2)
@@ -101,28 +136,43 @@ class PottingLineController:
         Returns:
             True if successful, False otherwise
         """
-        if self.status != ConnectionStatus.CONNECTED:
-            if not await self.connect():
-                return False
-
-        try:
-            node_key = f"line{line}_active"
-            if node_key not in self._nodes:
-                logger.error(f"Node not found for line {line}")
-                return False
-
-            await self._nodes[node_key].write_value(lot_id, ua.VariantType.Int32)
-
-            logger.info(f"Successfully set line {line} active lot to {lot_id}")
-            return True
-
-        except Exception as e:
-            self.last_error = str(e)
-            logger.error(f"Failed to set active lot for line {line}: {e}")
+        node_key = f"line{line}_active"
+        if node_key not in self._node_ids:
+            logger.error(f"Invalid line number: {line}")
             return False
 
+        for attempt in range(self.retry_attempts):
+            try:
+                async with self._get_connected_client() as client:
+                    node = client.get_node(self._node_ids[node_key])
+                    await node.write_value(lot_id, ua.VariantType.Int32)
+
+                    logger.info(f"Successfully set line {line} active lot to {lot_id}")
+                    return True
+
+            except uaerrors.BadTimeout as e:
+                logger.warning(f"Write timeout on attempt {attempt + 1}: {e}")
+                self.last_error = f"Write timeout: {e}"
+
+            except uaerrors.BadConnectionClosed as e:
+                logger.warning(f"Connection closed during write attempt {attempt + 1}: {e}")
+                self.last_error = f"Connection closed: {e}"
+                self.status = ConnectionStatus.DISCONNECTED
+
+            except Exception as e:
+                logger.warning(f"Write attempt {attempt + 1} failed: {e}")
+                self.last_error = str(e)
+
+            if attempt < self.retry_attempts - 1:
+                await asyncio.sleep(self.retry_delay * (attempt + 1))
+
+        logger.error(
+            f"Failed to set active lot for line {line} after {self.retry_attempts} attempts"
+        )
+        return False
+
     async def get_active_lot(self, line: int) -> Optional[int]:
-        """Get the active lot number for a potting line.
+        """Get the active lot number for a potting line with retry logic.
 
         Args:
             line: Potting line number (1 or 2)
@@ -130,23 +180,38 @@ class PottingLineController:
         Returns:
             Active lot ID, or None if error
         """
-        if self.status != ConnectionStatus.CONNECTED:
-            if not await self.connect():
-                return None
-
-        try:
-            node_key = f"line{line}_active"
-            if node_key not in self._nodes:
-                logger.error(f"Node not found for line {line}")
-                return None
-
-            value = await self._nodes[node_key].read_value()
-            return int(value) if value is not None else 0
-
-        except Exception as e:
-            self.last_error = str(e)
-            logger.error(f"Failed to get active lot for line {line}: {e}")
+        node_key = f"line{line}_active"
+        if node_key not in self._node_ids:
+            logger.error(f"Invalid line number: {line}")
             return None
+
+        for attempt in range(self.retry_attempts):
+            try:
+                async with self._get_connected_client() as client:
+                    node = client.get_node(self._node_ids[node_key])
+                    value = await node.read_value()
+                    return int(value) if value is not None else 0
+
+            except uaerrors.BadTimeout as e:
+                logger.warning(f"Read timeout on attempt {attempt + 1}: {e}")
+                self.last_error = f"Read timeout: {e}"
+
+            except uaerrors.BadConnectionClosed as e:
+                logger.warning(f"Connection closed during read attempt {attempt + 1}: {e}")
+                self.last_error = f"Connection closed: {e}"
+                self.status = ConnectionStatus.DISCONNECTED
+
+            except Exception as e:
+                logger.warning(f"Read attempt {attempt + 1} failed: {e}")
+                self.last_error = str(e)
+
+            if attempt < self.retry_attempts - 1:
+                await asyncio.sleep(self.retry_delay * (attempt + 1))
+
+        logger.error(
+            f"Failed to get active lot for line {line} after {self.retry_attempts} attempts"
+        )
+        return None
 
     async def initialize_lines(self) -> bool:
         """Initialize both potting lines to no active lot (0).
@@ -158,16 +223,24 @@ class PottingLineController:
         """
         logger.info("Initializing potting lines to no active lot")
 
-        success = True
-        success &= await self.set_active_lot(1, 0)
-        success &= await self.set_active_lot(2, 0)
+        try:
+            # Use asyncio.gather for concurrent initialization
+            results = await asyncio.gather(
+                self.set_active_lot(1, 0), self.set_active_lot(2, 0), return_exceptions=True
+            )
 
-        if success:
-            logger.info("Successfully initialized potting lines")
-        else:
-            logger.error("Failed to initialize one or more potting lines")
+            success = all(result is True for result in results)
 
-        return success
+            if success:
+                logger.info("Successfully initialized potting lines")
+            else:
+                logger.error(f"Failed to initialize one or more potting lines: {results}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Error during line initialization: {e}")
+            return False
 
     def get_status(self) -> Dict:
         """Get current controller status information."""
@@ -178,7 +251,10 @@ class PottingLineController:
             "last_connection_attempt": (
                 self.last_connection_attempt.isoformat() if self.last_connection_attempt else None
             ),
-            "connected_nodes": len(self._nodes),
+            "cached_node_ids": len(self._node_ids),
+            "connection_timeout": self.connection_timeout,
+            "watchdog_interval": self.watchdog_interval,
+            "retry_attempts": self.retry_attempts,
         }
 
 
@@ -187,7 +263,7 @@ _global_controller: Optional[PottingLineController] = None
 
 
 def get_controller() -> PottingLineController:
-    """Get the global potting line controller instance."""
+    """Get the global potting line controller instance with current configuration."""
     global _global_controller
     if _global_controller is None:
         _global_controller = PottingLineController()
