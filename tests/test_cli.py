@@ -50,7 +50,3 @@ def test_products_command(monkeypatch: MonkeyPatch):
     assert "Test Group A" in result.stdout
     assert "Test Product 2" in result.stdout
     assert "Test Group B" in result.stdout
-
-
-
-

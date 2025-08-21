@@ -41,5 +41,3 @@ def test_cli_logs_operations(cli_runner, captured_logs):
     logs = captured_logs.getvalue()
     assert "Production Control" in logs
     assert "version" in logs
-
-

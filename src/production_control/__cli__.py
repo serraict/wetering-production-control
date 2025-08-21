@@ -24,12 +24,6 @@ console = Console()
 app.add_typer(backup.app, name="backup", help="Dremio backup commands")
 
 
-
-
-
-
-
-
 @app.callback()
 def callback():
     """Application to help track production information at Wetering Potlilium."""
@@ -63,12 +57,6 @@ def products():
 
     console.print(table)
     logger.info(f"Found {len(products_list)} products")
-
-
-
-
-
-
 
 
 def cli():

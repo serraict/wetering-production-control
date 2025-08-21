@@ -58,7 +58,7 @@ def test_deactivate_nonexistent_lot():
     """Test deactivating a lot that doesn't exist."""
     mock_repository = Mock()
     service = ActivePottingLotService(mock_repository)
-    
+
     result = service.deactivate_lot(1)
     assert result is False
     assert service.get_active_lot_for_line(1) is None
@@ -69,15 +69,15 @@ def test_complete_lot_success():
     mock_repository = Mock()
     potting_lot = PottingLot(id=123, naam="Test Plant", bollen_code=456)
     mock_repository.get_by_id.return_value = potting_lot
-    
+
     service = ActivePottingLotService(mock_repository)
-    
+
     # First activate a lot
     service.activate_lot(1, 123)
-    
+
     # Complete the lot
     result = service.complete_lot(1, 150)
-    
+
     assert result is True
     # Verify lot is automatically deactivated after completion
     assert service.get_active_lot_for_line(1) is None
@@ -87,7 +87,7 @@ def test_complete_lot_no_active_lot():
     """Test completing when no lot is active."""
     mock_repository = Mock()
     service = ActivePottingLotService(mock_repository)
-    
+
     result = service.complete_lot(1, 150)
     assert result is False
 
@@ -97,15 +97,15 @@ def test_complete_lot_with_zero_pots():
     mock_repository = Mock()
     potting_lot = PottingLot(id=123, naam="Test Plant", bollen_code=456)
     mock_repository.get_by_id.return_value = potting_lot
-    
+
     service = ActivePottingLotService(mock_repository)
-    
+
     # First activate a lot
     service.activate_lot(1, 123)
-    
+
     # Complete with zero pots - should still succeed (validation is at UI level)
     result = service.complete_lot(1, 0)
-    
+
     assert result is True
     # Verify lot is deactivated
     assert service.get_active_lot_for_line(1) is None

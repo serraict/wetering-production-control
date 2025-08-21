@@ -150,9 +150,9 @@ class OPCMonitor:
 
         print("\n📊 Current OPC Node Values:")
         print("=" * 50)
-        
+
         values = await self.read_all_values()
-        
+
         for node_path, value in values.items():
             # Format different value types
             if isinstance(value, datetime):
@@ -161,9 +161,9 @@ class OPCMonitor:
                 formatted_value = str(value)
             else:
                 formatted_value = str(value)
-            
+
             print(f"📍 {node_path:<30} = {formatted_value}")
-        
+
         print("=" * 50)
 
 
@@ -171,7 +171,7 @@ async def main():
     """Main function."""
     # Check for --once flag
     read_once_mode = "--once" in sys.argv
-    
+
     monitor = OPCMonitor()
 
     try:

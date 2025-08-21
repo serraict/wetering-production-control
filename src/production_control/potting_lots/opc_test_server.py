@@ -102,7 +102,7 @@ class PottingLineOPCTestServer:
 async def main():
     """Main function to run the test server standalone."""
     logging.basicConfig(level=logging.INFO)
-    
+
     # Suppress noisy asyncua address space messages
     logging.getLogger("asyncua.server.address_space").setLevel(logging.WARNING)
 

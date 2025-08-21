@@ -14,6 +14,10 @@ Paul does not like to sit behind the computer.
 He is aware of the importance of a correct production control administration,
 but his primary concern is getting the job done.
 
+### Goal: user friendly app
+
+- remove all back to buttons
+
 ### Goal: Technical excellence
 
 - How to do dependency injection properly (e.g. to avoid patch difficulties in the test)
