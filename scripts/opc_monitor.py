@@ -26,6 +26,17 @@ class OPCMonitor:
         self.client = Client(url=endpoint)
         self._nodes: Dict[str, ua.Node] = {}
         self._connected = False
+        
+        # Define our namespace URI and NodeIds
+        self._namespace_uri = "http://wetering.potlilium.nl/potting-lines"
+        self._namespace_index = None
+        self._node_ids = {
+            "Lijn1/PC/nr_actieve_partij": "Lijn1_PC_nr_actieve_partij",
+            "Lijn1/OS/partij_nr_actieve_pallet": "Lijn1_OS_partij_nr_actieve_pallet",
+            "Lijn2/PC/nr_actieve_partij": "Lijn2_PC_nr_actieve_partij", 
+            "Lijn2/OS/partij_nr_actieve_pallet": "Lijn2_OS_partij_nr_actieve_pallet",
+            "last_updated": "last_updated",
+        }
 
     async def connect(self) -> bool:
         """Connect to OPC server and cache node references."""
@@ -44,31 +55,34 @@ class OPCMonitor:
             print(f"❌ Connection failed: {e}")
             return False
 
+    async def _resolve_namespace_index(self):
+        """Resolve our namespace URI to the runtime namespace index."""
+        if self._namespace_index is None:
+            try:
+                ns_array = await self.client.get_namespace_array()
+                if self._namespace_uri in ns_array:
+                    self._namespace_index = ns_array.index(self._namespace_uri)
+                    print(f"📍 Resolved namespace to index: {self._namespace_index}")
+                else:
+                    raise ValueError(f"Namespace '{self._namespace_uri}' not found")
+            except Exception as e:
+                print(f"❌ Failed to resolve namespace: {e}")
+                raise
+        return self._namespace_index
+
     async def _discover_and_cache_nodes(self) -> None:
-        """Discover and cache all relevant nodes."""
+        """Discover and cache all relevant nodes using string NodeIds."""
         try:
-            # Get root object
-            root = self.client.get_objects_node()
-            potting_lines = await root.get_child("2:PottingLines")
+            # Resolve namespace index
+            await self._resolve_namespace_index()
+            ns_idx = self._namespace_index
+            
+            # Cache nodes using string-based NodeIds
+            for display_name, node_id_string in self._node_ids.items():
+                node_id = f"ns={ns_idx};s={node_id_string}"
+                self._nodes[display_name] = self.client.get_node(node_id)
 
-            # Cache Line 1 nodes
-            line1 = await potting_lines.get_child("2:Lijn1")
-            line1_pc = await line1.get_child("2:PC")
-            self._nodes["Lijn1/PC/nr_actieve_partij"] = await line1_pc.get_child(
-                "2:nr_actieve_partij"
-            )
-
-            # Cache Line 2 nodes
-            line2 = await potting_lines.get_child("2:Lijn2")
-            line2_pc = await line2.get_child("2:PC")
-            self._nodes["Lijn2/PC/nr_actieve_partij"] = await line2_pc.get_child(
-                "2:nr_actieve_partij"
-            )
-
-            # Cache timestamp node
-            self._nodes["last_updated"] = await potting_lines.get_child("2:last_updated")
-
-            print(f"📋 Discovered {len(self._nodes)} nodes")
+            print(f"📋 Cached {len(self._nodes)} nodes")
 
         except Exception as e:
             print(f"⚠️  Failed to discover nodes: {e}")

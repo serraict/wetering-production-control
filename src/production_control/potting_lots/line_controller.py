@@ -48,11 +48,17 @@ class PottingLineController:
         self.last_error: Optional[str] = None
         self.last_connection_attempt: Optional[datetime] = None
 
-        # Cache NodeIds for performance (instead of path-based lookup)
-        self._node_ids: Dict[str, ua.NodeId] = {
-            "line1_active": ua.NodeId(4, 2),  # ns=2;i=4 from XML nodeset
-            "line2_active": ua.NodeId(7, 2),  # ns=2;i=7 from XML nodeset
-            "last_updated": ua.NodeId(8, 2),  # ns=2;i=8 from XML nodeset
+        # Define our namespace URI (matches XML)
+        self._namespace_uri = "http://wetering.potlilium.nl/potting-lines"
+        self._namespace_index = None  # Will be resolved at runtime
+        
+        # Use string-based NodeIds - these are stable and namespace-independent!
+        self._node_ids: Dict[str, str] = {
+            "line1_pc_active": "Lijn1_PC_nr_actieve_partij",
+            "line1_os_active": "Lijn1_OS_partij_nr_actieve_pallet", 
+            "line2_pc_active": "Lijn2_PC_nr_actieve_partij",
+            "line2_os_active": "Lijn2_OS_partij_nr_actieve_pallet",
+            "last_updated": "last_updated",
         }
 
         logger.info(f"Initialized OPC controller for environment: {self.config.environment}")
@@ -119,6 +125,23 @@ class PottingLineController:
 
         self.status = ConnectionStatus.DISCONNECTED
 
+    async def _resolve_namespace_index(self, client):
+        """Resolve our namespace URI to the runtime namespace index."""
+        if self._namespace_index is None:
+            try:
+                # Get the server's namespace array
+                ns_array = await client.get_namespace_array()
+                if self._namespace_uri in ns_array:
+                    self._namespace_index = ns_array.index(self._namespace_uri)
+                    logger.debug(f"Resolved namespace '{self._namespace_uri}' to index {self._namespace_index}")
+                else:
+                    logger.error(f"Namespace '{self._namespace_uri}' not found in server namespace array")
+                    raise ValueError(f"Namespace '{self._namespace_uri}' not found")
+            except Exception as e:
+                logger.error(f"Failed to resolve namespace: {e}")
+                raise
+        return self._namespace_index
+
     @asynccontextmanager
     async def _get_connected_client(self):
         """Get a connected client with automatic connection management."""
@@ -129,6 +152,8 @@ class PottingLineController:
 
         try:
             await client.connect()
+            # Resolve namespace index on first connection
+            await self._resolve_namespace_index(client)
             yield client
         finally:
             try:
@@ -136,17 +161,25 @@ class PottingLineController:
             except Exception as e:
                 logger.debug(f"Error during client disconnect: {e}")
 
-    async def set_active_lot(self, line: int, lot_id: int) -> bool:
+    async def set_active_lot(self, line: int, lot_id: int, component: str = "PC") -> bool:
         """Set the active lot number for a potting line with retry logic.
 
         Args:
             line: Potting line number (1 or 2)
             lot_id: Potting lot ID (0 for no active lot)
+            component: Component type ("PC" or "OS")
 
         Returns:
             True if successful, False otherwise
         """
-        node_key = f"line{line}_active"
+        if component.upper() == "PC":
+            node_key = f"line{line}_pc_active"
+        elif component.upper() == "OS":
+            node_key = f"line{line}_os_active"
+        else:
+            logger.error(f"Invalid component: {component}")
+            return False
+            
         if node_key not in self._node_ids:
             logger.error(f"Invalid line number: {line}")
             return False
@@ -154,10 +187,13 @@ class PottingLineController:
         for attempt in range(self.retry_attempts):
             try:
                 async with self._get_connected_client() as client:
-                    node = client.get_node(self._node_ids[node_key])
+                    # Use string-based NodeId with resolved namespace index
+                    ns_idx = self._namespace_index
+                    node_id = f"ns={ns_idx};s={self._node_ids[node_key]}"
+                    node = client.get_node(node_id)
                     await node.write_value(lot_id, ua.VariantType.Int32)
 
-                    logger.info(f"Successfully set line {line} active lot to {lot_id}")
+                    logger.info(f"Successfully set line {line} {component} active lot to {lot_id}")
                     return True
 
             except uaerrors.BadTimeout as e:
@@ -181,16 +217,24 @@ class PottingLineController:
         )
         return False
 
-    async def get_active_lot(self, line: int) -> Optional[int]:
+    async def get_active_lot(self, line: int, component: str = "PC") -> Optional[int]:
         """Get the active lot number for a potting line with retry logic.
 
         Args:
             line: Potting line number (1 or 2)
+            component: Component type ("PC" or "OS")
 
         Returns:
             Active lot ID, or None if error
         """
-        node_key = f"line{line}_active"
+        if component.upper() == "PC":
+            node_key = f"line{line}_pc_active"
+        elif component.upper() == "OS":
+            node_key = f"line{line}_os_active"
+        else:
+            logger.error(f"Invalid component: {component}")
+            return None
+            
         if node_key not in self._node_ids:
             logger.error(f"Invalid line number: {line}")
             return None
@@ -198,7 +242,10 @@ class PottingLineController:
         for attempt in range(self.retry_attempts):
             try:
                 async with self._get_connected_client() as client:
-                    node = client.get_node(self._node_ids[node_key])
+                    # Use string-based NodeId with resolved namespace index
+                    ns_idx = self._namespace_index
+                    node_id = f"ns={ns_idx};s={self._node_ids[node_key]}"
+                    node = client.get_node(node_id)
                     value = await node.read_value()
                     return int(value) if value is not None else 0
 
@@ -262,6 +309,8 @@ class PottingLineController:
                 self.last_connection_attempt.isoformat() if self.last_connection_attempt else None
             ),
             "cached_node_ids": len(self._node_ids),
+            "namespace_uri": self._namespace_uri,
+            "resolved_namespace_index": self._namespace_index,
             "connection_timeout": self.connection_timeout,
             "watchdog_interval": self.watchdog_interval,
             "retry_attempts": self.retry_attempts,

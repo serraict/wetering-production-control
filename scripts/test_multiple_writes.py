@@ -19,27 +19,25 @@ logging.getLogger("asyncua.common").setLevel(logging.WARNING)
 
 
 async def write_to_opc_server(line: int, lot_id: int) -> bool:
-    """Write to OPC server using a dedicated connection (same as fixed active service)."""
+    """Write to OPC server using string NodeIds with namespace resolution."""
     endpoint = "opc.tcp://127.0.0.1:4840/potting-lines/"
     client = Client(url=endpoint)
+    namespace_uri = "http://wetering.potlilium.nl/potting-lines"
 
     try:
         await client.connect()
 
-        # Get node reference
-        root = client.get_objects_node()
-        potting_lines = await root.get_child("2:PottingLines")
-
-        if line == 1:
-            line_obj = await potting_lines.get_child("2:Lijn1")
-        elif line == 2:
-            line_obj = await potting_lines.get_child("2:Lijn2")
-        else:
-            logger.error(f"Invalid line number: {line}")
+        # Resolve namespace index
+        ns_array = await client.get_namespace_array()
+        if namespace_uri not in ns_array:
+            logger.error(f"Namespace '{namespace_uri}' not found")
             return False
-
-        line_pc = await line_obj.get_child("2:PC")
-        active_node = await line_pc.get_child("2:nr_actieve_partij")
+        ns_idx = ns_array.index(namespace_uri)
+        
+        # Get node using string NodeId
+        node_id_string = f"Lijn{line}_PC_nr_actieve_partij"
+        node_id = f"ns={ns_idx};s={node_id_string}"
+        active_node = client.get_node(node_id)
 
         # Write the value
         await active_node.write_value(lot_id, ua.VariantType.Int32)

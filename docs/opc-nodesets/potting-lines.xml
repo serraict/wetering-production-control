@@ -5,19 +5,17 @@
     </NamespaceUris>
     
     <Aliases>
-        <Alias Alias="Boolean">i=1</Alias>
         <Alias Alias="Int32">i=6</Alias>
         <Alias Alias="DateTime">i=13</Alias>
         <Alias Alias="HasComponent">i=47</Alias>
         <Alias Alias="HasTypeDefinition">i=40</Alias>
         <Alias Alias="Organizes">i=35</Alias>
         <Alias Alias="BaseDataVariableType">i=63</Alias>
-        <Alias Alias="FolderType">i=61</Alias>
         <Alias Alias="BaseObjectType">i=58</Alias>
     </Aliases>
     
     <!-- Root PottingLines Object -->
-    <UAObject NodeId="ns=1;i=1" BrowseName="1:PottingLines">
+    <UAObject NodeId="ns=1;s=PottingLines" BrowseName="PottingLines">
         <DisplayName>PottingLines</DisplayName>
         <References>
             <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
@@ -26,29 +24,50 @@
     </UAObject>
     
     <!-- Line 1 Object -->
-    <UAObject NodeId="ns=1;i=2" BrowseName="1:Lijn1">
+    <UAObject NodeId="ns=1;s=Lijn1" BrowseName="Lijn1">
         <DisplayName>Lijn1</DisplayName>
         <References>
-            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
-            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=1</Reference>
+            <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">ns=1;s=PottingLines</Reference>
         </References>
     </UAObject>
     
     <!-- Line 1 PC Object -->
-    <UAObject NodeId="ns=1;i=3" BrowseName="1:PC">
+    <UAObject NodeId="ns=1;s=Lijn1_PC" BrowseName="PC">
         <DisplayName>PC</DisplayName>
         <References>
-            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
-            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=2</Reference>
+            <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn1</Reference>
         </References>
     </UAObject>
     
-    <!-- Line 1 Active Variable -->
-    <UAVariable NodeId="ns=1;i=4" BrowseName="1:nr_actieve_partij" DataType="Int32" AccessLevel="3" UserAccessLevel="3" WriteMask="0" UserWriteMask="0" MinimumSamplingInterval="0">
+    <!-- Line 1 OS Object -->
+    <UAObject NodeId="ns=1;s=Lijn1_OS" BrowseName="OS">
+        <DisplayName>OS</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn1</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 1 PC Variable: nr_actieve_partij -->
+    <UAVariable NodeId="ns=1;s=Lijn1_PC_nr_actieve_partij" BrowseName="nr_actieve_partij" DataType="Int32" AccessLevel="3" UserAccessLevel="3">
         <DisplayName>nr_actieve_partij</DisplayName>
         <References>
             <Reference ReferenceType="HasTypeDefinition">BaseDataVariableType</Reference>
-            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=3</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn1_PC</Reference>
+        </References>
+        <Value>
+            <uax:Int32>0</uax:Int32>
+        </Value>
+    </UAVariable>
+    
+    <!-- Line 1 OS Variable: partij_nr_actieve_pallet -->
+    <UAVariable NodeId="ns=1;s=Lijn1_OS_partij_nr_actieve_pallet" BrowseName="partij_nr_actieve_pallet" DataType="Int32" AccessLevel="3" UserAccessLevel="3">
+        <DisplayName>partij_nr_actieve_pallet</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">BaseDataVariableType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn1_OS</Reference>
         </References>
         <Value>
             <uax:Int32>0</uax:Int32>
@@ -56,41 +75,62 @@
     </UAVariable>
     
     <!-- Line 2 Object -->
-    <UAObject NodeId="ns=1;i=5" BrowseName="1:Lijn2">
+    <UAObject NodeId="ns=1;s=Lijn2" BrowseName="Lijn2">
         <DisplayName>Lijn2</DisplayName>
         <References>
-            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
-            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=1</Reference>
+            <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">ns=1;s=PottingLines</Reference>
         </References>
     </UAObject>
     
     <!-- Line 2 PC Object -->
-    <UAObject NodeId="ns=1;i=6" BrowseName="1:PC">
+    <UAObject NodeId="ns=1;s=Lijn2_PC" BrowseName="PC">
         <DisplayName>PC</DisplayName>
         <References>
-            <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
-            <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=5</Reference>
+            <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn2</Reference>
         </References>
     </UAObject>
     
-    <!-- Line 2 Active Variable -->
-    <UAVariable NodeId="ns=1;i=7" BrowseName="1:nr_actieve_partij" DataType="Int32" AccessLevel="3" UserAccessLevel="3" WriteMask="0" UserWriteMask="0" MinimumSamplingInterval="0">
+    <!-- Line 2 OS Object -->
+    <UAObject NodeId="ns=1;s=Lijn2_OS" BrowseName="OS">
+        <DisplayName>OS</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">BaseObjectType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn2</Reference>
+        </References>
+    </UAObject>
+    
+    <!-- Line 2 PC Variable: nr_actieve_partij -->
+    <UAVariable NodeId="ns=1;s=Lijn2_PC_nr_actieve_partij" BrowseName="nr_actieve_partij" DataType="Int32" AccessLevel="3" UserAccessLevel="3">
         <DisplayName>nr_actieve_partij</DisplayName>
         <References>
             <Reference ReferenceType="HasTypeDefinition">BaseDataVariableType</Reference>
-            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=6</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn2_PC</Reference>
         </References>
         <Value>
             <uax:Int32>0</uax:Int32>
         </Value>
     </UAVariable>
     
-    <!-- Timestamp Variable -->
-    <UAVariable NodeId="ns=1;i=8" BrowseName="1:last_updated" DataType="i=294" AccessLevel="3">
+    <!-- Line 2 OS Variable: partij_nr_actieve_pallet -->
+    <UAVariable NodeId="ns=1;s=Lijn2_OS_partij_nr_actieve_pallet" BrowseName="partij_nr_actieve_pallet" DataType="Int32" AccessLevel="3" UserAccessLevel="3">
+        <DisplayName>partij_nr_actieve_pallet</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">BaseDataVariableType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Lijn2_OS</Reference>
+        </References>
+        <Value>
+            <uax:Int32>0</uax:Int32>
+        </Value>
+    </UAVariable>
+    
+    <!-- Global Timestamp Variable -->
+    <UAVariable NodeId="ns=1;s=last_updated" BrowseName="last_updated" DataType="DateTime" AccessLevel="3">
         <DisplayName>last_updated</DisplayName>
         <References>
-            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
-            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1</Reference>
+            <Reference ReferenceType="HasTypeDefinition">BaseDataVariableType</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=PottingLines</Reference>
         </References>
         <Value>
             <uax:DateTime>2025-08-21T09:30:00Z</uax:DateTime>
