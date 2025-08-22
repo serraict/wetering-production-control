@@ -55,6 +55,7 @@ class TestProductionErrorHandling:
     """Test production-ready error handling."""
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_retry_logic_on_timeout(self):
         """Test that operations retry on timeout errors."""
         test_config = OPCConfig(
@@ -72,6 +73,7 @@ class TestProductionErrorHandling:
         assert controller.last_error is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_graceful_degradation(self):
         """Test that system works when OPC communication fails."""
         # This would be tested with a mock or by shutting down the OPC server
@@ -97,6 +99,7 @@ class TestOPCConnectionManagement:
     """Test OPC connection lifecycle and management."""
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_connection_status_tracking(self):
         """Test that connection status is tracked correctly."""
         test_config = OPCConfig(
@@ -139,7 +142,7 @@ class TestOPCConnectionManagement:
 
         # Status should be string representation
         assert isinstance(status["status"], str)
-        assert status["cached_node_ids"] == 3  # line1, line2, last_updated
+        assert status["cached_node_ids"] == 5  # line1_pc, line1_os, line2_pc, line2_os, last_updated
 
     @pytest.mark.asyncio
     async def test_global_controller_management(self):
@@ -162,6 +165,7 @@ class TestOPCConnectionManagement:
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_concurrent_operations():
     """Test that concurrent OPC operations work correctly."""
     test_config = OPCConfig(
@@ -203,17 +207,19 @@ class TestPerformanceOptimizations:
         """Test that NodeIds are cached for performance."""
         controller = PottingLineController()
 
-        # Should have cached NodeIds instead of path-based lookup
-        assert len(controller._node_ids) == 3
-        assert "line1_active" in controller._node_ids
-        assert "line2_active" in controller._node_ids
+        # Should have cached string NodeIds for all components
+        assert len(controller._node_ids) == 5
+        assert "line1_pc_active" in controller._node_ids
+        assert "line1_os_active" in controller._node_ids 
+        assert "line2_pc_active" in controller._node_ids
+        assert "line2_os_active" in controller._node_ids
         assert "last_updated" in controller._node_ids
 
-        # NodeIds should be proper AsyncUA NodeId objects
-        from asyncua import ua
-
+        # NodeIds should be strings for namespace-independent access
         for node_id in controller._node_ids.values():
-            assert isinstance(node_id, ua.NodeId)
+            assert isinstance(node_id, str)
+            # Should not contain namespace prefix (resolved at runtime)
+            assert not node_id.startswith("ns=")
 
     def test_timeout_configuration(self):
         """Test that timeouts are properly configured."""
