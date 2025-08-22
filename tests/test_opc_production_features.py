@@ -142,7 +142,9 @@ class TestOPCConnectionManagement:
 
         # Status should be string representation
         assert isinstance(status["status"], str)
-        assert status["cached_node_ids"] == 5  # line1_pc, line1_os, line2_pc, line2_os, last_updated
+        assert (
+            status["cached_node_ids"] == 5
+        )  # line1_pc, line1_os, line2_pc, line2_os, last_updated
 
     @pytest.mark.asyncio
     async def test_global_controller_management(self):
@@ -210,7 +212,7 @@ class TestPerformanceOptimizations:
         # Should have cached string NodeIds for all components
         assert len(controller._node_ids) == 5
         assert "line1_pc_active" in controller._node_ids
-        assert "line1_os_active" in controller._node_ids 
+        assert "line1_os_active" in controller._node_ids
         assert "line2_pc_active" in controller._node_ids
         assert "line2_os_active" in controller._node_ids
         assert "last_updated" in controller._node_ids

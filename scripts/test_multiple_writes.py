@@ -33,7 +33,7 @@ async def write_to_opc_server(line: int, lot_id: int) -> bool:
             logger.error(f"Namespace '{namespace_uri}' not found")
             return False
         ns_idx = ns_array.index(namespace_uri)
-        
+
         # Get node using string NodeId
         node_id_string = f"Lijn{line}_PC_nr_actieve_partij"
         node_id = f"ns={ns_idx};s={node_id_string}"

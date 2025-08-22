@@ -26,14 +26,14 @@ class OPCMonitor:
         self.client = Client(url=endpoint)
         self._nodes: Dict[str, ua.Node] = {}
         self._connected = False
-        
+
         # Define our namespace URI and NodeIds
         self._namespace_uri = "http://wetering.potlilium.nl/potting-lines"
         self._namespace_index = None
         self._node_ids = {
             "Lijn1/PC/nr_actieve_partij": "Lijn1_PC_nr_actieve_partij",
             "Lijn1/OS/partij_nr_actieve_pallet": "Lijn1_OS_partij_nr_actieve_pallet",
-            "Lijn2/PC/nr_actieve_partij": "Lijn2_PC_nr_actieve_partij", 
+            "Lijn2/PC/nr_actieve_partij": "Lijn2_PC_nr_actieve_partij",
             "Lijn2/OS/partij_nr_actieve_pallet": "Lijn2_OS_partij_nr_actieve_pallet",
             "last_updated": "last_updated",
         }
@@ -76,7 +76,7 @@ class OPCMonitor:
             # Resolve namespace index
             await self._resolve_namespace_index()
             ns_idx = self._namespace_index
-            
+
             # Cache nodes using string-based NodeIds
             for display_name, node_id_string in self._node_ids.items():
                 node_id = f"ns={ns_idx};s={node_id_string}"

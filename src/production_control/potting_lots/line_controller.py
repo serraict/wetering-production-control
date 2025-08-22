@@ -51,11 +51,11 @@ class PottingLineController:
         # Define our namespace URI (matches XML)
         self._namespace_uri = "http://wetering.potlilium.nl/potting-lines"
         self._namespace_index = None  # Will be resolved at runtime
-        
+
         # Use string-based NodeIds - these are stable and namespace-independent!
         self._node_ids: Dict[str, str] = {
             "line1_pc_active": "Lijn1_PC_nr_actieve_partij",
-            "line1_os_active": "Lijn1_OS_partij_nr_actieve_pallet", 
+            "line1_os_active": "Lijn1_OS_partij_nr_actieve_pallet",
             "line2_pc_active": "Lijn2_PC_nr_actieve_partij",
             "line2_os_active": "Lijn2_OS_partij_nr_actieve_pallet",
             "last_updated": "last_updated",
@@ -133,9 +133,13 @@ class PottingLineController:
                 ns_array = await client.get_namespace_array()
                 if self._namespace_uri in ns_array:
                     self._namespace_index = ns_array.index(self._namespace_uri)
-                    logger.debug(f"Resolved namespace '{self._namespace_uri}' to index {self._namespace_index}")
+                    logger.debug(
+                        f"Resolved namespace '{self._namespace_uri}' to index {self._namespace_index}"
+                    )
                 else:
-                    logger.error(f"Namespace '{self._namespace_uri}' not found in server namespace array")
+                    logger.error(
+                        f"Namespace '{self._namespace_uri}' not found in server namespace array"
+                    )
                     raise ValueError(f"Namespace '{self._namespace_uri}' not found")
             except Exception as e:
                 logger.error(f"Failed to resolve namespace: {e}")
@@ -179,7 +183,7 @@ class PottingLineController:
         else:
             logger.error(f"Invalid component: {component}")
             return False
-            
+
         if node_key not in self._node_ids:
             logger.error(f"Invalid line number: {line}")
             return False
@@ -234,7 +238,7 @@ class PottingLineController:
         else:
             logger.error(f"Invalid component: {component}")
             return None
-            
+
         if node_key not in self._node_ids:
             logger.error(f"Invalid line number: {line}")
             return None
