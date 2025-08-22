@@ -102,7 +102,7 @@ def test_handle_deactivation_function() -> None:
     from production_control.web.pages.potting_lots import handle_deactivation
     from production_control.potting_lots.models import PottingLot
     from production_control.potting_lots.active_models import ActivePottingLot
-    from unittest.mock import Mock, patch
+    from unittest.mock import patch
 
     with (
         patch("production_control.web.pages.potting_lots._active_service") as mock_service,
@@ -180,8 +180,6 @@ async def test_completion_button_on_active_lot_details_page(user: User) -> None:
 def test_handle_completion_function() -> None:
     """Test the handle_completion function logic."""
     from production_control.web.pages.potting_lots import handle_completion
-    from production_control.potting_lots.models import PottingLot
-    from production_control.potting_lots.active_models import ActivePottingLot
     from unittest.mock import Mock, patch
 
     with (

@@ -1,12 +1,10 @@
 """Command line interface for Production Control."""
 
 import logging
-from pathlib import Path
 import typer
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.table import Table
-from typing import Optional
 from . import __version__
 from .products.models import ProductRepository
 from .data import backup

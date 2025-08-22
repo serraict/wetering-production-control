@@ -1,12 +1,9 @@
 """Tests for CLI commands."""
 
-from datetime import date
-from uuid import uuid4
 from pytest import MonkeyPatch
 from typer.testing import CliRunner
 from production_control.__cli__ import app
 from production_control.products.models import Product
-from production_control.spacing.models import WijderzetRegistratie
 
 runner = CliRunner()
 

@@ -2,7 +2,6 @@
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch
 from production_control.potting_lots.line_controller import (
     PottingLineController,
     ConnectionStatus,

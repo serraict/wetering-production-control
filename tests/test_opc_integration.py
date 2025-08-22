@@ -1,24 +1,14 @@
 """Integration tests for OPC/UA potting line controller."""
 
+import os
 import pytest
-
-pytestmark = pytest.mark.integration
-
-import asyncio
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import patch
 from production_control.potting_lots.line_controller import (
     PottingLineController,
     ConnectionStatus,
 )
 
-# Production readiness integration tests
-# These tests require an external uaserver to be running with our nodeset
-# Run: make opc-server
-# Then run tests: pytest -m integration
-
-# Skip by default unless OPC server is explicitly available
-import os
+pytestmark = pytest.mark.integration
 
 if not os.getenv("OPC_INTEGRATION_TESTS", "").lower() in ("true", "1", "yes"):
     pytest.skip(

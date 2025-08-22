@@ -6,7 +6,6 @@ from typing import Generator
 
 import pytest
 from typer.testing import CliRunner
-from unittest.mock import patch, MagicMock
 
 from production_control.__cli__ import app
 
