@@ -99,7 +99,7 @@ class ActivePottingLotService:
             f"Actual pots: {actual_pots}, Completed at: {completion_time}"
         )
 
-        # TODO: In future iterations, write to technison database here
+        # TODO: Write to technison database here
         # TODO: Update potting lot status in main database if needed
 
         # Auto-deactivate the lot after completion
@@ -128,24 +128,3 @@ class ActivePottingLotService:
             logger.error(f"Error communicating with OPC/UA controller: {e}")
         finally:
             loop.close()
-
-    async def initialize_machine_communication(self) -> bool:
-        """Initialize machine communication at application startup.
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            success = await self._controller.initialize_lines()
-            if success:
-                logger.info("Successfully initialized potting line machine communication")
-            else:
-                logger.warning("Failed to initialize potting line machine communication")
-            return success
-        except Exception as e:
-            logger.error(f"Error initializing machine communication: {e}")
-            return False
-
-    def get_controller_status(self) -> dict:
-        """Get the current OPC/UA controller status."""
-        return self._controller.get_status()

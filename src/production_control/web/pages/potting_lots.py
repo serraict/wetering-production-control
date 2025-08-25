@@ -10,6 +10,7 @@ from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
 from ...potting_lots.label_generation import LabelGenerator
 from ...potting_lots.active_service import ActivePottingLotService
+from ...potting_lots.line_controller import get_controller
 from ..components import frame
 from ..components.model_detail_page import display_model_detail_page, create_model_view_action
 from ..components.model_list_page import display_model_list_page
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Global service instances to maintain state across the application
 _repository = PottingLotRepository()
 _active_service = ActivePottingLotService(_repository)
+_line_controller = get_controller()
 
 
 def create_label_action() -> Dict[str, Any]:
@@ -164,51 +166,23 @@ async def potting_lots_page() -> None:
     with frame("Oppotlijst"):
 
         with ui.row().classes("w-full justify-between items-center mb-4"):
-            # Connection status indicator with retry button
-            with ui.row().classes("items-center gap-2"):
-                connection_status = ui.chip("", icon="", color="").classes("text-sm")
-                retry_button = (
-                    ui.button(
-                        icon="refresh",
-                        on_click=lambda: handle_connection_retry(connection_status, retry_button),
-                    )
-                    .classes("text-sm")
-                    .props("flat dense")
-                )
-                retry_button.visible = False  # Initially hidden
-
-            update_connection_status(connection_status, retry_button)
-
             # Active potting lots and print button
             with ui.row().classes("gap-2"):
                 # Display active potting lots:
                 for line in [1, 2]:
-                    with (
-                        ui.button(
-                            f"{line}",
-                            color="info",
-                            on_click=lambda line=line: handle_active_lot_click(line),
-                        )
-                        .bind_text_from(
-                            _active_service,
-                            "active_lots_state",
-                            backward=lambda state, line=line: get_activation_button_text(
-                                state, line
-                            ),
-                        )
-                        .bind_icon_from(
-                            _active_service,
-                            "active_lots_state",
-                            backward=lambda state, line=line: "edit" if state.get(line) else "info",
-                        )
-                    ):
-                        ui.tooltip(line).bind_text_from(
-                            _active_service,
-                            "active_lots_state",
-                            backward=lambda state, line=line: get_active_lot_tooltip_text(
-                                state, line
-                            ),
-                        )
+                    ui.button(
+                        f"{line}",
+                        color="info",
+                        on_click=lambda line=line: handle_active_lot_click(line),
+                    ).bind_text_from(
+                        _active_service,
+                        "active_lots_state",
+                        backward=lambda state, line=line: get_activation_button_text(state, line),
+                    ).bind_icon_from(
+                        _active_service,
+                        "active_lots_state",
+                        backward=lambda state, line=line: "edit" if state.get(line) else "info",
+                    )
 
             # print button
             print_all_caption = "Labels Afdrukken"
@@ -299,73 +273,6 @@ def handle_active_lot_click(line: int) -> None:
     else:
         # Show info about no active lot
         ui.notify(f"Geen actieve partij op lijn {line}")
-
-
-def get_active_lot_tooltip_text(state: dict, line: int) -> str:
-    """Get tooltip text for active lot button."""
-    if active_lot := state.get(line):
-        return f"Klik om details te bekijken van actieve partij: {active_lot.potting_lot.naam}"
-    return f"Lijn {line}: Geen actieve partij"
-
-
-def update_connection_status(chip, retry_button=None) -> None:
-    """Update the connection status indicator chip."""
-    try:
-        status_info = _active_service.get_controller_status()
-        status = status_info.get("status", "unknown")
-
-        if status == "connected":
-            chip.text = "Machine Verbonden"
-            chip.icon = "link"
-            chip.props("color=positive")
-            if retry_button:
-                retry_button.visible = False
-        elif status == "connecting":
-            chip.text = "Verbinden..."
-            chip.icon = "sync"
-            chip.props("color=warning")
-            if retry_button:
-                retry_button.visible = False
-        elif status == "error":
-            chip.text = "Verbinding Fout"
-            chip.icon = "link_off"
-            chip.props("color=negative")
-            if retry_button:
-                retry_button.visible = True
-        else:
-            chip.text = "Machine Offline"
-            chip.icon = "cloud_off"
-            chip.props("color=grey")
-            if retry_button:
-                retry_button.visible = True
-
-    except Exception as e:
-        chip.text = "Status Onbekend"
-        chip.icon = "help"
-        chip.props("color=grey")
-        if retry_button:
-            retry_button.visible = True
-        logger.error(f"Error updating connection status: {e}")
-
-
-async def handle_connection_retry(chip, retry_button=None) -> None:
-    """Handle manual retry of machine connection."""
-    try:
-        ui.notify("Proberen verbinding te herstellen...", type="info")
-
-        # Get controller and try to reconnect
-        controller = _active_service._controller
-        await controller.disconnect()
-        success = await controller.connect()
-
-        if success:
-            ui.notify("Verbinding hersteld!", type="positive")
-        else:
-            ui.notify("Verbinding herstellen mislukt", type="negative")
-
-    except Exception as e:
-        ui.notify(f"Fout bij herstellen verbinding: {str(e)}", type="negative")
-        logger.error(f"Error retrying connection: {e}")
 
 
 def show_completion_dialog(line: int) -> None:
