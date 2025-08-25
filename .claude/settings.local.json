@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(make:*)",
+      "Bash(uv run:*)"
     ],
     "deny": [],
     "ask": []

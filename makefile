@@ -125,8 +125,8 @@ dev-test-integration:
 	pytest --cov=src/production_control --cov-report=term
 
 opc-server:
-	@echo "Starting OPC/UA server with potting lines nodeset..."
-	uv run uaserver -u opc.tcp://127.0.0.1:4840 -x docs/opc-nodesets/potting-lines.xml
+	@echo "Starting programmatic OPC/UA server for potting lines..."
+	uv run python scripts/opc_test_server.py
 
 opc-monitor:
 	@echo "Starting OPC/UA server monitor..."
