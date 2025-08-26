@@ -5,6 +5,8 @@ from typing import Dict, Any
 
 from nicegui import APIRouter, ui
 
+from production_control.web.components.styles import HEADER_CLASSES
+
 from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
 from ...potting_lots.active_service import ActivePottingLotService
@@ -316,19 +318,13 @@ def active_lot_details(line: int) -> None:
     active_lot = _active_service.get_active_lot_for_line(line)
 
     if not active_lot:
-        with frame(f"Lijn {line} - Geen Actieve Partij"):
-            # Back link
-            ui.link("← Terug naar Oppotlijst", "/potting-lots").classes(
-                "text-primary no-underline hover:underline mb-4 block"
-            )
-
-            # Get top 50 potting lots for dropdown
+        title = f"Lijn {line} - Geen Actieve Partij"
+        with frame(title):
             top_lots = _repository.get_top_lots(50)
             lot_options = {str(lot.id): f"{lot.id}: {lot.naam}" for lot in top_lots}
 
             with ui.column().classes("w-full gap-4"):
-                ui.label("Er is momenteel geen actieve partij op deze lijn.").classes("text-lg")
-
+                ui.label(title).classes(HEADER_CLASSES)
                 # Dropdown selection and activation
                 with ui.card().classes("w-full"):
                     ui.label("Selecteer een oppotpartij om te activeren:").classes("font-semibold")

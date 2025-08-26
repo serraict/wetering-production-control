@@ -57,11 +57,9 @@ async def test_active_lot_details_page_no_active_lot(user: User) -> None:
         await user.open("/potting-lots/active/1")
 
         await user.should_see("Lijn 1 - Geen Actieve Partij")
-        await user.should_see("Er is momenteel geen actieve partij op deze lijn.")
         await user.should_see("Selecteer een oppotpartij om te activeren:")
         await user.should_see("Activeren op deze lijn")
         await user.should_see("Scan QR-code om deze pagina op je telefoon te openen:")
-        await user.should_see("← Terug naar Oppotlijst")
 
 
 async def test_active_lot_details_page_with_active_lot(user: User) -> None:
