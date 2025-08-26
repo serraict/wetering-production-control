@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Tuple
 
-from sqlalchemy import Engine, Select, distinct, func, text
+from sqlalchemy import Engine, Select, distinct, func, text, bindparam, Integer
 from sqlmodel import Session, select
 
 from ..data import Pagination
@@ -76,3 +76,11 @@ class PottingLotRepository(DremioRepository[PottingLot]):
         with Session(self.engine) as session:
             # Using text() since Dremio Flight doesn't support parameterized queries
             return session.exec(select(PottingLot).where(text(f"id = {id}"))).first()
+
+    def get_top_lots(self, limit: int = 50) -> List[PottingLot]:
+        """Get the top N potting lots ordered by potting date (most recent first)."""
+        with Session(self.engine) as session:
+            query = self._apply_default_sorting(select(self.model)).limit(
+                bindparam("limit", type_=Integer, literal_execute=True)
+            )
+            return list(session.exec(query, params={"limit": limit}).all())

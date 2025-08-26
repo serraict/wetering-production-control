@@ -43,11 +43,25 @@ async def test_potting_lots_page_shows_active_header(user: User) -> None:
 
 async def test_active_lot_details_page_no_active_lot(user: User) -> None:
     """Test active lot details page when no lot is active."""
-    await user.open("/potting-lots/active/1")
+    from production_control.potting_lots.models import PottingLot
+    from datetime import date
 
-    await user.should_see("Lijn 1 - Geen Actieve Partij")
-    await user.should_see("Er is momenteel geen actieve partij op deze lijn.")
-    await user.should_see("← Terug naar Oppotlijst")
+    with patch("production_control.web.pages.potting_lots._repository") as mock_repo:
+        # Mock some test lots for the dropdown
+        test_lots = [
+            PottingLot(id=1, naam="Test Partij 1", bollen_code=123, oppot_datum=date(2024, 3, 15)),
+            PottingLot(id=2, naam="Test Partij 2", bollen_code=456, oppot_datum=date(2024, 3, 14)),
+        ]
+        mock_repo.get_top_lots.return_value = test_lots
+
+        await user.open("/potting-lots/active/1")
+
+        await user.should_see("Lijn 1 - Geen Actieve Partij")
+        await user.should_see("Er is momenteel geen actieve partij op deze lijn.")
+        await user.should_see("Selecteer een oppotpartij om te activeren:")
+        await user.should_see("Activeren op deze lijn")
+        await user.should_see("Scan QR-code om deze pagina op je telefoon te openen:")
+        await user.should_see("← Terug naar Oppotlijst")
 
 
 async def test_active_lot_details_page_with_active_lot(user: User) -> None:

@@ -54,3 +54,56 @@ def test_potting_lot_repository_filtering():
     assert "product_groep" in repository.search_fields
     assert "klant_code" in repository.search_fields
     assert "oppot_week" in repository.search_fields
+
+
+@pytest.mark.integration
+def test_get_top_lots_integration():
+    """Integration test for get_top_lots method with actual Dremio connection."""
+    repository = PottingLotRepository()
+
+    # Test with default limit (50)
+    top_lots = repository.get_top_lots()
+
+    # Verify we got results (assuming there are potting lots in the database)
+    assert isinstance(top_lots, list)
+    # We should get up to 50 results
+    assert len(top_lots) <= 50
+
+    # If we have results, verify they are PottingLot objects
+    if top_lots:
+        assert isinstance(top_lots[0], PottingLot)
+
+        # Verify ordering - results should be ordered by oppot_datum DESC, id DESC
+        if len(top_lots) > 1:
+            for i in range(len(top_lots) - 1):
+                current_lot = top_lots[i]
+                next_lot = top_lots[i + 1]
+
+                # If both have oppot_datum, check ordering
+                if current_lot.oppot_datum is not None and next_lot.oppot_datum is not None:
+                    # Current should be >= next (DESC order)
+                    assert current_lot.oppot_datum >= next_lot.oppot_datum
+                    # If dates are equal, IDs should be in DESC order
+                    if current_lot.oppot_datum == next_lot.oppot_datum:
+                        assert current_lot.id >= next_lot.id
+
+
+@pytest.mark.integration
+def test_get_top_lots_with_custom_limit():
+    """Integration test for get_top_lots with custom limit."""
+    repository = PottingLotRepository()
+
+    # Test with smaller limit
+    top_lots = repository.get_top_lots(limit=5)
+
+    assert isinstance(top_lots, list)
+    # We should get at most 5 results
+    assert len(top_lots) <= 5
+
+    # Test with limit of 1
+    single_lot = repository.get_top_lots(limit=1)
+    assert isinstance(single_lot, list)
+    assert len(single_lot) <= 1
+
+    if single_lot:
+        assert isinstance(single_lot[0], PottingLot)

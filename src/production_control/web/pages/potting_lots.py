@@ -181,6 +181,66 @@ def handle_deactivation(line: int) -> None:
         ui.notify("Geen actieve partij gevonden op deze lijn")
 
 
+def activate_selected_lot(line: int, selected_lot_id_str: str) -> None:
+    """Activate the selected lot on the specified line."""
+    if not selected_lot_id_str:
+        ui.notify("Selecteer eerst een oppotpartij", type="warning")
+        return
+
+    try:
+        lot_id = int(selected_lot_id_str)
+        lot = _repository.get_by_id(lot_id)
+        if lot:
+            _active_service.activate_lot(line=line, potting_lot_id=lot_id)
+            ui.notify(f"Partij {lot.naam} geactiveerd op lijn {line}", type="positive")
+            # Navigate back to refresh the page
+            ui.navigate.to(f"/potting-lots/active/{line}")
+        else:
+            ui.notify("Oppotpartij niet gevonden", type="negative")
+    except ValueError:
+        ui.notify("Ongeldige oppotpartij selectie", type="negative")
+
+
+def generate_qr_code_for_page(line: int) -> None:
+    """Generate and display QR code for the current active lot page."""
+    import qrcode
+    from io import BytesIO
+    import base64
+
+    # Get the current page URL - handle test environment gracefully
+    try:
+        base_url = getattr(ui.context.client, "base_url", "http://localhost:8080")
+        page_url = f"{base_url}/potting-lots/active/{line}"
+    except (AttributeError, RuntimeError):
+        # Fallback for test environment or when context is not available
+        page_url = f"http://localhost:8080/potting-lots/active/{line}"
+
+    # Generate QR code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=6,
+        border=4,
+    )
+    qr.add_data(page_url)
+    qr.make(fit=True)
+
+    # Create QR code image
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+
+    # Convert to base64 for display
+    buffer = BytesIO()
+    qr_img.save(buffer, format="PNG")
+    buffer.seek(0)
+    img_base64 = base64.b64encode(buffer.read()).decode()
+
+    # Display the QR code
+    with ui.row().classes("justify-center"):
+        ui.image(f"data:image/png;base64,{img_base64}").classes("w-48 h-48")
+
+    ui.label(f"URL: {page_url}").classes("text-sm text-gray-600")
+
+
 ##################################################
 # Pages
 ##################################################
@@ -257,10 +317,39 @@ def active_lot_details(line: int) -> None:
 
     if not active_lot:
         with frame(f"Lijn {line} - Geen Actieve Partij"):
-            ui.label("Er is momenteel geen actieve partij op deze lijn.")
-            # create a ui.select here
-            # options dict<int, text>: top 50 potting lots, key:id, value name of lot
-            # add activation button to activate the selected lot
+            # Back link
+            ui.link("← Terug naar Oppotlijst", "/potting-lots").classes(
+                "text-primary no-underline hover:underline mb-4 block"
+            )
+
+            # Get top 50 potting lots for dropdown
+            top_lots = _repository.get_top_lots(50)
+            lot_options = {str(lot.id): f"{lot.id}: {lot.naam}" for lot in top_lots}
+
+            with ui.column().classes("w-full gap-4"):
+                ui.label("Er is momenteel geen actieve partij op deze lijn.").classes("text-lg")
+
+                # Dropdown selection and activation
+                with ui.card().classes("w-full"):
+                    ui.label("Selecteer een oppotpartij om te activeren:").classes("font-semibold")
+
+                    selected_lot_id = ui.select(
+                        options=lot_options, label="Oppotpartij", with_input=True
+                    ).classes("w-full")
+
+                    ui.button(
+                        "Activeren op deze lijn",
+                        color="positive",
+                        icon="play_arrow",
+                        on_click=lambda: activate_selected_lot(line, selected_lot_id.value),
+                    ).classes("mt-2")
+
+                # QR Code for mobile access
+                with ui.card().classes("w-full"):
+                    ui.label("Scan QR-code om deze pagina op je telefoon te openen:").classes(
+                        "font-semibold"
+                    )
+                    generate_qr_code_for_page(line)
         return
 
     with frame(f"Lijn {line} - Actieve Partij: {active_lot.potting_lot.naam}"):

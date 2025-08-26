@@ -558,16 +558,19 @@ opc-client:
 
 **UI Changes**:
 
-- Highlight active lots in the main table with different styling
-- Add status indicators (active, completed)
-- Improve visual hierarchy of active lot header
-- Add progress indicators during activation/completion
+- page per potting line:
+  - ✅ active lot on the line:
+    - ✅ display lot details
+    - ✅ display complete and deactivate buttons
+  - no active lot on the line:
+    - display dropdow to select potting lot
+    - qr code wih url to the current page, so that people can use their own phone
+    - button to activate the lot on this line
+    - barcode scanner component to scan a potting lot label (wait for details on how to do this)
 
 **Tests**:
 
-- Test visual styling for active lots
-- Test status indicators display correctly
-- Test UI responsiveness during operations
+- show correct options
 
 **User Value**: Clearer visual feedback makes it easier to understand current state
 
