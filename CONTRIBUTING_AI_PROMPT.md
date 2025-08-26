@@ -42,7 +42,7 @@ Follow both this guide and the main CONTRIBUTING.md when making changes.
        assert Component().operation("") == default_value
    ```
 
-   Do not add "#ARRANGE ... #ACT ... #ASSERT ..." comments.
+   Do not add "#ARRANGE ... #ACT ... #ASSERT ..." or "#GIVEN ... #WHEN ... #THEN" comments.
 
 ## Workflow
 
@@ -190,10 +190,13 @@ When a task is done, suggest a prompt to start the next task.
 1. After pushing changes:
 
    - Monitor CI workflow status:
+
      ```shell
      python scripts/check_workflow.py CI --watch
      ```
+
    - Address any CI failures promptly
+
    - Make necessary fixes in new commits
 
 ## Environment Details
