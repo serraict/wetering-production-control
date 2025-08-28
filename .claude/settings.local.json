@@ -3,7 +3,9 @@
     "allow": [
       "Bash(pytest:*)",
       "Bash(make:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(gh run view:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

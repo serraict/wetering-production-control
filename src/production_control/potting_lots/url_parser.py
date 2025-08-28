@@ -2,7 +2,6 @@
 
 import re
 from typing import Optional
-from urllib.parse import urlparse
 
 
 def extract_lot_id_from_barcode(barcode_text: str) -> Optional[int]:
