@@ -209,7 +209,7 @@ def activate_scanned_lot(line: int, barcode_text: str) -> None:
     """Activate a lot based on scanned barcode."""
     # Extract lot ID from barcode using the URL parser
     lot_id = extract_lot_id_from_barcode(barcode_text)
-    
+
     if lot_id is not None:
         # Valid lot ID found
         lot = _repository.get_by_id(lot_id)
@@ -224,14 +224,14 @@ def activate_scanned_lot(line: int, barcode_text: str) -> None:
         # No valid lot ID could be extracted, try name-based search as fallback
         lots = _repository.get_all()
         matching_lot = None
-        
+
         # Try to find a lot that matches the barcode text by name
         barcode_clean = barcode_text.strip()
         for lot in lots:
             if lot.naam == barcode_clean or barcode_clean in lot.naam:
                 matching_lot = lot
                 break
-        
+
         if matching_lot:
             _active_service.activate_lot(line=line, potting_lot_id=matching_lot.id)
             ui.notify(f"Partij {matching_lot.naam} geactiveerd op lijn {line}", type="positive")
@@ -380,7 +380,9 @@ def active_lot_details(line: int) -> None:
                 # Barcode scanner for lot activation
                 with ui.card().classes("w-full"):
                     ui.label("Scan Oppotpartij Label:").classes("font-semibold")
-                    create_barcode_scanner_ui(on_scan=lambda barcode: activate_scanned_lot(line, barcode))
+                    create_barcode_scanner_ui(
+                        on_scan=lambda barcode: activate_scanned_lot(line, barcode)
+                    )
 
                 # QR Code for mobile access
                 with ui.card().classes("w-full"):
