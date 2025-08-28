@@ -563,9 +563,9 @@ opc-client:
     - ✅ display lot details
     - ✅ display complete and deactivate buttons
   - no active lot on the line:
-    - display dropdow to select potting lot
-    - qr code wih url to the current page, so that people can use their own phone
-    - button to activate the lot on this line
+    - ✅ display dropdow to select potting lot
+    - ✅ qr code wih url to the current page, so that people can use their own phone
+    - ✅ button to activate the lot on this line
     - barcode scanner component to scan a potting lot label (wait for details on how to do this)
 
 **Tests**:

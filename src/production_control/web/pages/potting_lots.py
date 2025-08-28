@@ -14,6 +14,8 @@ from ..components import frame
 from ..components.model_detail_page import display_model_detail_page, create_model_view_action
 from ..components.model_list_page import display_model_list_page
 from ..components import potting_lot_label_printer
+from ..components.barcode_scanner import create_barcode_scanner_ui
+from ...potting_lots.url_parser import extract_lot_id_from_barcode
 
 
 router = APIRouter(prefix="/potting-lots")
@@ -203,6 +205,41 @@ def activate_selected_lot(line: int, selected_lot_id_str: str) -> None:
         ui.notify("Ongeldige oppotpartij selectie", type="negative")
 
 
+def activate_scanned_lot(line: int, barcode_text: str) -> None:
+    """Activate a lot based on scanned barcode."""
+    # Extract lot ID from barcode using the URL parser
+    lot_id = extract_lot_id_from_barcode(barcode_text)
+    
+    if lot_id is not None:
+        # Valid lot ID found
+        lot = _repository.get_by_id(lot_id)
+        if lot:
+            _active_service.activate_lot(line=line, potting_lot_id=lot_id)
+            ui.notify(f"Partij {lot.naam} geactiveerd op lijn {line}", type="positive")
+            # Navigate back to refresh the page
+            ui.navigate.to(f"/potting-lots/active/{line}")
+        else:
+            ui.notify(f"Oppotpartij {lot_id} niet gevonden", type="negative")
+    else:
+        # No valid lot ID could be extracted, try name-based search as fallback
+        lots = _repository.get_all()
+        matching_lot = None
+        
+        # Try to find a lot that matches the barcode text by name
+        barcode_clean = barcode_text.strip()
+        for lot in lots:
+            if lot.naam == barcode_clean or barcode_clean in lot.naam:
+                matching_lot = lot
+                break
+        
+        if matching_lot:
+            _active_service.activate_lot(line=line, potting_lot_id=matching_lot.id)
+            ui.notify(f"Partij {matching_lot.naam} geactiveerd op lijn {line}", type="positive")
+            ui.navigate.to(f"/potting-lots/active/{line}")
+        else:
+            ui.notify(f"Geen oppotpartij gevonden voor barcode: {barcode_text}", type="negative")
+
+
 def generate_qr_code_for_page(line: int) -> None:
     """Generate and display QR code for the current active lot page."""
     import qrcode
@@ -339,6 +376,11 @@ def active_lot_details(line: int) -> None:
                         icon="play_arrow",
                         on_click=lambda: activate_selected_lot(line, selected_lot_id.value),
                     ).classes("mt-2")
+
+                # Barcode scanner for lot activation
+                with ui.card().classes("w-full"):
+                    ui.label("Scan Oppotpartij Label:").classes("font-semibold")
+                    create_barcode_scanner_ui(on_scan=lambda barcode: activate_scanned_lot(line, barcode))
 
                 # QR Code for mobile access
                 with ui.card().classes("w-full"):
