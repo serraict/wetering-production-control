@@ -188,3 +188,7 @@ opc-subscribe-line2-pc:
 opc-client:
 	@echo "Starting interactive OPC/UA client shell..."
 	uv run uaclient -u opc.tcp://127.0.0.1:4840
+
+test-qr-codes:
+	@echo "Generating test QR codes PDF..."
+	uv run python scripts/generate_test_qr_codes.py ./test_qr_codes.pdf
