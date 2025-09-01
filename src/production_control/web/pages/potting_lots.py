@@ -335,7 +335,7 @@ async def potting_lots_page() -> None:
 
 # Potting lot details
 @router.page("/{id}")
-def potting_lot_detail(id: int) -> None:
+async def potting_lot_detail(id: int) -> None:
     record = _repository.get_by_id(id)
 
     with frame("Oppotlijst Details"):
@@ -350,7 +350,7 @@ def potting_lot_detail(id: int) -> None:
 
 # Active potting requests by line
 @router.page("/active/{line}")
-def active_lot_details(line: int) -> None:
+async def active_lot_details(line: int) -> None:
     """Show details page for the currently active lot on the specified line."""
     active_lot = _active_service.get_active_lot_for_line(line)
 
@@ -409,5 +409,5 @@ def active_lot_details(line: int) -> None:
 
 
 @router.page("/scan/{id}")
-def potting_lot_scan(id: int) -> None:
+async def potting_lot_scan(id: int) -> None:
     ui.navigate.to(router.url_path_for("potting_lot_detail", id=id))
