@@ -131,6 +131,8 @@ graph TD
 - **Component-Based UI**: UI is built from reusable components
 - **Template Inheritance**: Label templates use inheritance for consistent styling
 - **Command Pattern**: CLI commands encapsulate operations like corrections and fixes
+- **Lazy Loading**: Global repository instances are created on-demand to avoid initialization-time issues
+- **FastAPI Async Patterns**: Route handlers follow FastAPI best practices for async/sync declarations
 
 ## Data Flow
 
@@ -145,3 +147,29 @@ graph TD
   (see work directory in commit 75c79d41b6ef6d69bd4296c4d01cd305869366cd for performance tests and report)
 - Background processing for CPU-intensive operations like PDF generation
 - Pagination for large data sets
+
+## Route Handler Patterns
+
+The application follows FastAPI best practices for route handler declarations:
+
+- **Use `def` (sync) for database operations**: Routes that perform synchronous database operations using SQLModel/SQLAlchemy should use regular `def` functions for optimal FastAPI performance
+- **Use `async def` only with `await`**: Routes should only be declared as `async def` when they use libraries that support `await` (e.g., async HTTP clients, async database drivers)
+- **Lazy repository loading**: Global repository instances use lazy loading to avoid initialization-time environment variable issues in production
+
+### Examples
+
+```python
+# Correct: Sync route for synchronous database operations
+@router.page("/{id}")
+def product_detail(id: int) -> None:
+    product = get_repository().get_by_id(id)
+    # ... render UI
+
+# Correct: Async route only when using await
+@router.page("/")
+async def async_operation() -> None:
+    result = await some_async_library()
+    # ... render UI
+```
+
+This pattern prevents database connection issues and ensures optimal FastAPI performance.

@@ -23,8 +23,25 @@ table_state_key = "potting_lots_table"
 logger = logging.getLogger(__name__)
 
 # Global service instances to maintain state across the application
-_repository = PottingLotRepository()
-_active_service = ActivePottingLotService(_repository)
+# Use lazy loading to avoid initialization-time environment variable issues
+_repository = None
+_active_service = None
+
+
+def get_repository() -> PottingLotRepository:
+    """Get the repository instance, creating it lazily if needed."""
+    global _repository
+    if _repository is None:
+        _repository = PottingLotRepository()
+    return _repository
+
+
+def get_active_service() -> ActivePottingLotService:
+    """Get the active service instance, creating it lazily if needed."""
+    global _active_service
+    if _active_service is None:
+        _active_service = ActivePottingLotService(get_repository())
+    return _active_service
 
 
 ##################################################
@@ -45,7 +62,7 @@ def custom_display(lot: PottingLot) -> None:
                     icon="play_arrow",
                     color="positive",
                     on_click=lambda line=line, lot=lot: activate_lot_simple(
-                        _active_service, line, lot
+                        get_active_service(), line, lot
                     ),
                 )
 
@@ -80,7 +97,7 @@ def activate_lot_simple(
 
 
 def deactivate_lot(active_service: ActivePottingLotService, line: int) -> None:
-    _active_service.deactivate_lot(line)
+    active_service.deactivate_lot(line)
     ui.notify(f"Lijn {line} gedeactiveerd")
 
 
@@ -112,11 +129,11 @@ def active_potting_lot_buttons():
             color="info",
             on_click=lambda line=line: handle_active_lot_click(line),
         ).bind_text_from(
-            _active_service,
+            get_active_service(),
             "active_lots_state",
             backward=lambda state, line=line: get_activation_button_text(state, line),
         ).bind_icon_from(
-            _active_service,
+            get_active_service(),
             "active_lots_state",
             backward=lambda state, line=line: "edit" if state.get(line) else "info",
         )
@@ -129,7 +146,7 @@ def handle_active_lot_click(line: int) -> None:
 
 def show_completion_dialog(line: int) -> None:
     """Show modal dialog for completing a potting lot with actual pot count."""
-    active_lot = _active_service.get_active_lot_for_line(line)
+    active_lot = get_active_service().get_active_lot_for_line(line)
     if not active_lot:
         ui.notify("Geen actieve partij gevonden op deze lijn")
         return
@@ -166,7 +183,7 @@ def handle_completion(line: int, actual_pots: float, dialog) -> None:
     actual_pots_int = int(actual_pots)
 
     # Complete the lot using the service
-    if _active_service.complete_lot(line, actual_pots_int):
+    if get_active_service().complete_lot(line, actual_pots_int):
         ui.notify(f"Oppotten voltooid! {actual_pots_int} potten gerealiseerd", type="positive")
         dialog.close()
         # Navigate back to main page
@@ -177,9 +194,9 @@ def handle_completion(line: int, actual_pots: float, dialog) -> None:
 
 def handle_deactivation(line: int) -> None:
     """Handle deactivation of the active lot on the specified line."""
-    active_lot = _active_service.get_active_lot_for_line(line)
+    active_lot = get_active_service().get_active_lot_for_line(line)
     if active_lot:
-        deactivate_lot(_active_service, line)
+        deactivate_lot(get_active_service(), line)
         ui.navigate.to("/potting-lots")
     else:
         ui.notify("Geen actieve partij gevonden op deze lijn")
@@ -193,9 +210,9 @@ def activate_selected_lot(line: int, selected_lot_id_str: str) -> None:
 
     try:
         lot_id = int(selected_lot_id_str)
-        lot = _repository.get_by_id(lot_id)
+        lot = get_repository().get_by_id(lot_id)
         if lot:
-            _active_service.activate_lot(line=line, potting_lot_id=lot_id)
+            get_active_service().activate_lot(line=line, potting_lot_id=lot_id)
             ui.notify(f"Partij {lot.naam} geactiveerd op lijn {line}", type="positive")
             # Navigate back to refresh the page
             ui.navigate.to(f"/potting-lots/active/{line}")
@@ -212,9 +229,9 @@ def activate_scanned_lot(line: int, barcode_text: str) -> None:
 
     if lot_id is not None:
         # Valid lot ID found
-        lot = _repository.get_by_id(lot_id)
+        lot = get_repository().get_by_id(lot_id)
         if lot:
-            _active_service.activate_lot(line=line, potting_lot_id=lot_id)
+            get_active_service().activate_lot(line=line, potting_lot_id=lot_id)
             ui.notify(f"Partij {lot.naam} geactiveerd op lijn {line}", type="positive")
             # Navigate back to refresh the page
             ui.navigate.to(f"/potting-lots/active/{line}")
@@ -222,7 +239,7 @@ def activate_scanned_lot(line: int, barcode_text: str) -> None:
             ui.notify(f"Oppotpartij {lot_id} niet gevonden", type="negative")
     else:
         # No valid lot ID could be extracted, try name-based search as fallback
-        lots = _repository.get_all()
+        lots = get_repository().get_all()
         matching_lot = None
 
         # Try to find a lot that matches the barcode text by name
@@ -233,7 +250,7 @@ def activate_scanned_lot(line: int, barcode_text: str) -> None:
                 break
 
         if matching_lot:
-            _active_service.activate_lot(line=line, potting_lot_id=matching_lot.id)
+            get_active_service().activate_lot(line=line, potting_lot_id=matching_lot.id)
             ui.notify(f"Partij {matching_lot.naam} geactiveerd op lijn {line}", type="positive")
             ui.navigate.to(f"/potting-lots/active/{line}")
         else:
@@ -287,11 +304,11 @@ def generate_qr_code_for_page(line: int) -> None:
 
 # Potting index
 @router.page("/")
-async def potting_lots_page() -> None:
+def potting_lots_page() -> None:
 
     row_actions = {
         "view": create_model_view_action(
-            repository=_repository,
+            repository=get_repository(),
             custom_display_function=custom_display,
         ),
         "label": create_label_action(),
@@ -325,7 +342,7 @@ async def potting_lots_page() -> None:
                 print_all_button.on_click(handle_print_with_feedback)
 
         display_model_list_page(
-            repository=_repository,
+            repository=get_repository(),
             model_cls=PottingLot,
             table_state_key=table_state_key,
             title="Oppotlijst",
@@ -335,8 +352,8 @@ async def potting_lots_page() -> None:
 
 # Potting lot details
 @router.page("/{id}")
-async def potting_lot_detail(id: int) -> None:
-    record = _repository.get_by_id(id)
+def potting_lot_detail(id: int) -> None:
+    record = get_repository().get_by_id(id)
 
     with frame("Oppotlijst Details"):
         display_model_detail_page(
@@ -350,14 +367,14 @@ async def potting_lot_detail(id: int) -> None:
 
 # Active potting requests by line
 @router.page("/active/{line}")
-async def active_lot_details(line: int) -> None:
+def active_lot_details(line: int) -> None:
     """Show details page for the currently active lot on the specified line."""
-    active_lot = _active_service.get_active_lot_for_line(line)
+    active_lot = get_active_service().get_active_lot_for_line(line)
 
     if not active_lot:
         title = f"Lijn {line} - Geen Actieve Partij"
         with frame(title):
-            top_lots = _repository.get_top_lots(50)
+            top_lots = get_repository().get_top_lots(50)
             lot_options = {str(lot.id): f"{lot.id}: {lot.naam}" for lot in top_lots}
 
             with ui.column().classes("w-full gap-4"):
@@ -409,5 +426,5 @@ async def active_lot_details(line: int) -> None:
 
 
 @router.page("/scan/{id}")
-async def potting_lot_scan(id: int) -> None:
+def potting_lot_scan(id: int) -> None:
     ui.navigate.to(router.url_path_for("potting_lot_detail", id=id))
