@@ -22,25 +22,21 @@ router = APIRouter(prefix="/potting-lots")
 table_state_key = "potting_lots_table"
 logger = logging.getLogger(__name__)
 
-# Global service instances to maintain state across the application
-# Use lazy loading to avoid initialization-time environment variable issues
-_repository = None
+
+def get_repository() -> PottingLotRepository:
+    """Create a fresh repository instance to avoid session caching issues."""
+    return PottingLotRepository()
+
+
+# Singleton active service
 _active_service = None
 
 
-def get_repository() -> PottingLotRepository:
-    """Get the repository instance, creating it lazily if needed."""
-    global _repository
-    if _repository is None:
-        _repository = PottingLotRepository()
-    return _repository
-
-
 def get_active_service() -> ActivePottingLotService:
-    """Get the active service instance, creating it lazily if needed."""
+    """Get the singleton active service instance."""
     global _active_service
     if _active_service is None:
-        _active_service = ActivePottingLotService(get_repository())
+        _active_service = ActivePottingLotService()
     return _active_service
 
 

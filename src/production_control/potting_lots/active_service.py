@@ -19,9 +19,8 @@ class ActivePottingLotService:
     # Use bindable property for reactive updates across all UI instances
     active_lots_state = binding.BindableProperty()
 
-    def __init__(self, potting_lot_repository: PottingLotRepository):
-        """Initialize the service with a potting lot repository."""
-        self._potting_lot_repository = potting_lot_repository
+    def __init__(self):
+        """Initialize the service."""
         self._controller = get_controller()
         # Initialize with both the bindable property and the internal storage
         self._active_lots: Dict[int, ActivePottingLot] = {}  # line -> active lot
@@ -33,8 +32,9 @@ class ActivePottingLotService:
 
     def activate_lot(self, line: int, potting_lot_id: int) -> ActivePottingLot:
         """Activate a lot on a specific line. Deactivates any previously active lot on that line."""
-        # Get the potting lot details from repository
-        potting_lot = self._potting_lot_repository.get_by_id(potting_lot_id)
+        # Get the potting lot details from repository (create fresh instance)
+        repository = PottingLotRepository()
+        potting_lot = repository.get_by_id(potting_lot_id)
 
         # Create active lot
         active_lot = ActivePottingLot(
