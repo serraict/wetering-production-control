@@ -47,7 +47,7 @@ class DremioRepository(Generic[T]):
         else:
             conn_str = os.getenv(
                 "VINEAPP_DB_CONNECTION",
-                "dremio+flight://bot:serra1bot@localhost:32010/dremio?UseEncryption=false",
+                "",
             )
             self.engine = create_engine(conn_str)
 
