@@ -68,6 +68,7 @@ When a task is done, suggest a prompt to start the next task.
    - Use `write_to_file` for all file modifications
    - Use `execute_command` for necessary CLI operations
    - Use `browser_action` for web interface tasks
+   - Use `./scripts/dremio_cli/dremio_query.py` to inspect the Dremio lakehouse
 
 1. When to ask questions:
 
