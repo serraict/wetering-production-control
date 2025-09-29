@@ -8,6 +8,7 @@ from ...inspectie.repositories import InspectieRepository
 from ...inspectie.models import InspectieRonde
 from ..components import frame
 from ..components.model_list_page import display_model_list_page
+from ..components.styles import add_print_styles
 
 
 router = APIRouter(prefix="/inspectie")
@@ -49,6 +50,14 @@ def inspectie_page() -> None:
 
     # Create actions for +1/-1 buttons
     row_actions = create_afwijking_actions()
+
+    # Add print-friendly styles with border removal
+    add_print_styles(
+        font_size="7px",
+        orientation="portrait",
+        margin="0.3in",
+        remove_borders=True,
+    )
 
     # Render page
     with frame("Inspectie Ronde"):
