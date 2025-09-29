@@ -36,7 +36,7 @@ class InspectieRonde(SQLModel, table=True):
 
     klant_code: Optional[str] = Field(
         default=None,
-        title="klant_code",
+        title="klant",
         description="Code van de klant",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
@@ -59,7 +59,7 @@ class InspectieRonde(SQLModel, table=True):
         default=None,
         title="product_groep_naam",
         description="Naam van de productgroep",
-        sa_column_kwargs={"info": {"ui_sortable": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_hidden": True}},
     )
 
     datum_afleveren_plan: Optional[date] = Field(
@@ -71,14 +71,14 @@ class InspectieRonde(SQLModel, table=True):
 
     aantal_in_kas: Optional[int] = Field(
         default=None,
-        title="aantal_in_kas",
+        title="#plt",
         description="Aantal in kas",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
 
     aantal_tafels: Optional[int] = Field(
         default=None,
-        title="aantal_tafels",
+        title="#cont",
         description="Aantal tafels",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
@@ -87,12 +87,12 @@ class InspectieRonde(SQLModel, table=True):
         default=None,
         title="1e baan",
         description="Minimum baan nummer",
-        sa_column_kwargs={"info": {"ui_sortable": True}},
+        sa_column_kwargs={"info": {"ui_sortable": True, "ui_hidden": True}},
     )
 
     afwijking_afleveren: Optional[int] = Field(
         default=None,
-        title="teeltafwijking",
+        title="afw.",
         description="Afwijking in dagen voor aflevering",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
