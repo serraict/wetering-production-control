@@ -82,8 +82,12 @@ class DremioRepository(Generic[T]):
 
         if page < 1:
             raise InvalidParameterError("Page number must be greater than 0")
-        if items_per_page < 1:
-            raise InvalidParameterError("Items per page must be greater than 0")
+        if items_per_page < 0:
+            raise InvalidParameterError("Items per page must be greater than or equal to 0")
+
+        # Handle "show all" case where items_per_page is 0
+        if items_per_page == 0:
+            items_per_page = 999999
 
         return page, items_per_page, sort_by, descending
 

@@ -64,3 +64,41 @@ def test_inspectie_repository_get_paginated(mock_session_class, mock_engine):
     assert len(records) <= 10
     for record in records:
         assert isinstance(record, InspectieRonde)
+
+
+@patch("production_control.inspectie.repositories.Session")
+def test_inspectie_repository_show_all_records(mock_session_class, mock_engine):
+    """Test that items_per_page=0 shows all records without error."""
+    repository = InspectieRepository(mock_engine)
+    session = mock_session_class.return_value.__enter__.return_value
+
+    # Mock count query
+    count_result = MagicMock()
+    count_result.one.return_value = 5
+
+    # Mock data query with multiple records
+    test_date = date(2025, 9, 25)
+    test_records = [
+        InspectieRonde(
+            code=f"2701{i}",
+            product_naam=f"Test Product {i}",
+            datum_afleveren_plan=test_date,
+            afwijking_afleveren=i,
+            min_baan=i,
+        )
+        for i in range(5)
+    ]
+    session.exec.side_effect = [count_result, test_records]
+
+    # Act - request to show all records (items_per_page=0)
+    records, total = repository.get_paginated(
+        page=1,
+        items_per_page=0,  # This should show all records
+    )
+
+    # Assert
+    assert isinstance(records, list)
+    assert len(records) == 5  # Should return all 5 records
+    assert total == 5
+    for record in records:
+        assert isinstance(record, InspectieRonde)

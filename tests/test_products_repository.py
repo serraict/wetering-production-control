@@ -166,7 +166,7 @@ def test_get_paginated_invalid_page(repository):
 def test_get_paginated_invalid_items_per_page(repository):
     """Test get_paginated raises error for invalid items_per_page."""
     with pytest.raises(InvalidParameterError):
-        repository.get_paginated(items_per_page=0)
+        repository.get_paginated(items_per_page=-1)
 
 
 @patch("production_control.products.models.Session")
