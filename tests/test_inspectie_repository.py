@@ -17,9 +17,9 @@ def mock_engine():
     return engine
 
 
-def test_inspectie_repository_exists():
+def test_inspectie_repository_exists(mock_engine):
     """Test that InspectieRepository can be instantiated."""
-    repository = InspectieRepository()
+    repository = InspectieRepository(mock_engine)
     assert repository is not None
 
 

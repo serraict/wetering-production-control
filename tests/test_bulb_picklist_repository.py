@@ -13,9 +13,9 @@ def mock_engine():
     return engine
 
 
-def test_bulb_picklist_repository_initialization():
+def test_bulb_picklist_repository_initialization(mock_engine):
     """Test initializing the BulbPickListRepository."""
-    repository = BulbPickListRepository()
+    repository = BulbPickListRepository(mock_engine)
     assert repository is not None
 
 
@@ -25,9 +25,9 @@ def test_bulb_picklist_repository_with_connection(mock_engine):
     assert repository is not None
 
 
-def test_bulb_picklist_repository_default_sorting():
+def test_bulb_picklist_repository_default_sorting(mock_engine):
     """Test the default sorting behavior of the repository."""
-    repository = BulbPickListRepository()
+    repository = BulbPickListRepository(mock_engine)
     # We can verify the repository has the expected search fields
     assert repository.search_fields == ["id", "bollen_code", "ras", "locatie", "oppot_week"]
 
@@ -36,11 +36,11 @@ def test_bulb_picklist_repository_default_sorting():
     repository._apply_default_sorting(select(BulbPickList))
 
 
-def test_bulb_picklist_repository_filtering():
+def test_bulb_picklist_repository_filtering(mock_engine):
     """Test the filtering behavior of the repository."""
     # This test verifies that the repository has the correct search fields
     # for filtering bulb picklist records
-    repository = BulbPickListRepository()
+    repository = BulbPickListRepository(mock_engine)
     assert "id" in repository.search_fields
     assert "bollen_code" in repository.search_fields
     assert "ras" in repository.search_fields

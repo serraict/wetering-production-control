@@ -13,9 +13,9 @@ def mock_engine():
     return engine
 
 
-def test_potting_lot_repository_initialization():
+def test_potting_lot_repository_initialization(mock_engine):
     """Test initializing the PottingLotRepository."""
-    repository = PottingLotRepository()
+    repository = PottingLotRepository(mock_engine)
     assert repository is not None
 
 
@@ -25,9 +25,9 @@ def test_potting_lot_repository_with_connection(mock_engine):
     assert repository is not None
 
 
-def test_potting_lot_repository_default_sorting():
+def test_potting_lot_repository_default_sorting(mock_engine):
     """Test the default sorting behavior of the repository."""
-    repository = PottingLotRepository()
+    repository = PottingLotRepository(mock_engine)
     # We can verify the repository has the expected search fields
     assert "id" in repository.search_fields
     assert "bollen_code" in repository.search_fields
@@ -40,11 +40,11 @@ def test_potting_lot_repository_default_sorting():
     repository._apply_default_sorting(select(PottingLot))
 
 
-def test_potting_lot_repository_filtering():
+def test_potting_lot_repository_filtering(mock_engine):
     """Test the filtering behavior of the repository."""
     # This test verifies that the repository has the correct search fields
     # for filtering potting lot records
-    repository = PottingLotRepository()
+    repository = PottingLotRepository(mock_engine)
     assert len(repository.search_fields) == 8
     assert "id" in repository.search_fields
     assert "bollen_code" in repository.search_fields
