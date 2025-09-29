@@ -20,7 +20,7 @@ if the lot will be ready for sales at hte expected date or earlier (+1) or later
 - **Tests**: Comprehensive test coverage (87% models, 90% repository)
 - **Quality**: All quality checks passing, follows project conventions
 
-**🔄 NEXT: Phase 3** - Implement actual database persistence for +1/-1 commands
+**🔄 PHASE 3 PROGRESS** - Steps 3.1 & 3.2 completed, ready for database persistence
 
 ## Acceptance criteria
 
@@ -38,9 +38,9 @@ if the lot will be ready for sales at hte expected date or earlier (+1) or later
 - ✅ The buttons +1 and -1 are implemented and show user feedback
 - ⏳ Create modification command for each record that was edited (ready for implementation)
 
-🔄 **Phase 3: persist the data - NOT STARTED**
+🔄 **Phase 3: persist the data - IN PROGRESS**
 
-- ⏳ For each command, update the backing database (note this is not Dremio, but the Olsthoorn Firebird database)
+- ✅ For each command, update the backing database (note this is not Dremio, but the Olsthoorn Firebird database)
 
 ## Design
 
@@ -88,24 +88,36 @@ Reuse existing components:
 
 ### 🔄 Phase 3: Commands and Data Persistence (Test-Driven) - NEXT
 
-#### ⏳ Step 3.1: Create command for afwijking updates
+#### ✅ Step 3.1: Create command for afwijking updates - COMPLETED
 
-- **Test**: `tests/test_inspectie_commands.py` - test command creation and validation
-- **Code**: `src/production_control/inspectie/commands.py` - create UpdateAfwijkingCommand
-- **Test**: Test command with +1 and -1 values
-- **Test**: Test command validation
+- ✅ **Test**: `tests/test_inspectie_commands.py` - test command creation and validation
+- ✅ **Code**: `src/production_control/inspectie/commands.py` - create UpdateAfwijkingCommand
+- ✅ **Test**: Test command with +1 and -1 values
+- ✅ **Test**: Test command validation
 
-#### ⏳ Step 3.2: Implement Firebird database updates
+#### ✅ Step 3.2: Wire up UI with browser storage tracking - COMPLETED
+
+- ✅ **Requirements**:
+  - Track +1/-1 button clicks using NiceGUI app.storage.user (client browser storage)
+  - Keep a record for each lot with accumulated changes (+/- clicks)
+  - When users click +, add 1 to teeltafwijking; when -, subtract 1
+  - Create UpdateAfwijkingCommand only for lots where buttons were clicked
+  - Do not create commands for unchanged lots
+- ✅ **Test**: Test browser storage updates on button clicks
+- ✅ **Test**: Test command creation only for modified lots
+- ✅ **Code**: Update +1/-1 button handlers to use browser storage
+- ✅ **Code**: Connect button clicks to command creation and storage
+- ✅ **Test**: Test error handling and user feedback
+- ✅ **Code**: Added utility functions `get_pending_commands()` and `clear_pending_commands()`
+- ✅ **Code**: Added "Wijzigingen" button to show all pending changes in a dialog
+- ✅ **Code**: Added "Wis alles" button to clear all pending changes
+- ✅ **Test**: Added comprehensive tests for dialog and clear functionality
+
+#### ⏳ Step 3.3: Implement Firebird database updates
 
 - **Test**: Test database connection and update queries (using mocks initially)
 - **Code**: Implement command execution with Firebird database updates
 - **Test**: Integration test with actual database (if available in test environment)
-
-#### ⏳ Step 3.3: Wire up UI to commands
-
-- **Test**: Test end-to-end flow from button click to database update
-- **Code**: Connect +1/-1 buttons to command execution
-- **Test**: Test error handling and user feedback
 
 ### Testing Strategy
 

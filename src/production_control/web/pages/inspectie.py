@@ -1,17 +1,113 @@
 """Inspectie page implementation."""
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
-from nicegui import APIRouter, ui
+from nicegui import APIRouter, ui, app
 
 from ...inspectie.repositories import InspectieRepository
 from ...inspectie.models import InspectieRonde
+from ...inspectie.commands import UpdateAfwijkingCommand
 from ..components import frame
 from ..components.model_list_page import display_model_list_page
 from ..components.styles import add_print_styles
 
 
 router = APIRouter(prefix="/inspectie")
+
+# Fallback storage when app.storage.user is not available
+_fallback_storage: Dict[str, Any] = {}
+
+
+def get_storage() -> Dict[str, Any]:
+    """Get storage safely, falling back to in-memory storage if needed."""
+    try:
+        return app.storage.user
+    except RuntimeError:
+        # Fallback to in-memory storage when storage_secret is not configured
+        return _fallback_storage
+
+
+def get_pending_commands() -> List[UpdateAfwijkingCommand]:
+    """Get all pending afwijking commands from browser storage."""
+    storage = get_storage()
+    if "inspectie_changes" not in storage:
+        return []
+
+    commands = []
+    for code, new_afwijking in storage["inspectie_changes"].items():
+        commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking))
+
+    return commands
+
+
+def clear_pending_commands() -> None:
+    """Clear all pending commands from browser storage."""
+    storage = get_storage()
+    if "inspectie_changes" in storage:
+        del storage["inspectie_changes"]
+
+
+def show_pending_changes_dialog() -> None:
+    """Show a dialog with all pending changes."""
+    storage = get_storage()
+    changes = storage.get("inspectie_changes", {})
+
+    with ui.dialog() as dialog, ui.card().classes("w-96"):
+        ui.label("Openstaande wijzigingen").classes("text-h6 mb-4")
+
+        if not changes:
+            ui.label("Geen openstaande wijzigingen").classes("text-center text-gray-500")
+        else:
+            # Create table with pending changes
+            columns = [
+                {
+                    "name": "code",
+                    "label": "Code",
+                    "field": "code",
+                    "required": True,
+                    "align": "left",
+                },
+                {
+                    "name": "change",
+                    "label": "Wijziging",
+                    "field": "change",
+                    "required": True,
+                    "align": "center",
+                },
+            ]
+
+            rows = [{"code": code, "change": f"{change:+d}"} for code, change in changes.items()]
+
+            ui.table(columns=columns, rows=rows, row_key="code").classes("w-full")
+
+            ui.separator().classes("my-4")
+
+            # Action buttons
+            with ui.row().classes("w-full justify-between"):
+                ui.button(
+                    "Alles wissen",
+                    icon="clear_all",
+                    color="negative",
+                    on_click=lambda: handle_clear_all_changes_and_close(dialog),
+                ).props("outline")
+
+        # Close button
+        with ui.row().classes("w-full justify-end mt-4"):
+            ui.button("Sluiten", on_click=dialog.close).props("flat")
+
+    dialog.open()
+
+
+def handle_clear_all_changes() -> None:
+    """Handle clearing all pending changes."""
+    clear_pending_commands()
+    ui.notify("Alle wijzigingen gewist", type="info")
+
+
+def handle_clear_all_changes_and_close(dialog) -> None:
+    """Handle clearing all changes and closing the dialog."""
+    handle_clear_all_changes()
+    dialog.close()
 
 
 def create_afwijking_actions() -> Dict[str, Any]:
@@ -20,14 +116,52 @@ def create_afwijking_actions() -> Dict[str, Any]:
     def handle_plus_one(e: Dict[str, Any]) -> None:
         """Handle +1 button click."""
         code = e.args.get("key")
-        # TODO: Implement command to update afwijking_afleveren +1
-        ui.notify(f"Afwijking +1 voor {code}", type="positive")
+        if not code:
+            ui.notify("Geen code gevonden", type="negative")
+            return
+
+        # Get storage safely
+        storage = get_storage()
+
+        # Initialize storage if needed
+        if "inspectie_changes" not in storage:
+            storage["inspectie_changes"] = {}
+
+        # Update change tracking (+1)
+        current_change = storage["inspectie_changes"].get(code, 0)
+        storage["inspectie_changes"][code] = current_change + 1
+
+        # Create and store command
+        command = UpdateAfwijkingCommand(
+            code=code, new_afwijking=storage["inspectie_changes"][code]
+        )
+
+        ui.notify(f"Afwijking +1 voor {code} (totaal: {command.new_afwijking})", type="positive")
 
     def handle_minus_one(e: Dict[str, Any]) -> None:
         """Handle -1 button click."""
         code = e.args.get("key")
-        # TODO: Implement command to update afwijking_afleveren -1
-        ui.notify(f"Afwijking -1 voor {code}", type="positive")
+        if not code:
+            ui.notify("Geen code gevonden", type="negative")
+            return
+
+        # Get storage safely
+        storage = get_storage()
+
+        # Initialize storage if needed
+        if "inspectie_changes" not in storage:
+            storage["inspectie_changes"] = {}
+
+        # Update change tracking (-1)
+        current_change = storage["inspectie_changes"].get(code, 0)
+        storage["inspectie_changes"][code] = current_change - 1
+
+        # Create and store command
+        command = UpdateAfwijkingCommand(
+            code=code, new_afwijking=storage["inspectie_changes"][code]
+        )
+
+        ui.notify(f"Afwijking -1 voor {code} (totaal: {command.new_afwijking})", type="positive")
 
     return {
         "plus_one": {
@@ -63,9 +197,16 @@ def inspectie_page() -> None:
     with frame("Inspectie Ronde"):
         with ui.row().classes("w-full justify-between items-center mb-4"):
             ui.label("Inspectie Ronde").classes("text-h4")
-            ui.button(
-                "Print", icon="print", on_click=lambda: ui.run_javascript("window.print()")
-            ).props("outline")
+
+            # Action buttons
+            with ui.row().classes("gap-2"):
+                ui.button(
+                    "Wijzigingen", icon="edit_note", on_click=show_pending_changes_dialog
+                ).props("outline").tooltip("Toon openstaande wijzigingen")
+
+                ui.button(
+                    "Print", icon="print", on_click=lambda: ui.run_javascript("window.print()")
+                ).props("outline").tooltip("Print de pagina")
 
         display_model_list_page(
             repository=repository,

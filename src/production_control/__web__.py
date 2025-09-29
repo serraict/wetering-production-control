@@ -15,4 +15,5 @@ def init() -> None:
 if __name__ in {"__main__", "__mp_main__"}:
     init()
     port = int(os.getenv("NICEGUI_PORT", "8080"))
-    ui.run(title="Production Control", port=port)
+    storage_secret = os.getenv("NICEGUI_STORAGE_SECRET", "production-control-default-secret")
+    ui.run(title="Production Control", port=port, storage_secret=storage_secret)
