@@ -47,6 +47,50 @@ def clear_pending_commands() -> None:
         del storage["inspectie_changes"]
 
 
+def get_filter_state() -> str:
+    """Get current filter state from browser storage."""
+    storage = get_storage()
+    return storage.get("inspectie_filter", "next_two_weeks")
+
+
+def set_filter_state(filter_state: str) -> None:
+    """Set filter state in browser storage."""
+    storage = get_storage()
+    storage["inspectie_filter"] = filter_state
+
+
+def toggle_filter() -> None:
+    """Toggle between 'next_two_weeks' and 'show_all' filters."""
+    current_state = get_filter_state()
+    new_state = "show_all" if current_state == "next_two_weeks" else "next_two_weeks"
+    set_filter_state(new_state)
+
+    # Refresh the page to apply the new filter
+    ui.run_javascript("location.reload()")
+
+
+def create_enhanced_repository() -> InspectieRepository:
+    """Create repository with current filter state applied."""
+    from datetime import date, timedelta
+
+    repository = InspectieRepository()
+    filter_state = get_filter_state()
+
+    # Apply default filter if set to next_two_weeks
+    if filter_state == "next_two_weeks":
+        # Monkey patch the get_paginated method to apply default filter
+        original_get_paginated = repository.get_paginated
+
+        def get_paginated_with_filter(*args, **kwargs):
+            if "default_filter" not in kwargs:
+                kwargs["default_filter"] = "next_two_weeks"
+            return original_get_paginated(*args, **kwargs)
+
+        repository.get_paginated = get_paginated_with_filter
+
+    return repository
+
+
 def show_pending_changes_dialog() -> None:
     """Show a dialog with all pending changes."""
     storage = get_storage()
@@ -180,7 +224,7 @@ def create_afwijking_actions() -> Dict[str, Any]:
 @router.page("/")
 def inspectie_page() -> None:
     """Render the inspectie ronde overview page."""
-    repository = InspectieRepository()
+    repository = create_enhanced_repository()
 
     # Create actions for +1/-1 buttons
     row_actions = create_afwijking_actions()
@@ -193,6 +237,11 @@ def inspectie_page() -> None:
         remove_borders=True,
     )
 
+    # Get current filter state for UI display
+    current_filter = get_filter_state()
+    filter_label = "Komende 2 weken" if current_filter == "next_two_weeks" else "Alle records"
+    filter_icon = "filter_list" if current_filter == "next_two_weeks" else "view_list"
+
     # Render page
     with frame("Inspectie Ronde"):
         with ui.row().classes("w-full justify-between items-center mb-4"):
@@ -200,6 +249,10 @@ def inspectie_page() -> None:
 
             # Action buttons
             with ui.row().classes("gap-2"):
+                ui.button(
+                    filter_label, icon=filter_icon, on_click=toggle_filter
+                ).props("outline").tooltip("Wissel tussen komende 2 weken en alle records")
+
                 ui.button(
                     "Wijzigingen", icon="edit_note", on_click=show_pending_changes_dialog
                 ).props("outline").tooltip("Toon openstaande wijzigingen")

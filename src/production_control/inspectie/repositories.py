@@ -1,5 +1,6 @@
 """Inspectie repository for data access."""
 
+from datetime import date, timedelta
 from typing import List, Optional, Tuple, Union
 
 from sqlalchemy import Engine, Select, func, text
@@ -21,12 +22,50 @@ class InspectieRepository(DremioRepository[InspectieRonde]):
         super().__init__(InspectieRonde, connection)
 
     def _apply_default_sorting(self, query: Select) -> Select:
-        """Apply default sorting to query."""
+        """Apply default sorting to query.
+
+        Sorts by min_baan first (to address position 2 vs 7 issue),
+        then by datum_afleveren_plan, then by product_naam, then by code.
+        """
         return query.order_by(
+            self.model.min_baan,
             InspectieRonde.datum_afleveren_plan,
             self.model.product_naam,
             self.model.code,
         )
+
+    def _apply_date_filter(
+        self,
+        query: Select,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
+        default_filter: Optional[str] = None,
+    ) -> Select:
+        """Apply date range filtering to query.
+
+        Args:
+            query: The base query to filter
+            date_from: Start date for filtering
+            date_to: End date for filtering
+            default_filter: Named filter like 'next_two_weeks'
+
+        Returns:
+            Query with date filter applied
+        """
+        # Handle default filter presets
+        if default_filter == "next_two_weeks":
+            today = date.today()
+            date_from = today
+            date_to = today + timedelta(days=14)
+
+        # Apply date range filtering if provided
+        if date_from is not None:
+            query = query.where(text(f"datum_afleveren_plan >= '{date_from}'"))
+
+        if date_to is not None:
+            query = query.where(text(f"datum_afleveren_plan <= '{date_to}'"))
+
+        return query
 
     def get_paginated(
         self,
@@ -36,6 +75,9 @@ class InspectieRepository(DremioRepository[InspectieRonde]):
         descending: bool = False,
         filter_text: Optional[str] = None,
         pagination: Optional[Pagination] = None,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
+        default_filter: Optional[str] = None,
     ) -> Tuple[List[InspectieRonde], int]:
         """Get paginated inspectie records from the data source."""
         page, items_per_page, sort_by, descending = self._validate_pagination(
@@ -46,6 +88,10 @@ class InspectieRepository(DremioRepository[InspectieRonde]):
             # Create base queries
             base_query = select(InspectieRonde)
             count_stmt = select(func.count(InspectieRonde.code))
+
+            # Apply date filtering
+            base_query = self._apply_date_filter(base_query, date_from, date_to, default_filter)
+            count_stmt = self._apply_date_filter(count_stmt, date_from, date_to, default_filter)
 
             # Execute paginated query
             return self._execute_paginated_query(

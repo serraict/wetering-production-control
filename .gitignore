@@ -37,3 +37,4 @@ test-output/
 # Environment
 .env
 .env.local
+.nicegui/**

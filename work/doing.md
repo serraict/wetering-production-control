@@ -9,38 +9,53 @@ if the lot will be ready for sales at hte expected date or earlier (+1) or later
 
 ## Current Status
 
-**✅ PHASES 1 & 2 COMPLETED** - Basic functionality is working!
+First deploy done, received feedback from Bianca:
 
-- **Model & Repository**: Full `InspectieRonde` model with all 13 fields from Dremio view
-- **Web Interface**: Complete page at `/inspectie` with table showing correct columns:
-  - `Code`, `banen`, `klant_code`, `product`, `product_groep_naam`, `datum`, `aantal_in_kas`, `aantal_tafels`, `1e baan`, `teeltafwijking`, Actions
-- **UI Controls**: +1/-1 buttons on each row (currently show notifications)
-- **Navigation**: "Inspectie Ronde" menu item added
-- **Print**: Print button using browser's native print
-- **Tests**: Comprehensive test coverage (87% models, 90% repository)
-- **Quality**: All quality checks passing, follows project conventions
-
-**🔄 PHASE 3 PROGRESS** - Steps 3.1 & 3.2 completed, ready for database persistence
+> Hoi Marijn,
+>
+> Ik kan hem niet met mijn mobiel openen.
+>
+> Wel met de computer.
+>
+> Als ik op + druk, verandert er alleen niets.
+>
+> Ook krijg ik de volgorde niet lekker.
+>
+> Net als vroeger zet hij een partij die in 2 en 7 staan in de volgorde op positie 7 en niet op 2.
+>
+> En je kan geen selectie maken van de komende 2 weken.
+>
+> Partijen waarvan een deel al over de baan naar het inpakken gaan en die daardoor ook een baannummer van bijvoorbeeld 812 en 813 hebben en ook nog een laag nummer, die staan helemaal onderaan de lijst denk ik als ik hem uitprint en ik had alleen de eerste 3 pagina’s uitgeprint, dus die miste ik in het rondje lopen.
+>
+> Met vriendelijke groet,
+>
+> Bianca van de Wetering
 
 ## Acceptance criteria
 
-✅ **Phase 1: view data with inline edit controls - COMPLETED**
+✅ View data with inline edit controls
 
 - ✅ There is an overview page with all the inspectieronde ("Verkoop.inspectie_ronde") columns (similar to wijderzetten page)
 - ✅ We can show all record on this page
 - ✅ There is a +1 and -1 button on each row
-- ⏳ Printing
+- ✅ Printing
   - ✅ There is a print button that prints the current page
-  - ⏳ Printing shows all the columns
+  - ✅ Printing shows all the columns
 
-✅ **Phase 2: edit data pleasantly - COMPLETED**
+✅ Edit data pleasantly
 
 - ✅ The buttons +1 and -1 are implemented and show user feedback
-- ⏳ Create modification command for each record that was edited (ready for implementation)
+- ✅ Create modification command for each record that was edited (ready for implementation)
 
-🔄 **Phase 3: persist the data - IN PROGRESS**
+🔄 Smart filtering and sorting - NEXT**
 
-- ✅ For each command, update the backing database (note this is not Dremio, but the Olsthoorn Firebird database)
+- ⏳ Add date range filtering with "next 2 weeks" default and "show all" toggle
+- ⏳ Fix sorting order to prioritize min_baan field (addresses position 2 vs 7 issue)
+- ⏳ Ensure items with multiple baan numbers appear at correct position based on min_baan
+
+🔄 Persist the data - IN PROGRESS
+
+- ⏳ For each command, update the backing database (note this is not Dremio, but the Olsthoorn Firebird database)
 
 ## Design
 
@@ -76,48 +91,48 @@ Reuse existing components:
 
 ### ✅ Phase 2: Basic Web Interface (Test-Driven) - COMPLETED
 
-#### ✅ Step 2.1: Create overview page
-
-#### ✅ Step 2.2: Add inline edit controls (+1/-1 buttons)
-
-#### ⏳ Step 2.3: Add print functionality
-
-- ✅ **Test**: Test print button exists and triggers browser print
-- ✅ **Code**: Add print button using JavaScript window.print()
-- ⏳ Print all the columns
-
 ### 🔄 Phase 3: Commands and Data Persistence (Test-Driven) - NEXT
 
 #### ✅ Step 3.1: Create command for afwijking updates - COMPLETED
 
-- ✅ **Test**: `tests/test_inspectie_commands.py` - test command creation and validation
-- ✅ **Code**: `src/production_control/inspectie/commands.py` - create UpdateAfwijkingCommand
-- ✅ **Test**: Test command with +1 and -1 values
-- ✅ **Test**: Test command validation
-
 #### ✅ Step 3.2: Wire up UI with browser storage tracking - COMPLETED
-
-- ✅ **Requirements**:
-  - Track +1/-1 button clicks using NiceGUI app.storage.user (client browser storage)
-  - Keep a record for each lot with accumulated changes (+/- clicks)
-  - When users click +, add 1 to teeltafwijking; when -, subtract 1
-  - Create UpdateAfwijkingCommand only for lots where buttons were clicked
-  - Do not create commands for unchanged lots
-- ✅ **Test**: Test browser storage updates on button clicks
-- ✅ **Test**: Test command creation only for modified lots
-- ✅ **Code**: Update +1/-1 button handlers to use browser storage
-- ✅ **Code**: Connect button clicks to command creation and storage
-- ✅ **Test**: Test error handling and user feedback
-- ✅ **Code**: Added utility functions `get_pending_commands()` and `clear_pending_commands()`
-- ✅ **Code**: Added "Wijzigingen" button to show all pending changes in a dialog
-- ✅ **Code**: Added "Wis alles" button to clear all pending changes
-- ✅ **Test**: Added comprehensive tests for dialog and clear functionality
 
 #### ⏳ Step 3.3: Implement Firebird database updates
 
 - **Test**: Test database connection and update queries (using mocks initially)
 - **Code**: Implement command execution with Firebird database updates
 - **Test**: Integration test with actual database (if available in test environment)
+
+### 🔄 Phase 4: Smart Filtering and Sorting (Test-Driven) - PLANNED
+
+#### Step 4.1: Enhanced Repository Filtering
+
+- **Test**: Add test for date range filtering in `InspectieRepository`
+- **Code**: Extend `get_paginated()` method to accept `date_from` and `date_to` parameters
+- **Code**: Implement filtering logic using `datum_afleveren_plan` field
+- **Test**: Test default "next 2 weeks" filter behavior
+
+#### Step 4.2: Fix Sorting Order
+
+- **Test**: Add test for proper sorting by `min_baan` first, then `datum_afleveren_plan`
+- **Code**: Update `_apply_default_sorting()` method in `InspectieRepository`
+- **Code**: Change sort order to: `min_baan ASC, datum_afleveren_plan ASC, product_naam ASC`
+- **Test**: Verify items with multiple baan numbers (812, 813) appear at correct position
+
+#### Step 4.3: Enhanced UI Controls
+
+- **Test**: Add test for filter toggle functionality
+- **Code**: Add "Next 2 weeks" / "Show all" toggle button to UI
+- **Code**: Implement button state management and page refresh on toggle
+- **Test**: Test filter state persistence in browser storage
+
+#### ~~Step 4.4: Improved Button Feedback~~
+
+#### Step 4.5: Integration Testing
+
+- **Test**: End-to-end test of filtering + sorting + button actions
+- **Test**: Performance test with large datasets (> 1000 records)
+- **Code**: Optimize queries if needed based on performance results
 
 ### Testing Strategy
 

@@ -234,3 +234,38 @@ def test_clear_all_changes_button(mock_ui, mock_clear_commands):
     mock_clear_commands.assert_called_once()
     # Verify notification was shown
     mock_ui.notify.assert_called_with("Alle wijzigingen gewist", type="info")
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+def test_filter_toggle_functionality(mock_get_storage):
+    """Test filter toggle state management."""
+    from production_control.web.pages.inspectie import get_filter_state, set_filter_state
+
+    mock_storage = {}
+    mock_get_storage.return_value = mock_storage
+
+    # Default should be "next_two_weeks"
+    assert get_filter_state() == "next_two_weeks"
+
+    # Set to "show_all"
+    set_filter_state("show_all")
+    assert mock_storage["inspectie_filter"] == "show_all"
+    assert get_filter_state() == "show_all"
+
+    # Set back to "next_two_weeks"
+    set_filter_state("next_two_weeks")
+    assert mock_storage["inspectie_filter"] == "next_two_weeks"
+    assert get_filter_state() == "next_two_weeks"
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+def test_filter_state_persistence(mock_get_storage):
+    """Test that filter state persists across sessions."""
+    from production_control.web.pages.inspectie import get_filter_state
+
+    # Simulate existing storage with saved filter state
+    mock_storage = {"inspectie_filter": "show_all"}
+    mock_get_storage.return_value = mock_storage
+
+    # Should return the saved state
+    assert get_filter_state() == "show_all"
