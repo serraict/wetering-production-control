@@ -34,7 +34,14 @@ def get_pending_commands() -> List[UpdateAfwijkingCommand]:
         return []
 
     commands = []
-    for code, new_afwijking in storage["inspectie_changes"].items():
+    for code, change_data in storage["inspectie_changes"].items():
+        if isinstance(change_data, dict):
+            # New format with original and new values
+            new_afwijking = change_data["new"]
+        else:
+            # Legacy format (fallback)
+            new_afwijking = change_data
+
         commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking))
 
     return commands
@@ -118,7 +125,20 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                 },
             ]
 
-            rows = [{"code": code, "change": f"{change:+d}"} for code, change in changes.items()]
+            rows = []
+            for code, change_data in changes.items():
+                if isinstance(change_data, dict):
+                    # New format: show the difference from original
+                    original = change_data["original"] or 0
+                    new_value = change_data["new"]
+                    difference = new_value - original
+                    rows.append({
+                        "code": code,
+                        "change": f"{original} → {new_value} ({difference:+d})"
+                    })
+                else:
+                    # Legacy format
+                    rows.append({"code": code, "change": f"{change_data:+d}"})
 
             ui.table(columns=columns, rows=rows, row_key="code").classes("w-full")
 
@@ -165,6 +185,10 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
             ui.notify("Geen code gevonden", type="negative")
             return
 
+        # Get the current afwijking from the row data
+        row_data = e.args.get("row", {})
+        current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
+
         # Get storage safely
         storage = get_storage()
 
@@ -172,13 +196,31 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
         if "inspectie_changes" not in storage:
             storage["inspectie_changes"] = {}
 
-        # Update change tracking (+1)
-        current_change = storage["inspectie_changes"].get(code, 0)
-        storage["inspectie_changes"][code] = current_change + 1
+        # Check if this is the first change for this code
+        if code not in storage["inspectie_changes"]:
+            # First change: store both original and new value
+            new_afwijking = current_afwijking + 1
+            storage["inspectie_changes"][code] = {
+                "original": current_afwijking,
+                "new": new_afwijking
+            }
+        else:
+            # Subsequent change: increment the new value
+            change_data = storage["inspectie_changes"][code]
+            if isinstance(change_data, dict):
+                new_afwijking = change_data["new"] + 1
+                storage["inspectie_changes"][code]["new"] = new_afwijking
+            else:
+                # Handle legacy format (just in case)
+                new_afwijking = current_afwijking + 1
+                storage["inspectie_changes"][code] = {
+                    "original": current_afwijking,
+                    "new": new_afwijking
+                }
 
         # Create and store command
         command = UpdateAfwijkingCommand(
-            code=code, new_afwijking=storage["inspectie_changes"][code]
+            code=code, new_afwijking=new_afwijking
         )
 
         ui.notify(f"Afwijking +1 voor {code} (totaal: {command.new_afwijking})", type="positive")
@@ -194,6 +236,10 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
             ui.notify("Geen code gevonden", type="negative")
             return
 
+        # Get the current afwijking from the row data
+        row_data = e.args.get("row", {})
+        current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
+
         # Get storage safely
         storage = get_storage()
 
@@ -201,13 +247,31 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
         if "inspectie_changes" not in storage:
             storage["inspectie_changes"] = {}
 
-        # Update change tracking (-1)
-        current_change = storage["inspectie_changes"].get(code, 0)
-        storage["inspectie_changes"][code] = current_change - 1
+        # Check if this is the first change for this code
+        if code not in storage["inspectie_changes"]:
+            # First change: store both original and new value
+            new_afwijking = current_afwijking - 1
+            storage["inspectie_changes"][code] = {
+                "original": current_afwijking,
+                "new": new_afwijking
+            }
+        else:
+            # Subsequent change: decrement the new value
+            change_data = storage["inspectie_changes"][code]
+            if isinstance(change_data, dict):
+                new_afwijking = change_data["new"] - 1
+                storage["inspectie_changes"][code]["new"] = new_afwijking
+            else:
+                # Handle legacy format (just in case)
+                new_afwijking = current_afwijking - 1
+                storage["inspectie_changes"][code] = {
+                    "original": current_afwijking,
+                    "new": new_afwijking
+                }
 
         # Create and store command
         command = UpdateAfwijkingCommand(
-            code=code, new_afwijking=storage["inspectie_changes"][code]
+            code=code, new_afwijking=new_afwijking
         )
 
         ui.notify(f"Afwijking -1 voor {code} (totaal: {command.new_afwijking})", type="positive")

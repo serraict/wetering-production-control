@@ -30,17 +30,23 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
     actions = create_afwijking_actions()
     plus_handler = actions["plus_one"]["handler"]
 
-    # Simulate button click event
+    # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {"key": "27014"}
+    event_data.args = {
+        "key": "27014",
+        "row": {"afwijking_afleveren": 7}  # Current afwijking is 7
+    }
 
     # Call handler
     plus_handler(event_data)
 
-    # Verify storage was updated
+    # Verify storage was updated with new structure
     assert "inspectie_changes" in mock_storage
     assert "27014" in mock_storage["inspectie_changes"]
-    assert mock_storage["inspectie_changes"]["27014"] == 1
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert isinstance(change_data, dict)
+    assert change_data["original"] == 7
+    assert change_data["new"] == 8  # 7 + 1
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -55,25 +61,35 @@ def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
     actions = create_afwijking_actions()
     minus_handler = actions["minus_one"]["handler"]
 
-    # Simulate button click event
+    # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {"key": "27014"}
+    event_data.args = {
+        "key": "27014",
+        "row": {"afwijking_afleveren": 7}  # Current afwijking is 7
+    }
 
     # Call handler
     minus_handler(event_data)
 
-    # Verify storage was updated
+    # Verify storage was updated with new structure
     assert "inspectie_changes" in mock_storage
     assert "27014" in mock_storage["inspectie_changes"]
-    assert mock_storage["inspectie_changes"]["27014"] == -1
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert isinstance(change_data, dict)
+    assert change_data["original"] == 7
+    assert change_data["new"] == 6  # 7 - 1
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
 @patch("production_control.web.pages.inspectie.ui")
 def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
     """Test that multiple clicks accumulate in storage."""
-    # Setup mock storage with existing change
-    mock_storage = {"inspectie_changes": {"27014": 2}}
+    # Setup mock storage with existing change in new format
+    mock_storage = {
+        "inspectie_changes": {
+            "27014": {"original": 7, "new": 9}  # Already has +2 change
+        }
+    }
     mock_get_storage.return_value = mock_storage
 
     # Create actions
@@ -81,17 +97,22 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
     plus_handler = actions["plus_one"]["handler"]
     minus_handler = actions["minus_one"]["handler"]
 
-    # Simulate button click events
+    # Simulate button click events with row data
     event_data = Mock()
-    event_data.args = {"key": "27014"}
+    event_data.args = {
+        "key": "27014",
+        "row": {"afwijking_afleveren": 7}  # Original afwijking is 7
+    }
 
-    # Click +1 (should be 2 + 1 = 3)
+    # Click +1 (should be 9 + 1 = 10)
     plus_handler(event_data)
-    assert mock_storage["inspectie_changes"]["27014"] == 3
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert change_data["new"] == 10
 
-    # Click -1 (should be 3 - 1 = 2)
+    # Click -1 (should be 10 - 1 = 9)
     minus_handler(event_data)
-    assert mock_storage["inspectie_changes"]["27014"] == 2
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert change_data["new"] == 9
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -111,9 +132,9 @@ def test_get_pending_commands_with_changes(mock_get_storage):
 
     mock_get_storage.return_value = {
         "inspectie_changes": {
-            "27014": 2,
-            "27015": -1,
-            "27016": 0,  # Should be included as well
+            "27014": {"original": 7, "new": 9},  # +2 change, final value 9
+            "27015": {"original": 5, "new": 4},  # -1 change, final value 4
+            "27016": {"original": 0, "new": 0},  # no change, final value 0
         }
     }
 
@@ -126,12 +147,12 @@ def test_get_pending_commands_with_changes(mock_get_storage):
     assert "27015" in codes
     assert "27016" in codes
 
-    # Check afwijking values
+    # Check absolute afwijking values (not relative changes)
     for cmd in commands:
         if cmd.code == "27014":
-            assert cmd.new_afwijking == 2
+            assert cmd.new_afwijking == 9
         elif cmd.code == "27015":
-            assert cmd.new_afwijking == -1
+            assert cmd.new_afwijking == 4
         elif cmd.code == "27016":
             assert cmd.new_afwijking == 0
 
@@ -327,9 +348,12 @@ def test_changes_state_updates_on_click(mock_ui, mock_get_storage):
     actions = create_afwijking_actions(changes_state)
     plus_handler = actions["plus_one"]["handler"]
 
-    # Simulate button click event
+    # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {"key": "27014"}
+    event_data.args = {
+        "key": "27014",
+        "row": {"afwijking_afleveren": 7}
+    }
 
     # Call handler
     plus_handler(event_data)
@@ -372,3 +396,44 @@ def test_clear_all_changes_updates_state(mock_ui, mock_clear_commands):
     assert changes_state.update_called
     assert changes_state.count == 0
     assert changes_state.label == "Wijzigingen"
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+@patch("production_control.web.pages.inspectie.ui")
+def test_absolute_afwijking_calculation(mock_ui, mock_get_storage):
+    """Test that afwijking is calculated as absolute value (current + changes)."""
+    from production_control.web.pages.inspectie import create_afwijking_actions
+
+    # Setup mock storage
+    mock_storage = {}
+    mock_get_storage.return_value = mock_storage
+
+    # Create actions
+    actions = create_afwijking_actions()
+    plus_handler = actions["plus_one"]["handler"]
+
+    # Simulate: current afwijking is 7, user clicks +1 twice
+    event_data = Mock()
+    event_data.args = {
+        "key": "27014",
+        "row": {"afwijking_afleveren": 7}  # Current afwijking is 7
+    }
+
+    # First click: +1 (should result in 8)
+    plus_handler(event_data)
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert change_data["original"] == 7
+    assert change_data["new"] == 8
+
+    # Second click: +1 (should result in 9)
+    plus_handler(event_data)
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert change_data["original"] == 7
+    assert change_data["new"] == 9
+
+    # Verify the command contains absolute value 9, not relative +2
+    from production_control.web.pages.inspectie import get_pending_commands
+    commands = get_pending_commands()
+    assert len(commands) == 1
+    assert commands[0].code == "27014"
+    assert commands[0].new_afwijking == 9  # Absolute value: 7 + 2 = 9
