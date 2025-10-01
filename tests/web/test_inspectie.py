@@ -269,3 +269,106 @@ def test_filter_state_persistence(mock_get_storage):
 
     # Should return the saved state
     assert get_filter_state() == "show_all"
+
+
+@patch("production_control.web.pages.inspectie.get_pending_commands")
+def test_changes_button_shows_count(mock_get_pending_commands):
+    """Test that changes button shows count of pending changes."""
+    from production_control.web.pages.inspectie import get_pending_commands
+
+    # Test with no pending changes
+    mock_get_pending_commands.return_value = []
+    pending_commands = get_pending_commands()
+    changes_count = len(pending_commands)
+    changes_label = f"Wijzigingen ({changes_count})" if changes_count > 0 else "Wijzigingen"
+    assert changes_label == "Wijzigingen"
+
+    # Test with 3 pending changes
+    from production_control.inspectie.commands import UpdateAfwijkingCommand
+    mock_get_pending_commands.return_value = [
+        UpdateAfwijkingCommand(code="27014", new_afwijking=1),
+        UpdateAfwijkingCommand(code="27015", new_afwijking=-1),
+        UpdateAfwijkingCommand(code="27016", new_afwijking=2),
+    ]
+    pending_commands = get_pending_commands()
+    changes_count = len(pending_commands)
+    changes_label = f"Wijzigingen ({changes_count})" if changes_count > 0 else "Wijzigingen"
+    assert changes_label == "Wijzigingen (3)"
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+@patch("production_control.web.pages.inspectie.ui")
+def test_changes_state_updates_on_click(mock_ui, mock_get_storage):
+    """Test that changes state updates when +1/-1 buttons are clicked."""
+    from production_control.web.pages.inspectie import create_afwijking_actions
+
+    # Setup mock storage
+    mock_storage = {}
+    mock_get_storage.return_value = mock_storage
+
+    # Create a mock changes state
+    class MockChangesState:
+        def __init__(self):
+            self.count = 0
+            self.update_called = False
+
+        def update(self):
+            self.update_called = True
+            # Simulate updating the count
+            self.count = len(mock_storage.get("inspectie_changes", {}))
+
+        @property
+        def label(self) -> str:
+            return f"Wijzigingen ({self.count})" if self.count > 0 else "Wijzigingen"
+
+    changes_state = MockChangesState()
+
+    # Create actions with changes state
+    actions = create_afwijking_actions(changes_state)
+    plus_handler = actions["plus_one"]["handler"]
+
+    # Simulate button click event
+    event_data = Mock()
+    event_data.args = {"key": "27014"}
+
+    # Call handler
+    plus_handler(event_data)
+
+    # Verify that changes_state.update() was called
+    assert changes_state.update_called
+    assert changes_state.count == 1
+
+
+@patch("production_control.web.pages.inspectie.clear_pending_commands")
+@patch("production_control.web.pages.inspectie.ui")
+def test_clear_all_changes_updates_state(mock_ui, mock_clear_commands):
+    """Test that clearing all changes updates the changes state."""
+    from production_control.web.pages.inspectie import handle_clear_all_changes
+
+    # Create a mock changes state
+    class MockChangesState:
+        def __init__(self):
+            self.count = 3  # Start with some changes
+            self.update_called = False
+
+        def update(self):
+            self.update_called = True
+            self.count = 0  # Simulate clearing all changes
+
+        @property
+        def label(self) -> str:
+            return f"Wijzigingen ({self.count})" if self.count > 0 else "Wijzigingen"
+
+    changes_state = MockChangesState()
+
+    # Call the function with changes state
+    handle_clear_all_changes(changes_state)
+
+    # Verify clear function was called
+    mock_clear_commands.assert_called_once()
+    # Verify notification was shown
+    mock_ui.notify.assert_called_with("Alle wijzigingen gewist", type="info")
+    # Verify that changes_state.update() was called
+    assert changes_state.update_called
+    assert changes_state.count == 0
+    assert changes_state.label == "Wijzigingen"

@@ -71,8 +71,6 @@ def toggle_filter() -> None:
 
 def create_enhanced_repository() -> InspectieRepository:
     """Create repository with current filter state applied."""
-    from datetime import date, timedelta
-
     repository = InspectieRepository()
     filter_state = get_filter_state()
 
@@ -91,7 +89,7 @@ def create_enhanced_repository() -> InspectieRepository:
     return repository
 
 
-def show_pending_changes_dialog() -> None:
+def show_pending_changes_dialog(changes_state=None) -> None:
     """Show a dialog with all pending changes."""
     storage = get_storage()
     changes = storage.get("inspectie_changes", {})
@@ -132,7 +130,7 @@ def show_pending_changes_dialog() -> None:
                     "Alles wissen",
                     icon="clear_all",
                     color="negative",
-                    on_click=lambda: handle_clear_all_changes_and_close(dialog),
+                    on_click=lambda: handle_clear_all_changes_and_close(dialog, changes_state),
                 ).props("outline")
 
         # Close button
@@ -142,19 +140,22 @@ def show_pending_changes_dialog() -> None:
     dialog.open()
 
 
-def handle_clear_all_changes() -> None:
+def handle_clear_all_changes(changes_state=None) -> None:
     """Handle clearing all pending changes."""
     clear_pending_commands()
     ui.notify("Alle wijzigingen gewist", type="info")
+    # Update changes state if provided
+    if changes_state:
+        changes_state.update()
 
 
-def handle_clear_all_changes_and_close(dialog) -> None:
+def handle_clear_all_changes_and_close(dialog, changes_state=None) -> None:
     """Handle clearing all changes and closing the dialog."""
-    handle_clear_all_changes()
+    handle_clear_all_changes(changes_state)
     dialog.close()
 
 
-def create_afwijking_actions() -> Dict[str, Any]:
+def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
     """Create row actions for +1/-1 buttons."""
 
     def handle_plus_one(e: Dict[str, Any]) -> None:
@@ -182,6 +183,10 @@ def create_afwijking_actions() -> Dict[str, Any]:
 
         ui.notify(f"Afwijking +1 voor {code} (totaal: {command.new_afwijking})", type="positive")
 
+        # Update changes state if provided
+        if changes_state:
+            changes_state.update()
+
     def handle_minus_one(e: Dict[str, Any]) -> None:
         """Handle -1 button click."""
         code = e.args.get("key")
@@ -207,6 +212,10 @@ def create_afwijking_actions() -> Dict[str, Any]:
 
         ui.notify(f"Afwijking -1 voor {code} (totaal: {command.new_afwijking})", type="positive")
 
+        # Update changes state if provided
+        if changes_state:
+            changes_state.update()
+
     return {
         "plus_one": {
             "icon": "add",
@@ -226,8 +235,22 @@ def inspectie_page() -> None:
     """Render the inspectie ronde overview page."""
     repository = create_enhanced_repository()
 
+    # Create reactive state for changes count
+    class ChangesState:
+        def __init__(self):
+            self.count = len(get_pending_commands())
+
+        def update(self):
+            self.count = len(get_pending_commands())
+
+        @property
+        def label(self) -> str:
+            return f"Wijzigingen ({self.count})" if self.count > 0 else "Wijzigingen"
+
+    changes_state = ChangesState()
+
     # Create actions for +1/-1 buttons
-    row_actions = create_afwijking_actions()
+    row_actions = create_afwijking_actions(changes_state)
 
     # Add print-friendly styles with border removal
     add_print_styles(
@@ -254,8 +277,10 @@ def inspectie_page() -> None:
                 ).props("outline").tooltip("Wissel tussen komende 2 weken en alle records")
 
                 ui.button(
-                    "Wijzigingen", icon="edit_note", on_click=show_pending_changes_dialog
-                ).props("outline").tooltip("Toon openstaande wijzigingen")
+                    icon="edit_note", on_click=lambda: show_pending_changes_dialog(changes_state)
+                ).props("outline").tooltip("Toon openstaande wijzigingen").bind_text_from(
+                    changes_state, "label"
+                )
 
                 ui.button(
                     "Print", icon="print", on_click=lambda: ui.run_javascript("window.print()")

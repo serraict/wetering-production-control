@@ -97,6 +97,23 @@ def add_print_styles(
             min-width: auto !important;
         }}
 
+        /* Hide actions column when printing */
+        .q-table th:last-child,
+        .q-table td:last-child {{
+            display: none !important;
+        }}
+
+        /* Alternative: Target specifically by header text */
+        .q-table th:contains("Acties"),
+        .q-table th:contains("Actions") {{
+            display: none !important;
+        }}
+
+        /* Hide the corresponding table cells in the actions column */
+        .q-table tr td:nth-last-child(1) {{
+            display: none !important;
+        }}
+
         /* Page setup */
         @page {{
             size: A4 {orientation};
