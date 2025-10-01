@@ -132,10 +132,9 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                     original = change_data["original"] or 0
                     new_value = change_data["new"]
                     difference = new_value - original
-                    rows.append({
-                        "code": code,
-                        "change": f"{original} → {new_value} ({difference:+d})"
-                    })
+                    rows.append(
+                        {"code": code, "change": f"{original} → {new_value} ({difference:+d})"}
+                    )
                 else:
                     # Legacy format
                     rows.append({"code": code, "change": f"{change_data:+d}"})
@@ -202,7 +201,7 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
             new_afwijking = current_afwijking + 1
             storage["inspectie_changes"][code] = {
                 "original": current_afwijking,
-                "new": new_afwijking
+                "new": new_afwijking,
             }
         else:
             # Subsequent change: increment the new value
@@ -215,13 +214,11 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
                 new_afwijking = current_afwijking + 1
                 storage["inspectie_changes"][code] = {
                     "original": current_afwijking,
-                    "new": new_afwijking
+                    "new": new_afwijking,
                 }
 
         # Create and store command
-        command = UpdateAfwijkingCommand(
-            code=code, new_afwijking=new_afwijking
-        )
+        command = UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking)
 
         ui.notify(f"Afwijking +1 voor {code} (totaal: {command.new_afwijking})", type="positive")
 
@@ -253,7 +250,7 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
             new_afwijking = current_afwijking - 1
             storage["inspectie_changes"][code] = {
                 "original": current_afwijking,
-                "new": new_afwijking
+                "new": new_afwijking,
             }
         else:
             # Subsequent change: decrement the new value
@@ -266,13 +263,11 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
                 new_afwijking = current_afwijking - 1
                 storage["inspectie_changes"][code] = {
                     "original": current_afwijking,
-                    "new": new_afwijking
+                    "new": new_afwijking,
                 }
 
         # Create and store command
-        command = UpdateAfwijkingCommand(
-            code=code, new_afwijking=new_afwijking
-        )
+        command = UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking)
 
         ui.notify(f"Afwijking -1 voor {code} (totaal: {command.new_afwijking})", type="positive")
 
@@ -336,9 +331,9 @@ def inspectie_page() -> None:
 
             # Action buttons
             with ui.row().classes("gap-2"):
-                ui.button(
-                    filter_label, icon=filter_icon, on_click=toggle_filter
-                ).props("outline").tooltip("Wissel tussen komende 2 weken en alle records")
+                ui.button(filter_label, icon=filter_icon, on_click=toggle_filter).props(
+                    "outline"
+                ).tooltip("Wissel tussen komende 2 weken en alle records")
 
                 ui.button(
                     icon="edit_note", on_click=lambda: show_pending_changes_dialog(changes_state)

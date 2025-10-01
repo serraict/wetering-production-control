@@ -32,10 +32,7 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
 
     # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {
-        "key": "27014",
-        "row": {"afwijking_afleveren": 7}  # Current afwijking is 7
-    }
+    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Current afwijking is 7
 
     # Call handler
     plus_handler(event_data)
@@ -63,10 +60,7 @@ def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
 
     # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {
-        "key": "27014",
-        "row": {"afwijking_afleveren": 7}  # Current afwijking is 7
-    }
+    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Current afwijking is 7
 
     # Call handler
     minus_handler(event_data)
@@ -86,9 +80,7 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
     """Test that multiple clicks accumulate in storage."""
     # Setup mock storage with existing change in new format
     mock_storage = {
-        "inspectie_changes": {
-            "27014": {"original": 7, "new": 9}  # Already has +2 change
-        }
+        "inspectie_changes": {"27014": {"original": 7, "new": 9}}  # Already has +2 change
     }
     mock_get_storage.return_value = mock_storage
 
@@ -99,10 +91,7 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
 
     # Simulate button click events with row data
     event_data = Mock()
-    event_data.args = {
-        "key": "27014",
-        "row": {"afwijking_afleveren": 7}  # Original afwijking is 7
-    }
+    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Original afwijking is 7
 
     # Click +1 (should be 9 + 1 = 10)
     plus_handler(event_data)
@@ -306,6 +295,7 @@ def test_changes_button_shows_count(mock_get_pending_commands):
 
     # Test with 3 pending changes
     from production_control.inspectie.commands import UpdateAfwijkingCommand
+
     mock_get_pending_commands.return_value = [
         UpdateAfwijkingCommand(code="27014", new_afwijking=1),
         UpdateAfwijkingCommand(code="27015", new_afwijking=-1),
@@ -350,10 +340,7 @@ def test_changes_state_updates_on_click(mock_ui, mock_get_storage):
 
     # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {
-        "key": "27014",
-        "row": {"afwijking_afleveren": 7}
-    }
+    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}
 
     # Call handler
     plus_handler(event_data)
@@ -414,10 +401,7 @@ def test_absolute_afwijking_calculation(mock_ui, mock_get_storage):
 
     # Simulate: current afwijking is 7, user clicks +1 twice
     event_data = Mock()
-    event_data.args = {
-        "key": "27014",
-        "row": {"afwijking_afleveren": 7}  # Current afwijking is 7
-    }
+    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Current afwijking is 7
 
     # First click: +1 (should result in 8)
     plus_handler(event_data)
@@ -433,6 +417,7 @@ def test_absolute_afwijking_calculation(mock_ui, mock_get_storage):
 
     # Verify the command contains absolute value 9, not relative +2
     from production_control.web.pages.inspectie import get_pending_commands
+
     commands = get_pending_commands()
     assert len(commands) == 1
     assert commands[0].code == "27014"
