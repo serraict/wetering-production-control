@@ -139,7 +139,9 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                     # Legacy format
                     rows.append({"code": code, "change": f"{change_data:+d}"})
 
-            ui.table(columns=columns, rows=rows, row_key="code").classes("w-full")
+            ui.table(columns=columns, rows=rows, row_key="code").classes(
+                "w-full print-preserve-columns"
+            )
 
             ui.separator().classes("my-4")
 
@@ -321,7 +323,7 @@ def inspectie_page() -> None:
 
     # Get current filter state for UI display
     current_filter = get_filter_state()
-    filter_label = "Komende 2 weken" if current_filter == "next_two_weeks" else "Alle records"
+    filter_label = "3 weken periode" if current_filter == "next_two_weeks" else "Alle records"
     filter_icon = "filter_list" if current_filter == "next_two_weeks" else "view_list"
 
     # Render page
@@ -333,7 +335,9 @@ def inspectie_page() -> None:
             with ui.row().classes("gap-2"):
                 ui.button(filter_label, icon=filter_icon, on_click=toggle_filter).props(
                     "outline"
-                ).tooltip("Wissel tussen komende 2 weken en alle records")
+                ).tooltip(
+                    "Wissel tussen 3 weken periode (1 week terug tot 2 weken vooruit) en alle records"
+                )
 
                 ui.button(
                     icon="edit_note", on_click=lambda: show_pending_changes_dialog(changes_state)

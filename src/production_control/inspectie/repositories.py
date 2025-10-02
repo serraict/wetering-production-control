@@ -55,8 +55,8 @@ class InspectieRepository(DremioRepository[InspectieRonde]):
         # Handle default filter presets
         if default_filter == "next_two_weeks":
             today = date.today()
-            date_from = today
-            date_to = today + timedelta(days=14)
+            date_from = today - timedelta(days=7)  # 1 week before today
+            date_to = today + timedelta(days=14)  # 2 weeks after today
 
         # Apply date range filtering if provided
         if date_from is not None:
