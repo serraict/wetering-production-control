@@ -97,21 +97,40 @@ def add_print_styles(
             min-width: auto !important;
         }}
 
-        /* Hide actions column when printing */
-        .q-table th:last-child,
-        .q-table td:last-child {{
+        /* Ensure tables with print-preserve-columns class show ALL columns */
+        .q-table.print-preserve-columns th,
+        .q-table.print-preserve-columns td {{
+            display: table-cell !important;
+        }}
+
+        /* Hide actions column when printing - but NOT for tables with print-preserve-columns class */
+        .q-table:not(.print-preserve-columns) th:last-child,
+        .q-table:not(.print-preserve-columns) td:last-child {{
             display: none !important;
         }}
 
-        /* Alternative: Target specifically by header text */
-        .q-table th:contains("Acties"),
-        .q-table th:contains("Actions") {{
+        /* Alternative: Target specifically by header text - but NOT for print-preserve-columns tables */
+        .q-table:not(.print-preserve-columns) th:contains("Acties"),
+        .q-table:not(.print-preserve-columns) th:contains("Actions") {{
             display: none !important;
         }}
 
-        /* Hide the corresponding table cells in the actions column */
-        .q-table tr td:nth-last-child(1) {{
+        /* Hide the corresponding table cells in the actions column - but NOT for print-preserve-columns tables */
+        .q-table:not(.print-preserve-columns) tr td:nth-last-child(1) {{
             display: none !important;
+        }}
+
+        /* FINAL OVERRIDE: Ensure dialog tables and preserve-columns tables show all columns */
+        .q-dialog .q-table th,
+        .q-dialog .q-table td,
+        .q-dialog .q-table th:last-child,
+        .q-dialog .q-table td:last-child,
+        .q-dialog .q-table tr td:nth-last-child(1),
+        .q-table.print-preserve-columns th:last-child,
+        .q-table.print-preserve-columns td:last-child,
+        .q-table.print-preserve-columns tr td:nth-last-child(1) {{
+            display: table-cell !important;
+            visibility: visible !important;
         }}
 
         /* Page setup */
