@@ -5,7 +5,8 @@
       "Bash(make:*)",
       "Bash(uv run:*)",
       "Bash(gh run view:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:nicegui.io)"
     ],
     "deny": [],
     "ask": []

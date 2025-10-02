@@ -48,6 +48,7 @@ def server_side_paginated_table(
     title: str = "Items",
     row_key: str = "id",
     row_actions: Dict[str, Dict[str, Any]] = {},
+    enable_fullscreen: bool = False,
 ) -> ui.table:
     """Create a refreshable table component.
 
@@ -57,6 +58,7 @@ def server_side_paginated_table(
         on_request: Callback for handling table requests (pagination/sorting)
         title: Optional table title
         row_actions: Optional dict of row actions, each with 'icon' and 'handler'
+        enable_fullscreen: Whether to enable fullscreen toggle button
 
     Returns:
         A refreshable table component
@@ -88,6 +90,22 @@ def server_side_paginated_table(
 
     for action_key, action in row_actions.items():
         table.on(action_key, action["handler"])
+
+    # Add fullscreen functionality if enabled
+    if enable_fullscreen:
+        with table.add_slot("top-left"):
+
+            def toggle_fullscreen():
+                table.toggle_fullscreen()
+                fullscreen_button.props(
+                    "icon=fullscreen_exit" if table.is_fullscreen else "icon=fullscreen"
+                )
+
+            fullscreen_button = (
+                ui.button("Volledig scherm", icon="fullscreen", on_click=toggle_fullscreen)
+                .props("flat")
+                .tooltip("Schakelen naar volledig scherm")
+            )
 
     table.on("request", on_request)
     return table

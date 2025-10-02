@@ -31,6 +31,13 @@ First deploy done, received feedback from Bianca:
 >
 > Bianca van de Wetering
 
+Second deploy done, feedback:
+
+> Het is fijn dat de afwijkingen er meteen bij staan.
+> Alleen door je selectie van 2 weken pakt hij niet meer de partijen met een ideale rijpdatum voor vandaag, maar die er nog wel staan.
+> Die wil ik ook nog graag kunnen zien. Vandaag is het 40-4, maar een partij die op 40-3 stond, kan ik best verkeerd ingeschat hebben en alsnog naar 40-5 moeten.
+> Kun je dan ook een week ervoor tot 2 weken erna als selectieperiode zetten?
+
 ## Acceptance criteria
 
 ✅ View data with inline edit controls
@@ -105,21 +112,21 @@ Reuse existing components:
 
 ### 🔄 Phase 4: Smart Filtering and Sorting (Test-Driven) - PLANNED
 
-#### Step 4.1: Enhanced Repository Filtering
+#### Step 4.1: ✅ Enhanced Repository Filtering
 
 - **Test**: Add test for date range filtering in `InspectieRepository`
 - **Code**: Extend `get_paginated()` method to accept `date_from` and `date_to` parameters
 - **Code**: Implement filtering logic using `datum_afleveren_plan` field
 - **Test**: Test default "next 2 weeks" filter behavior
 
-#### Step 4.2: Fix Sorting Order
+#### Step 4.2: ✅ Fix Sorting Order
 
 - **Test**: Add test for proper sorting by `min_baan` first, then `datum_afleveren_plan`
 - **Code**: Update `_apply_default_sorting()` method in `InspectieRepository`
 - **Code**: Change sort order to: `min_baan ASC, datum_afleveren_plan ASC, product_naam ASC`
 - **Test**: Verify items with multiple baan numbers (812, 813) appear at correct position
 
-#### Step 4.3: Enhanced UI Controls
+#### Step 4.3: ✅ Enhanced UI Controls
 
 - **Test**: Add test for filter toggle functionality
 - **Code**: Add "Next 2 weeks" / "Show all" toggle button to UI

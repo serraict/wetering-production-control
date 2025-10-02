@@ -351,4 +351,5 @@ def inspectie_page() -> None:
             table_state_key="inspectie_table",
             title="Inspectie Ronde",
             row_actions=row_actions,
+            enable_fullscreen=True,
         )

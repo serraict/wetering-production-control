@@ -19,6 +19,7 @@ def display_model_list_page(
     filter_placeholder: str = "Zoek ...",  # to do: remove this parameter
     custom_filters: Optional[Callable[[ui.row], None]] = None,
     custom_load_data: Optional[Callable[[Any, Any], Callable]] = None,
+    enable_fullscreen: bool = False,
 ) -> None:
     """Display a model list page with standard layout.
 
@@ -31,6 +32,8 @@ def display_model_list_page(
         card_width: The width of the card (default: "max-w-5xl")
         filter_placeholder: Placeholder text for the filter input
         custom_filters: Optional function to add custom filters to the filter row
+        custom_load_data: Optional function for custom data loading
+        enable_fullscreen: Whether to enable fullscreen toggle button
     """
     # Set up table data access
     table_state = ClientStorageTableState.initialize(table_state_key)
@@ -95,6 +98,7 @@ def display_model_list_page(
             state=table_state,
             on_request=handle_table_request,
             row_actions=row_actions,
+            enable_fullscreen=enable_fullscreen,
         )
 
     # load initial data
