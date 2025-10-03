@@ -334,8 +334,9 @@ def test_changes_state_updates_on_click(mock_ui, mock_get_storage):
             self.count = len(mock_storage.get("inspectie_changes", {}))
 
         @property
-        def label(self) -> str:
-            return f"Wijzigingen ({self.count})" if self.count > 0 else "Wijzigingen"
+        def badge(self) -> str:
+            """Return badge text showing count."""
+            return str(self.count) if self.count > 0 else ""
 
     changes_state = MockChangesState()
 
@@ -373,8 +374,9 @@ def test_clear_all_changes_updates_state(mock_ui, mock_clear_commands):
             self.count = 0  # Simulate clearing all changes
 
         @property
-        def label(self) -> str:
-            return f"Wijzigingen ({self.count})" if self.count > 0 else "Wijzigingen"
+        def badge(self) -> str:
+            """Return badge text showing count."""
+            return str(self.count) if self.count > 0 else ""
 
     changes_state = MockChangesState()
 
@@ -388,7 +390,7 @@ def test_clear_all_changes_updates_state(mock_ui, mock_clear_commands):
     # Verify that changes_state.update() was called
     assert changes_state.update_called
     assert changes_state.count == 0
-    assert changes_state.label == "Wijzigingen"
+    assert changes_state.badge == ""
 
 
 @patch("production_control.web.pages.inspectie.get_storage")

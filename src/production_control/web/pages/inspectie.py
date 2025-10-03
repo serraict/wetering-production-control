@@ -339,8 +339,9 @@ def inspectie_page() -> None:
             self.count = len(get_pending_commands())
 
         @property
-        def label(self) -> str:
-            return f"Wijzigingen ({self.count})" if self.count > 0 else "Wijzigingen"
+        def badge(self) -> str:
+            """Return badge text showing count."""
+            return str(self.count) if self.count > 0 else ""
 
     changes_state = ChangesState()
 
@@ -357,13 +358,21 @@ def inspectie_page() -> None:
 
     # Get current filter state for UI display
     current_filter = get_filter_state()
-    filter_label = "3 weken periode" if current_filter == "next_two_weeks" else "Alle records"
     filter_icon = "filter_list" if current_filter == "next_two_weeks" else "view_list"
+    filter_tooltip = (
+        "3 weken periode - klik om alle records te tonen"
+        if current_filter == "next_two_weeks"
+        else "Alle records - klik om 3 weken periode te tonen"
+    )
 
     # Get current compact view state for UI display
     compact_view = get_compact_view_state()
-    view_label = "Compact" if compact_view else "Volledig"
     view_icon = "view_agenda" if compact_view else "view_list"
+    view_tooltip = (
+        "Compacte weergave - klik voor volledige weergave"
+        if compact_view
+        else "Volledige weergave - klik voor compacte weergave"
+    )
 
     # Render page
     with frame("Inspectie Ronde"):
@@ -372,35 +381,36 @@ def inspectie_page() -> None:
 
             # Action buttons
             with ui.row().classes("gap-2"):
-                ui.button(filter_label, icon=filter_icon, on_click=toggle_filter).props(
-                    "outline"
-                ).tooltip(
-                    "Wissel tussen 3 weken periode (1 week terug tot 2 weken vooruit) en alle records"
-                )
+                ui.button(icon=filter_icon, on_click=toggle_filter).props("outline").tooltip(
+                    filter_tooltip
+                ).props("aria-label='Filter weergave'")
 
-                ui.button(
-                    view_label, icon=view_icon, on_click=toggle_compact_view
-                ).props("outline").tooltip(
-                    "Wissel tussen compacte weergave (minder kolommen) en volledige weergave"
-                )
+                ui.button(icon=view_icon, on_click=toggle_compact_view).props("outline").tooltip(
+                    view_tooltip
+                ).props("aria-label='Wissel weergave'")
 
-                ui.button(
+                changes_button = ui.button(
                     icon="edit_note", on_click=lambda: show_pending_changes_dialog(changes_state)
-                ).props("outline").tooltip("Toon openstaande wijzigingen").bind_text_from(
-                    changes_state, "label"
-                )
+                ).props("outline")
+                changes_button.tooltip("Openstaande wijzigingen")
+                # Bind button text to show count
+                changes_button.bind_text_from(changes_state, "badge")
 
-                ui.button(
-                    "Print", icon="print", on_click=lambda: ui.run_javascript("window.print()")
-                ).props("outline").tooltip("Print de pagina")
+                ui.button(icon="print", on_click=lambda: ui.run_javascript("window.print()")).props(
+                    "outline"
+                ).tooltip("Print de pagina").props("aria-label='Print'")
 
         # Define which fields to show in compact view
-        compact_columns = [
-            "product_naam",
-            "datum_afleveren_plan",
-            "afwijking_afleveren",
-            "baan_samenvatting",
-        ] if compact_view else None
+        compact_columns = (
+            [
+                "product_naam",
+                "datum_afleveren_plan",
+                "afwijking_afleveren",
+                "baan_samenvatting",
+            ]
+            if compact_view
+            else None
+        )
 
         display_model_list_page(
             repository=repository,
