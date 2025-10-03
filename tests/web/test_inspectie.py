@@ -12,10 +12,12 @@ def test_inspectie_page_router_exists():
 
 def test_create_afwijking_actions_exists():
     """Test that afwijking actions function exists."""
-    actions = create_afwijking_actions()
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
     assert actions is not None
     assert "plus_one" in actions
     assert "minus_one" in actions
+    assert "view" in actions
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -27,7 +29,8 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
     mock_get_storage.return_value = mock_storage
 
     # Create actions and get +1 handler
-    actions = create_afwijking_actions()
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
     plus_handler = actions["plus_one"]["handler"]
 
     # Simulate button click event with row data
@@ -55,7 +58,8 @@ def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
     mock_get_storage.return_value = mock_storage
 
     # Create actions and get -1 handler
-    actions = create_afwijking_actions()
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
     minus_handler = actions["minus_one"]["handler"]
 
     # Simulate button click event with row data
@@ -85,7 +89,8 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
     mock_get_storage.return_value = mock_storage
 
     # Create actions
-    actions = create_afwijking_actions()
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
     plus_handler = actions["plus_one"]["handler"]
     minus_handler = actions["minus_one"]["handler"]
 
@@ -335,7 +340,8 @@ def test_changes_state_updates_on_click(mock_ui, mock_get_storage):
     changes_state = MockChangesState()
 
     # Create actions with changes state
-    actions = create_afwijking_actions(changes_state)
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository, changes_state)
     plus_handler = actions["plus_one"]["handler"]
 
     # Simulate button click event with row data
@@ -396,7 +402,8 @@ def test_absolute_afwijking_calculation(mock_ui, mock_get_storage):
     mock_get_storage.return_value = mock_storage
 
     # Create actions
-    actions = create_afwijking_actions()
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
     plus_handler = actions["plus_one"]["handler"]
 
     # Simulate: current afwijking is 7, user clicks +1 twice

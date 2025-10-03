@@ -2,7 +2,7 @@
 
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Any, Type, get_args, get_origin
+from typing import Dict, List, Any, Type, Optional, get_args, get_origin
 from sqlmodel import SQLModel
 from pydantic_core._pydantic_core import PydanticUndefinedType
 
@@ -57,7 +57,7 @@ def is_decimal_field(field_type: Any) -> bool:
     return False
 
 
-def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
+def get_table_columns(model_class: Type[SQLModel], columns: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """Generate table columns configuration from a SQLModel class.
 
     Uses model field metadata to configure columns:
@@ -69,11 +69,13 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
 
     Args:
         model_class: The SQLModel class to generate columns for
+        columns: Optional list of field names to show. If provided, only these columns will be shown.
+                If None, all non-hidden fields will be shown.
 
     Returns:
         List of column configurations for use with ui.table
     """
-    columns = []
+    result_columns = []
 
     # Get all model fields - Python 3.7+ dicts maintain insertion order
     for field_name, field in model_class.model_fields.items():
@@ -85,6 +87,10 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
 
         # Skip hidden fields
         if field_info.get("ui_hidden"):
+            continue
+
+        # If specific columns requested, only show those
+        if columns is not None and field_name not in columns:
             continue
 
         # Create column config
@@ -103,11 +109,11 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
             decimals = field_info.get("decimals", 1)  # Default to 1 decimal place
             column[":format"] = f"value => Number(value).toFixed({decimals})"
 
-        columns.append(column)
+        result_columns.append(column)
 
     # Add warning emoji column first if model has warning_emoji property
     if hasattr(model_class, "warning_emoji"):
-        columns.insert(
+        result_columns.insert(
             0,
             {
                 "name": "warning_emoji",
@@ -117,9 +123,9 @@ def get_table_columns(model_class: Type[SQLModel]) -> List[Dict[str, Any]]:
         )
 
     # Add actions column at the end
-    columns.append({"name": "actions", "label": "Acties", "field": "actions"})
+    result_columns.append({"name": "actions", "label": "Acties", "field": "actions"})
 
-    return columns
+    return result_columns
 
 
 def format_row(model: SQLModel) -> Dict[str, Any]:

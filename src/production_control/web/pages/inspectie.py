@@ -9,6 +9,7 @@ from ...inspectie.models import InspectieRonde
 from ...inspectie.commands import UpdateAfwijkingCommand
 from ..components import frame
 from ..components.model_list_page import display_model_list_page
+from ..components.model_detail_page import create_model_view_action
 from ..components.styles import add_print_styles
 
 
@@ -64,6 +65,27 @@ def set_filter_state(filter_state: str) -> None:
     """Set filter state in browser storage."""
     storage = get_storage()
     storage["inspectie_filter"] = filter_state
+
+
+def get_compact_view_state() -> bool:
+    """Get current compact view state from browser storage."""
+    storage = get_storage()
+    return storage.get("inspectie_compact_view", False)
+
+
+def set_compact_view_state(compact_view: bool) -> None:
+    """Set compact view state in browser storage."""
+    storage = get_storage()
+    storage["inspectie_compact_view"] = compact_view
+
+
+def toggle_compact_view() -> None:
+    """Toggle compact view state."""
+    current_state = get_compact_view_state()
+    set_compact_view_state(not current_state)
+
+    # Refresh the page to apply the new view
+    ui.run_javascript("location.reload()")
 
 
 def toggle_filter() -> None:
@@ -176,8 +198,8 @@ def handle_clear_all_changes_and_close(dialog, changes_state=None) -> None:
     dialog.close()
 
 
-def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
-    """Create row actions for +1/-1 buttons."""
+def create_afwijking_actions(repository: InspectieRepository, changes_state=None) -> Dict[str, Any]:
+    """Create row actions for +1/-1 buttons and view details."""
 
     def handle_plus_one(e: Dict[str, Any]) -> None:
         """Handle +1 button click."""
@@ -277,6 +299,13 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
         if changes_state:
             changes_state.update()
 
+    # Create view action for showing all details
+    view_action = create_model_view_action(
+        repository=repository,
+        id_field="code",
+        dialog=True,
+    )
+
     return {
         "plus_one": {
             "icon": "add",
@@ -287,6 +316,11 @@ def create_afwijking_actions(changes_state=None) -> Dict[str, Any]:
             "icon": "remove",
             "tooltip": "Afwijking -1",
             "handler": handle_minus_one,
+        },
+        "view": {
+            "icon": "visibility",
+            "tooltip": "Bekijk details",
+            "handler": view_action["handler"],
         },
     }
 
@@ -310,8 +344,8 @@ def inspectie_page() -> None:
 
     changes_state = ChangesState()
 
-    # Create actions for +1/-1 buttons
-    row_actions = create_afwijking_actions(changes_state)
+    # Create actions for +1/-1 buttons and view details
+    row_actions = create_afwijking_actions(repository, changes_state)
 
     # Add print-friendly styles with border removal
     add_print_styles(
@@ -325,6 +359,11 @@ def inspectie_page() -> None:
     current_filter = get_filter_state()
     filter_label = "3 weken periode" if current_filter == "next_two_weeks" else "Alle records"
     filter_icon = "filter_list" if current_filter == "next_two_weeks" else "view_list"
+
+    # Get current compact view state for UI display
+    compact_view = get_compact_view_state()
+    view_label = "Compact" if compact_view else "Volledig"
+    view_icon = "view_agenda" if compact_view else "view_list"
 
     # Render page
     with frame("Inspectie Ronde"):
@@ -340,6 +379,12 @@ def inspectie_page() -> None:
                 )
 
                 ui.button(
+                    view_label, icon=view_icon, on_click=toggle_compact_view
+                ).props("outline").tooltip(
+                    "Wissel tussen compacte weergave (minder kolommen) en volledige weergave"
+                )
+
+                ui.button(
                     icon="edit_note", on_click=lambda: show_pending_changes_dialog(changes_state)
                 ).props("outline").tooltip("Toon openstaande wijzigingen").bind_text_from(
                     changes_state, "label"
@@ -349,6 +394,14 @@ def inspectie_page() -> None:
                     "Print", icon="print", on_click=lambda: ui.run_javascript("window.print()")
                 ).props("outline").tooltip("Print de pagina")
 
+        # Define which fields to show in compact view
+        compact_columns = [
+            "product_naam",
+            "datum_afleveren_plan",
+            "afwijking_afleveren",
+            "baan_samenvatting",
+        ] if compact_view else None
+
         display_model_list_page(
             repository=repository,
             model_cls=InspectieRonde,
@@ -356,4 +409,5 @@ def inspectie_page() -> None:
             title="Inspectie Ronde",
             row_actions=row_actions,
             enable_fullscreen=True,
+            columns=compact_columns,
         )

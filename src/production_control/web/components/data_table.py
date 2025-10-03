@@ -19,6 +19,7 @@ class ServerSidePaginatingTable(ui.table):
         pagination: Pagination,
         row_key: str = "id",
         title: Optional[str] = None,
+        columns: Optional[List[str]] = None,
     ) -> None:
         """Initialize table with server-side pagination.
 
@@ -28,10 +29,11 @@ class ServerSidePaginatingTable(ui.table):
             pagination: Pagination instance for state management
             row_key: Field to use as row key
             title: Optional table title
+            columns: Optional list of column names to show. If None, shows all non-hidden columns.
         """
-        columns = get_table_columns(model_class)
+        table_columns = get_table_columns(model_class, columns=columns)
         super().__init__(
-            columns=columns,
+            columns=table_columns,
             rows=rows,
             row_key=row_key,
             title=title,
@@ -49,6 +51,7 @@ def server_side_paginated_table(
     row_key: str = "id",
     row_actions: Dict[str, Dict[str, Any]] = {},
     enable_fullscreen: bool = False,
+    columns: Optional[List[str]] = None,
 ) -> ui.table:
     """Create a refreshable table component.
 
@@ -59,6 +62,7 @@ def server_side_paginated_table(
         title: Optional table title
         row_actions: Optional dict of row actions, each with 'icon' and 'handler'
         enable_fullscreen: Whether to enable fullscreen toggle button
+        columns: Optional list of column names to show. If None, shows all non-hidden columns.
 
     Returns:
         A refreshable table component
@@ -69,6 +73,7 @@ def server_side_paginated_table(
         row_key=row_key,
         title=title,
         pagination=state.pagination,
+        columns=columns,
     )
 
     btns = [

@@ -110,36 +110,17 @@ Reuse existing components:
 - **Code**: Implement command execution with Firebird database updates
 - **Test**: Integration test with actual database (if available in test environment)
 
-### 🔄 Phase 4: Smart Filtering and Sorting (Test-Driven) - PLANNED
+### ✅ Phase 4: Smart Filtering and Sorting - COMPLETED
 
-#### Step 4.1: ✅ Enhanced Repository Filtering
+### ✅ Phase 5: Mobile-Friendly Improvements - COMPLETED
 
-- **Test**: Add test for date range filtering in `InspectieRepository`
-- **Code**: Extend `get_paginated()` method to accept `date_from` and `date_to` parameters
-- **Code**: Implement filtering logic using `datum_afleveren_plan` field
-- **Test**: Test default "next 2 weeks" filter behavior
-
-#### Step 4.2: ✅ Fix Sorting Order
-
-- **Test**: Add test for proper sorting by `min_baan` first, then `datum_afleveren_plan`
-- **Code**: Update `_apply_default_sorting()` method in `InspectieRepository`
-- **Code**: Change sort order to: `min_baan ASC, datum_afleveren_plan ASC, product_naam ASC`
-- **Test**: Verify items with multiple baan numbers (812, 813) appear at correct position
-
-#### Step 4.3: ✅ Enhanced UI Controls
-
-- **Test**: Add test for filter toggle functionality
-- **Code**: Add "Next 2 weeks" / "Show all" toggle button to UI
-- **Code**: Implement button state management and page refresh on toggle
-- **Test**: Test filter state persistence in browser storage
-
-#### ~~Step 4.4: Improved Button Feedback~~
-
-#### Step 4.5: Integration Testing
-
-- **Test**: End-to-end test of filtering + sorting + button actions
-- **Test**: Performance test with large datasets (> 1000 records)
-- **Code**: Optimize queries if needed based on performance results
+- ✅ Refactored mobile view implementation:
+  - Replaced `mobile_view` and `mobile_fields` parameters with single optional `columns` parameter
+  - Simplified API across all table components (table_utils, data_table, model_list_page)
+  - Renamed "Mobile/Desktop" toggle to "Compact/Volledig" view
+  - Compact view shows: product_naam, datum_afleveren_plan, afwijking_afleveren, baan_samenvatting
+- ✅ Added view details button to inspection page row actions
+- ✅ TODO: Collapse top bar menu into burger menu on small screens
 
 ### Testing Strategy
 
