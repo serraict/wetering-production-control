@@ -6,7 +6,8 @@
       "Bash(uv run:*)",
       "Bash(gh run view:*)",
       "Bash(git log:*)",
-      "WebFetch(domain:nicegui.io)"
+      "WebFetch(domain:nicegui.io)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []

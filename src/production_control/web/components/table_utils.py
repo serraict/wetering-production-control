@@ -57,7 +57,9 @@ def is_decimal_field(field_type: Any) -> bool:
     return False
 
 
-def get_table_columns(model_class: Type[SQLModel], columns: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+def get_table_columns(
+    model_class: Type[SQLModel], columns: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
     """Generate table columns configuration from a SQLModel class.
 
     Uses model field metadata to configure columns:

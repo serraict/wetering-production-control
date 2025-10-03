@@ -1,7 +1,6 @@
 """Navigation menu component."""
 
 from nicegui import ui
-from .styles import MENU_LINK_CLASSES
 
 
 def menu() -> None:

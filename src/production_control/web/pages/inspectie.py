@@ -425,7 +425,9 @@ def inspectie_page() -> None:
                         with ui.card().classes("w-full sm:w-80"):
                             with ui.row().classes("w-full justify-between items-center"):
                                 ui.label(item.get("product_naam", "")).classes("text-lg font-bold")
-                                ui.label(item.get("datum_afleveren_plan", "")).classes("text-sm text-gray-600")
+                                ui.label(item.get("datum_afleveren_plan", "")).classes(
+                                    "text-sm text-gray-600"
+                                )
 
                             with ui.row().classes("w-full gap-2 mt-2"):
                                 ui.label("Baan:").classes("text-sm font-semibold")
@@ -437,17 +439,28 @@ def inspectie_page() -> None:
 
                             # Action buttons
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):
-                                ui.button(icon="add", on_click=lambda e, code=item.get("id"): row_actions["plus_one"]["handler"](
-                                    type('Event', (), {'args': {'key': code, 'row': item}})()
-                                )).props("dense flat color=primary").tooltip("+1")
+                                ui.button(
+                                    icon="add",
+                                    on_click=lambda e, code=item.get("id"): row_actions["plus_one"][
+                                        "handler"
+                                    ](type("Event", (), {"args": {"key": code, "row": item}})()),
+                                ).props("dense flat color=primary").tooltip("+1")
 
-                                ui.button(icon="remove", on_click=lambda e, code=item.get("id"): row_actions["minus_one"]["handler"](
-                                    type('Event', (), {'args': {'key': code, 'row': item}})()
-                                )).props("dense flat color=primary").tooltip("-1")
+                                ui.button(
+                                    icon="remove",
+                                    on_click=lambda e, code=item.get("id"): row_actions[
+                                        "minus_one"
+                                    ]["handler"](
+                                        type("Event", (), {"args": {"key": code, "row": item}})()
+                                    ),
+                                ).props("dense flat color=primary").tooltip("-1")
 
-                                ui.button(icon="visibility", on_click=lambda e, code=item.get("id"): row_actions["view"]["handler"](
-                                    type('Event', (), {'args': {'key': code, 'row': item}})()
-                                )).props("dense flat color=primary").tooltip("Details")
+                                ui.button(
+                                    icon="visibility",
+                                    on_click=lambda e, code=item.get("id"): row_actions["view"][
+                                        "handler"
+                                    ](type("Event", (), {"args": {"key": code, "row": item}})()),
+                                ).props("dense flat color=primary").tooltip("Details")
 
             @ui.refreshable
             def render_pagination():
@@ -456,7 +469,9 @@ def inspectie_page() -> None:
                 if rows_per_page == 0:
                     total_pages = 1  # All rows on one page
                 else:
-                    total_pages = (table_state.pagination.total_rows + rows_per_page - 1) // rows_per_page
+                    total_pages = (
+                        table_state.pagination.total_rows + rows_per_page - 1
+                    ) // rows_per_page
 
                 # Show pagination controls
                 with ui.row().classes("w-full justify-between items-center mt-4"):
@@ -468,18 +483,18 @@ def inspectie_page() -> None:
                             10: "10",
                             25: "25",
                             50: "50",
-                            0: f"Alle ({table_state.pagination.total_rows})"
+                            0: f"Alle ({table_state.pagination.total_rows})",
                         }
                         ui.select(
                             options=options_dict,
                             value=table_state.pagination.rows_per_page,
                             on_change=lambda e: (
-                                setattr(table_state.pagination, 'rows_per_page', e.value),
-                                setattr(table_state.pagination, 'page', 1),
-                                load_data()
-                            )
+                                setattr(table_state.pagination, "rows_per_page", e.value),
+                                setattr(table_state.pagination, "page", 1),
+                                load_data(),
+                            ),
                         ).props("dense options-dense").classes("w-32").bind_value(
-                            table_state.pagination, 'rows_per_page'
+                            table_state.pagination, "rows_per_page"
                         )
 
                     # Page navigation on right (only if more than one page)
@@ -489,30 +504,37 @@ def inspectie_page() -> None:
                             ui.button(
                                 icon="chevron_left",
                                 on_click=lambda: (
-                                    setattr(table_state.pagination, 'page', table_state.pagination.page - 1),
-                                    load_data()
-                                )
+                                    setattr(
+                                        table_state.pagination,
+                                        "page",
+                                        table_state.pagination.page - 1,
+                                    ),
+                                    load_data(),
+                                ),
                             ).props("flat round").bind_enabled_from(
-                                table_state.pagination, 'page',
-                                backward=lambda p: p > 1
+                                table_state.pagination, "page", backward=lambda p: p > 1
                             )
 
                             # Page info
                             ui.label().bind_text_from(
-                                table_state.pagination, 'page',
-                                backward=lambda p: f"Pagina {p} van {total_pages}"
+                                table_state.pagination,
+                                "page",
+                                backward=lambda p: f"Pagina {p} van {total_pages}",
                             )
 
                             # Next button
                             ui.button(
                                 icon="chevron_right",
                                 on_click=lambda: (
-                                    setattr(table_state.pagination, 'page', table_state.pagination.page + 1),
-                                    load_data()
-                                )
+                                    setattr(
+                                        table_state.pagination,
+                                        "page",
+                                        table_state.pagination.page + 1,
+                                    ),
+                                    load_data(),
+                                ),
                             ).props("flat round").bind_enabled_from(
-                                table_state.pagination, 'page',
-                                backward=lambda p: p < total_pages
+                                table_state.pagination, "page", backward=lambda p: p < total_pages
                             )
 
             render_cards()
