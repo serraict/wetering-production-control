@@ -6,10 +6,12 @@ from .styles import MENU_LINK_CLASSES
 
 def menu() -> None:
     """Render the navigation menu."""
-    with ui.row().classes("gap-6"):
-        ui.link("Producten", "/products").classes(MENU_LINK_CLASSES)
-        ui.link("Wijderzetten", "/spacing").classes(MENU_LINK_CLASSES)
-        ui.link("Inspectie Ronde", "/inspectie").classes(MENU_LINK_CLASSES)
-        ui.link("Bollen Picklist", "/bulb-picking").classes(MENU_LINK_CLASSES)
-        ui.link("Oppotlijst", "/potting-lots").classes(MENU_LINK_CLASSES)
-        ui.link("About", "/about").classes(MENU_LINK_CLASSES)
+    with ui.element():
+        with ui.button(icon="menu").props("flat").classes("text-white"):
+            with ui.menu():
+                ui.menu_item("Producten", lambda: ui.navigate.to("/products"))
+                ui.menu_item("Wijderzetten", lambda: ui.navigate.to("/spacing"))
+                ui.menu_item("Inspectie Ronde", lambda: ui.navigate.to("/inspectie"))
+                ui.menu_item("Bollen Picklist", lambda: ui.navigate.to("/bulb-picking"))
+                ui.menu_item("Oppotlijst", lambda: ui.navigate.to("/potting-lots"))
+                ui.menu_item("About", lambda: ui.navigate.to("/about"))
