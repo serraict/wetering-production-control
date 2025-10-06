@@ -28,44 +28,39 @@ def frame(navigation_title: str):
     )
 
     with ui.header().classes("w-full px-6 py-2 bg-primary flex justify-between items-center"):
-        # Left section: App logo and navigation
+        # Left section: Navigation menu
         with ui.row().classes("items-center gap-8"):
-            # Logo that navigates home on click
-            with (
-                ui.element("a")
-                .classes("flex items-center gap-1 no-underline cursor-pointer")
-                .on("click", lambda: ui.navigate.to("/"))
-            ):
-                # Data pipeline icon
-                ui.icon("account_tree", color="white").classes("text-xl")
-                # Leaf icon overlapping slightly
-                ui.icon("eco", color="white").classes("text-lg -ml-1")
             menu()
 
-        # Right section: User name and page title
+        # Center section: Page title
+        ui.label(navigation_title).classes("text-lg text-white/90")
+
+        # Right section: User menu
         with ui.row().classes("items-center gap-4"):
-            # User display
+            # User menu with icon
             user = get_current_user()
             user_name = user["name"]
             user_roles = user["roles"]
             profile_page = user["profile_page"]
 
-            # Create tooltip text with groups/roles
-            if user_roles:
-                tooltip_text = f"Roles: {', '.join(user_roles)}"
-            else:
-                tooltip_text = "No roles assigned"
+            # User icon with dropdown menu
+            with ui.button(icon="account_circle").props("flat").classes("text-white"):
+                with ui.menu():
+                    # User name at top (as link if profile page exists)
+                    if profile_page:
+                        ui.menu_item(user_name, lambda: ui.navigate.to(profile_page))
+                    else:
+                        ui.menu_item(user_name, auto_close=False)
 
-            # Display user name as link or label
-            if profile_page:
-                ui.link(user_name, profile_page).classes(
-                    "text-lg text-white/90 no-underline"
-                ).tooltip(tooltip_text)
-            else:
-                ui.label(user_name).classes("text-lg text-white/90").tooltip(tooltip_text)
+                    # Separator
+                    ui.separator()
 
-            # Page title
-            ui.label(navigation_title).classes("text-lg text-white/90")
+                    # Display roles
+                    if user_roles:
+                        for role in user_roles:
+                            ui.menu_item(f"Role: {role}", auto_close=False)
+                    else:
+                        ui.menu_item("No roles assigned", auto_close=False)
 
     # Main content with error handling
     with ui.element("main").classes("w-full flex-grow"):

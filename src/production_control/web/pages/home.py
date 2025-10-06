@@ -32,14 +32,35 @@ def index_page() -> None:
                 ui.label("A Serra Vine application.").classes(SUBHEADER_CLASSES)
 
                 # Navigation cards
-                with ui.row().classes("w-full gap-4 justify-center mt-4"):
+                with ui.row().classes("w-full gap-4 justify-center mt-4 flex-wrap"):
 
                     with ui.card().classes(NAV_CARD_CLASSES):
-                        ui.label("About").classes(HEADER_CLASSES + " mb-2")
-                        ui.label("Learn more about Production Control").classes(
+                        ui.label("Bollen Picklist").classes(HEADER_CLASSES + " mb-2")
+                        ui.label(
+                            "Beheer bollen picklijsten voor het verzamelen van bollen"
+                        ).classes(SUBHEADER_CLASSES + " mb-4")
+                        ui.link("Ga naar Bollen Picklist", "/bulb-picking").classes(LINK_CLASSES)
+
+                    with ui.card().classes(NAV_CARD_CLASSES):
+                        ui.label("Oppotlijst").classes(HEADER_CLASSES + " mb-2")
+                        ui.label("Beheer oppotlijsten en activeer partijen voor productie").classes(
                             SUBHEADER_CLASSES + " mb-4"
                         )
-                        ui.link("About", "/about").classes(LINK_CLASSES)
+                        ui.link("Ga naar Oppotlijst", "/potting-lots").classes(LINK_CLASSES)
+
+                    with ui.card().classes(NAV_CARD_CLASSES):
+                        ui.label("Wijderzetten").classes(HEADER_CLASSES + " mb-2")
+                        ui.label("Registreer en corrigeer wijderzet handelingen").classes(
+                            SUBHEADER_CLASSES + " mb-4"
+                        )
+                        ui.link("Ga naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
+
+                    with ui.card().classes(NAV_CARD_CLASSES):
+                        ui.label("Inspectie Ronde").classes(HEADER_CLASSES + " mb-2")
+                        ui.label("Voer inspectierondes uit en registreer afwijkingen").classes(
+                            SUBHEADER_CLASSES + " mb-4"
+                        )
+                        ui.link("Ga naar Inspectie Ronde", "/inspectie").classes(LINK_CLASSES)
 
 
 @root_router.page("/about")
