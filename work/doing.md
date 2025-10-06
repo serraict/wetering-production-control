@@ -54,13 +54,9 @@ Second deploy done, feedback:
 - ✅ The buttons +1 and -1 are implemented and show user feedback
 - ✅ Create modification command for each record that was edited (ready for implementation)
 
-🔄 Smart filtering and sorting - NEXT**
+✅ Smart filtering and sorting
 
-- ⏳ Add date range filtering with "next 2 weeks" default and "show all" toggle
-- ⏳ Fix sorting order to prioritize min_baan field (addresses position 2 vs 7 issue)
-- ⏳ Ensure items with multiple baan numbers appear at correct position based on min_baan
-
-🔄 Persist the data - IN PROGRESS
+🔄 Persist the data - moved to the backlog
 
 - ⏳ For each command, update the backing database (note this is not Dremio, but the Olsthoorn Firebird database)
 
