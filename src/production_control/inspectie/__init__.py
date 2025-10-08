@@ -1,1 +1,1 @@
-"""Inspectie ronde module."""
+"""Inspectieronde module."""

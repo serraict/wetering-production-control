@@ -226,11 +226,11 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                 ).props("outline")
 
                 ui.button(
-                    "Opslaan in database",
+                    "Alles opslaan",
                     icon="save",
                     color="positive",
                     on_click=lambda: handle_commit_changes(dialog, changes_state),
-                ).props("unelevated")
+                ).props("outline")
 
         # Close button
         with ui.row().classes("w-full justify-end mt-4"):
@@ -396,16 +396,23 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
 
 @router.page("/")
 def inspectie_page() -> None:
-    """Render the inspectie ronde overview page."""
+    """Render the inspectieronde overview page."""
     repository = create_enhanced_repository()
 
     # Create reactive state for changes count
     class ChangesState:
         def __init__(self):
             self.count = len(get_pending_commands())
+            self.refresh_callback = None
 
         def update(self):
             self.count = len(get_pending_commands())
+            if self.refresh_callback:
+                self.refresh_callback()
+
+        def set_refresh_callback(self, callback):
+            """Set a callback to be called when state is updated."""
+            self.refresh_callback = callback
 
         @property
         def badge(self) -> str:
@@ -444,9 +451,9 @@ def inspectie_page() -> None:
     )
 
     # Render page
-    with frame("Inspectie Ronde"):
+    with frame("Inspectieronde"):
         with ui.row().classes("w-full justify-between items-center mb-4"):
-            ui.label("Inspectie Ronde").classes("text-h4")
+            ui.label("Inspectieronde").classes("text-h4")
 
             # Action buttons
             with ui.row().classes("gap-2"):
@@ -489,9 +496,20 @@ def inspectie_page() -> None:
 
             @ui.refreshable
             def render_cards():
+                storage = get_storage()
+                changes = storage.get("inspectie_changes", {})
+
                 with ui.row().classes("w-full gap-4 flex-wrap"):
                     for item in table_state.rows:
-                        with ui.card().classes("w-full sm:w-80"):
+                        code = item.get("id")
+                        has_pending_change = code in changes
+                        card_classes = "w-full sm:w-80"
+                        if has_pending_change:
+                            card_classes += " border-l-4"
+
+                        with ui.card().classes(card_classes).style(
+                            "border-left-color: #f39c21" if has_pending_change else None
+                        ):
                             with ui.row().classes("w-full justify-between items-center"):
                                 ui.label(item.get("product_naam", "")).classes("text-lg font-bold")
                                 ui.label(item.get("datum_afleveren_plan", "")).classes(
@@ -504,20 +522,34 @@ def inspectie_page() -> None:
 
                             with ui.row().classes("w-full gap-2"):
                                 ui.label("Afwijking:").classes("text-sm font-semibold")
-                                ui.label(str(item.get("afwijking_afleveren", 0))).classes("text-sm")
+                                current_afwijking = item.get("afwijking_afleveren") or 0
+
+                                if has_pending_change:
+                                    change_data = changes[code]
+                                    if isinstance(change_data, dict):
+                                        new_value = change_data["new"]
+                                        ui.label(f"{current_afwijking} → {new_value}").classes(
+                                            "text-base font-bold text-accent"
+                                        )
+                                    else:
+                                        ui.label(f"{current_afwijking} ({change_data:+d})").classes(
+                                            "text-base font-bold text-accent"
+                                        )
+                                else:
+                                    ui.label(str(current_afwijking)).classes("text-sm")
 
                             # Action buttons
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                                 ui.button(
                                     icon="add",
-                                    on_click=lambda e, code=item.get("id"): row_actions["plus_one"][
+                                    on_click=lambda _e, code=item.get("id"): row_actions["plus_one"][
                                         "handler"
                                     ](type("Event", (), {"args": {"key": code, "row": item}})()),
                                 ).props("dense flat color=primary").tooltip("+1")
 
                                 ui.button(
                                     icon="remove",
-                                    on_click=lambda e, code=item.get("id"): row_actions[
+                                    on_click=lambda _e, code=item.get("id"): row_actions[
                                         "minus_one"
                                     ]["handler"](
                                         type("Event", (), {"args": {"key": code, "row": item}})()
@@ -526,7 +558,7 @@ def inspectie_page() -> None:
 
                                 ui.button(
                                     icon="visibility",
-                                    on_click=lambda e, code=item.get("id"): row_actions["view"][
+                                    on_click=lambda _e, code=item.get("id"): row_actions["view"][
                                         "handler"
                                     ](type("Event", (), {"args": {"key": code, "row": item}})()),
                                 ).props("dense flat color=primary").tooltip("Details")
@@ -606,6 +638,9 @@ def inspectie_page() -> None:
                                 table_state.pagination, "page", backward=lambda p: p < total_pages
                             )
 
+            # Set up refresh callback so changes trigger card refresh
+            changes_state.set_refresh_callback(render_cards.refresh)
+
             render_cards()
             render_pagination()
             load_data()
@@ -615,7 +650,7 @@ def inspectie_page() -> None:
                 repository=repository,
                 model_cls=InspectieRonde,
                 table_state_key="inspectie_table",
-                title="Inspectie Ronde",
+                title="Inspectieronde",
                 row_actions=row_actions,
                 enable_fullscreen=True,
                 columns=None,

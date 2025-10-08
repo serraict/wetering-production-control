@@ -12,7 +12,7 @@ def menu() -> None:
                 ui.menu_item("Bollen Picklist", lambda: ui.navigate.to("/bulb-picking"))
                 ui.menu_item("Oppotlijst", lambda: ui.navigate.to("/potting-lots"))
                 ui.menu_item("Wijderzetten", lambda: ui.navigate.to("/spacing"))
-                ui.menu_item("Inspectie Ronde", lambda: ui.navigate.to("/inspectie"))
+                ui.menu_item("Inspectieronde", lambda: ui.navigate.to("/inspectie"))
                 with ui.menu_item("Info", auto_close=False):
                     with ui.item_section().props("side"):
                         ui.icon("keyboard_arrow_right")

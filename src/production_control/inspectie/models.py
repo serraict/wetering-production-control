@@ -1,4 +1,4 @@
-"""Inspectie ronde data models."""
+"""Inspectieronde data models."""
 
 from datetime import date
 from typing import Optional
@@ -16,7 +16,7 @@ class InspectieRonde(SQLModel, table=True):
     code: str = Field(
         primary_key=True,
         title="Code",
-        description="Code van de inspectie ronde",
+        description="Code van de inspectieronde",
         sa_column_kwargs={"info": {"ui_sortable": True}},
     )
 

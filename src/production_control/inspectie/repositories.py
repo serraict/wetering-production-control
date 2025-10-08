@@ -12,7 +12,7 @@ from .models import InspectieRonde
 
 
 class InspectieRepository(DremioRepository[InspectieRonde]):
-    """Repository for accessing inspectie ronde data from Dremio."""
+    """Repository for accessing inspectieronde data from Dremio."""
 
     # Fields to search when filtering inspectie records
     search_fields = ["code", "product_naam", "product_groep_naam", "klant_code"]

@@ -56,11 +56,11 @@ def index_page() -> None:
                         ui.link("Ga naar Wijderzetten", "/spacing").classes(LINK_CLASSES)
 
                     with ui.card().classes(NAV_CARD_CLASSES):
-                        ui.label("Inspectie Ronde").classes(HEADER_CLASSES + " mb-2")
+                        ui.label("Inspectieronde").classes(HEADER_CLASSES + " mb-2")
                         ui.label("Voer inspectierondes uit en registreer afwijkingen").classes(
                             SUBHEADER_CLASSES + " mb-4"
                         )
-                        ui.link("Ga naar Inspectie Ronde", "/inspectie").classes(LINK_CLASSES)
+                        ui.link("Ga naar Inspectieronde", "/inspectie").classes(LINK_CLASSES)
 
 
 @root_router.page("/about")
