@@ -38,3 +38,4 @@ test-output/
 .env
 .env.local
 .nicegui/**
+scripts/firebird/02_seed_data.sql

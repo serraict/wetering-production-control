@@ -2,7 +2,7 @@ services:
   production_control:
     image: ghcr.io/serraict/wetering-production-control:latest
     ports:
-      - "7901:8080"
+      - "7901:7901"
     env_file:
       - .env
     networks:
