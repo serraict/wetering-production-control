@@ -6,8 +6,7 @@ This backlog describes the product increments we have to build to realize our pr
 
 ### Goal: use the app in the greenhouse
 
-- persist record inspection changes in the firebird database, so that Bianca does not have to enter them twice
-- something with scanning the corp labels
+- something with scanning the crop labels
 
 ## Later
 

@@ -17,6 +17,7 @@ dependencies = [
     "jinja2",
     "asyncua",
     "nicegui-scanner>=0.4.0",
+    "fdb>=2.0.2",
 ]
 dynamic = ["version"]
 # license.file = "LICENCE"

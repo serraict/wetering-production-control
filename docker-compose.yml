@@ -8,9 +8,27 @@ services:
     networks:
       - serra-vine
 
+  firebird:
+    image: wmakley/firebird-2.5-cs
+    environment:
+      ISC_PASSWORD: masterkey
+      FIREBIRD_DATABASE: production.fdb
+      FIREBIRD_USER: SYSDBA
+    ports:
+      - "3050:3050"
+    volumes:
+      - firebird_data:/firebird/data
+      - ./scripts/firebird:/docker-entrypoint-initdb.d
+    networks:
+      - serra-vine
+
 networks:
   serra-vine:
     external: true
 
-# After starting, the service will be available at:
+volumes:
+  firebird_data:
+
+# After starting, the services will be available at:
 # - Web UI: http://localhost:7901
+# - Firebird DB: localhost:3050 (user: SYSDBA, password: masterkey, database: production.fdb)

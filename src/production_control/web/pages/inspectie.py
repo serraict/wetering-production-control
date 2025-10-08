@@ -1,6 +1,7 @@
 """Inspectie page implementation."""
 
 from typing import Dict, Any, List
+import httpx
 
 from nicegui import APIRouter, ui, app
 
@@ -53,6 +54,51 @@ def clear_pending_commands() -> None:
     storage = get_storage()
     if "inspectie_changes" in storage:
         del storage["inspectie_changes"]
+
+
+async def commit_pending_commands() -> Dict[str, Any]:
+    """Commit all pending commands to Firebird database.
+
+    Returns:
+        Dict with success status and message
+    """
+    commands = get_pending_commands()
+
+    if not commands:
+        return {"success": False, "message": "Geen openstaande wijzigingen"}
+
+    errors = []
+    success_count = 0
+
+    # Use relative URL to work with any port/host
+    api_url = "/api/firebird/update-afwijking"
+
+    async with httpx.AsyncClient(base_url="http://localhost:7901") as client:
+        for command in commands:
+            try:
+                response = await client.post(
+                    api_url,
+                    json={"code": command.code, "new_afwijking": command.new_afwijking},
+                    timeout=10.0,
+                )
+
+                if response.status_code == 200:
+                    success_count += 1
+                else:
+                    errors.append(f"{command.code}: {response.text}")
+            except Exception as e:
+                errors.append(f"{command.code}: {str(e)}")
+
+    if errors:
+        return {
+            "success": False,
+            "message": f"{success_count} succesvol, {len(errors)} fouten: {'; '.join(errors[:3])}",
+        }
+    else:
+        # Clear commands on success
+        clear_pending_commands()
+        return {"success": True, "message": f"{success_count} wijzigingen opgeslagen in database"}
+
 
 
 def get_filter_state() -> str:
@@ -176,6 +222,13 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                     on_click=lambda: handle_clear_all_changes_and_close(dialog, changes_state),
                 ).props("outline")
 
+                ui.button(
+                    "Opslaan in database",
+                    icon="save",
+                    color="positive",
+                    on_click=lambda: handle_commit_changes(dialog, changes_state),
+                ).props("unelevated")
+
         # Close button
         with ui.row().classes("w-full justify-end mt-4"):
             ui.button("Sluiten", on_click=dialog.close).props("flat")
@@ -196,6 +249,19 @@ def handle_clear_all_changes_and_close(dialog, changes_state=None) -> None:
     """Handle clearing all changes and closing the dialog."""
     handle_clear_all_changes(changes_state)
     dialog.close()
+
+
+async def handle_commit_changes(dialog, changes_state=None) -> None:
+    """Handle committing all changes to Firebird database."""
+    result = await commit_pending_commands()
+
+    if result["success"]:
+        ui.notify(result["message"], type="positive")
+        if changes_state:
+            changes_state.update()
+        dialog.close()
+    else:
+        ui.notify(result["message"], type="negative")
 
 
 def create_afwijking_actions(repository: InspectieRepository, changes_state=None) -> Dict[str, Any]:
