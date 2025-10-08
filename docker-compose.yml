@@ -28,7 +28,3 @@ networks:
 
 volumes:
   firebird_data:
-
-# After starting, the services will be available at:
-# - Web UI: http://localhost:7901
-# - Firebird DB: localhost:3050 (user: SYSDBA, password: masterkey, database: production.fdb)
