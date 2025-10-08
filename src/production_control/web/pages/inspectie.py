@@ -1,5 +1,6 @@
 """Inspectie page implementation."""
 
+import os
 from typing import Dict, Any, List
 import httpx
 
@@ -70,10 +71,13 @@ async def commit_pending_commands() -> Dict[str, Any]:
     errors = []
     success_count = 0
 
-    # Use relative URL to work with any port/host
+    # Use the NiceGUI app's base URL (same server as the web interface)
+    # This works for both development and production without configuration
+    port = int(os.getenv("NICEGUI_PORT", "8080"))
+    api_base_url = f"http://localhost:{port}"
     api_url = "/api/firebird/update-afwijking"
 
-    async with httpx.AsyncClient(base_url="http://localhost:7901") as client:
+    async with httpx.AsyncClient(base_url=api_base_url) as client:
         for command in commands:
             try:
                 response = await client.post(
@@ -98,7 +102,6 @@ async def commit_pending_commands() -> Dict[str, Any]:
         # Clear commands on success
         clear_pending_commands()
         return {"success": True, "message": f"{success_count} wijzigingen opgeslagen in database"}
-
 
 
 def get_filter_state() -> str:

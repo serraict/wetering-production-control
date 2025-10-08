@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     shared-mime-info \
     libgirepository1.0-dev \
     libglib2.0-0 \
+    # Firebird client libraries
+    libfbclient2 \
     # Additional common dependencies that might be needed
     pkg-config \
     && apt-get clean \

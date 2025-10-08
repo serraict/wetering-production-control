@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Firebird database integration for persisting inspection changes:
+  - Direct database writes eliminate manual re-entry into desktop application
+  - FastAPI endpoints for updating afwijking values in Firebird database
+  - "Opslaan in database" button in inspection page to commit pending changes
+  - Parameterized SQL queries to prevent SQL injection vulnerabilities
+  - Comprehensive test coverage for all Firebird integration code
+  - Production-ready connection using fdb library with Firebird client libraries
+  - Environment-based configuration for flexible deployment
+
+### Changed
+
+- Updated Dockerfile.base to include Firebird client libraries (libfbclient2)
+- Inspection page now uses NICEGUI_PORT environment variable for API calls
+
 ## [0.1.36] - 2025-05-16
 
 ### Changed

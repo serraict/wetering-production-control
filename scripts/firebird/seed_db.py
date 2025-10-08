@@ -74,12 +74,14 @@ def seed_database():
                     values.append(f"'{escaped}'")
                 elif isinstance(val, (int, float)):
                     values.append(str(val))
-                elif hasattr(val, 'strftime'):  # Date/datetime
+                elif hasattr(val, "strftime"):  # Date/datetime
                     values.append(f"'{val.strftime('%Y-%m-%d')}'")
                 else:
                     values.append(f"'{val}'")
 
-            insert_sql = f"INSERT INTO TEELTPL ({', '.join(columns)}) VALUES ({', '.join(values)});\n"
+            insert_sql = (
+                f"INSERT INTO TEELTPL ({', '.join(columns)}) VALUES ({', '.join(values)});\n"
+            )
             f.write(insert_sql)
 
             if (idx + 1) % 100 == 0:
@@ -92,13 +94,24 @@ def seed_database():
 
     # Execute the SQL file via docker
     import subprocess
+
     result = subprocess.run(
-        ["docker", "compose", "exec", "-T", "firebird",
-         "/opt/firebird/bin/isql", "-user", "SYSDBA", "-password", "masterkey",
-         "localhost:/firebird/data/production.fdb"],
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "firebird",
+            "/opt/firebird/bin/isql",
+            "-user",
+            "SYSDBA",
+            "-password",
+            "masterkey",
+            "localhost:/firebird/data/production.fdb",
+        ],
         stdin=open(sql_file),
         capture_output=True,
-        text=True
+        text=True,
     )
 
     if result.returncode == 0:
