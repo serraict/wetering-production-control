@@ -507,8 +507,10 @@ def inspectie_page() -> None:
                         if has_pending_change:
                             card_classes += " border-l-4"
 
-                        with ui.card().classes(card_classes).style(
-                            "border-left-color: #f39c21" if has_pending_change else None
+                        with (
+                            ui.card()
+                            .classes(card_classes)
+                            .style("border-left-color: #f39c21" if has_pending_change else None)
                         ):
                             with ui.row().classes("w-full justify-between items-center"):
                                 ui.label(item.get("product_naam", "")).classes("text-lg font-bold")
@@ -542,9 +544,11 @@ def inspectie_page() -> None:
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                                 ui.button(
                                     icon="add",
-                                    on_click=lambda _e, code=item.get("id"): row_actions["plus_one"][
-                                        "handler"
-                                    ](type("Event", (), {"args": {"key": code, "row": item}})()),
+                                    on_click=lambda _e, code=item.get("id"): row_actions[
+                                        "plus_one"
+                                    ]["handler"](
+                                        type("Event", (), {"args": {"key": code, "row": item}})()
+                                    ),
                                 ).props("dense flat color=primary").tooltip("+1")
 
                                 ui.button(
