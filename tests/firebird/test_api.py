@@ -1,5 +1,6 @@
 """Tests for Firebird API endpoints."""
 
+from datetime import date
 from unittest.mock import patch
 
 import pytest
@@ -97,4 +98,25 @@ async def test_update_afwijking_prevents_sql_injection(mock_execute):
     assert response.success is True
     mock_execute.assert_called_once_with(
         "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?", (10, malicious_code)
+    )
+
+
+@pytest.mark.asyncio
+@patch("production_control.firebird.api.execute_firebird_command")
+async def test_update_afwijking_with_date(mock_execute):
+    """Test afwijking update with delivery date."""
+    mock_execute.return_value = {"success": True, "message": "Command executed successfully"}
+
+    test_date = date(2025, 10, 15)
+    command = UpdateAfwijkingCommand(code="24096", new_afwijking=10, new_datum_afleveren=test_date)
+    response = await update_afwijking(command)
+
+    assert response.success is True
+    assert "24096" in response.message
+    assert "2025-10-15" in response.message
+
+    # Verify parameterized query updates both fields
+    mock_execute.assert_called_once_with(
+        "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
+        (10, test_date, "24096"),
     )

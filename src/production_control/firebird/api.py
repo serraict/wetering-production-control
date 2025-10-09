@@ -32,16 +32,26 @@ async def update_afwijking(command: UpdateAfwijkingCommand) -> ApiResponse:
     """
     # Build SQL UPDATE statement with parameterized query to prevent SQL injection
     # Note: VOLGNR is the primary key, code is stored in TEELTNR field
-    sql = "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?"
-    params = (command.new_afwijking, command.code)
+    if command.new_datum_afleveren:
+        sql = "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?"
+        params = (command.new_afwijking, command.new_datum_afleveren, command.code)
+    else:
+        sql = "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?"
+        params = (command.new_afwijking, command.code)
 
     result = execute_firebird_command(sql, params)
 
     if result["success"]:
-        return ApiResponse(
-            success=True,
-            message=f"Updated afwijking for code {command.code} to {command.new_afwijking}",
-        )
+        if command.new_datum_afleveren:
+            return ApiResponse(
+                success=True,
+                message=f"Updated afwijking for code {command.code} to {command.new_afwijking} and date to {command.new_datum_afleveren}",
+            )
+        else:
+            return ApiResponse(
+                success=True,
+                message=f"Updated afwijking for code {command.code} to {command.new_afwijking}",
+            )
     else:
         raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
 
