@@ -214,13 +214,30 @@ def show_pending_changes_dialog(changes_state=None) -> None:
             rows = []
             for code, change_data in changes.items():
                 if isinstance(change_data, dict):
-                    # New format: show the difference from original
-                    original = change_data["original"] or 0
-                    new_value = change_data["new"]
-                    difference = new_value - original
-                    rows.append(
-                        {"code": code, "change": f"{original} → {new_value} ({difference:+d})"}
-                    )
+                    # New format with dates
+                    if "new_afwijking" in change_data:
+                        original_afw = change_data.get("original_afwijking", 0) or 0
+                        new_afw = change_data["new_afwijking"]
+                        difference = new_afw - original_afw
+
+                        # Format the change display
+                        change_text = f"Afw: {original_afw} → {new_afw} ({difference:+d})"
+
+                        # Add date change if present
+                        if change_data.get("new_datum"):
+                            original_datum = change_data.get("original_datum", "")
+                            new_datum = change_data["new_datum"]
+                            change_text += f" | Datum: {original_datum} → {new_datum}"
+
+                        rows.append({"code": code, "change": change_text})
+                    else:
+                        # Old format with just "original" and "new" keys
+                        original = change_data.get("original", 0) or 0
+                        new_value = change_data.get("new", 0)
+                        difference = new_value - original
+                        rows.append(
+                            {"code": code, "change": f"{original} → {new_value} ({difference:+d})"}
+                        )
                 else:
                     # Legacy format
                     rows.append({"code": code, "change": f"{change_data:+d}"})
@@ -570,16 +587,33 @@ def inspectie_page() -> None:
                                 if has_pending_change:
                                     change_data = changes[code]
                                     if isinstance(change_data, dict):
-                                        new_value = change_data["new"]
-                                        ui.label(f"{current_afwijking} → {new_value}").classes(
-                                            "text-base font-bold text-accent"
-                                        )
+                                        if "new_afwijking" in change_data:
+                                            new_value = change_data["new_afwijking"]
+                                            ui.label(f"{current_afwijking} → {new_value}").classes(
+                                                "text-base font-bold text-accent"
+                                            )
+                                        else:
+                                            # Old format
+                                            new_value = change_data.get("new", current_afwijking)
+                                            ui.label(f"{current_afwijking} → {new_value}").classes(
+                                                "text-base font-bold text-accent"
+                                            )
                                     else:
                                         ui.label(f"{current_afwijking} ({change_data:+d})").classes(
                                             "text-base font-bold text-accent"
                                         )
                                 else:
                                     ui.label(str(current_afwijking)).classes("text-sm")
+
+                            # Show date change if present
+                            if has_pending_change:
+                                change_data = changes[code]
+                                if isinstance(change_data, dict) and change_data.get("new_datum"):
+                                    with ui.row().classes("w-full gap-2"):
+                                        ui.label("Nieuwe datum:").classes("text-sm font-semibold")
+                                        ui.label(change_data["new_datum"]).classes(
+                                            "text-sm text-accent font-bold"
+                                        )
 
                             # Action buttons
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):
