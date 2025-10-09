@@ -45,6 +45,11 @@ def get_pending_commands() -> List[UpdateAfwijkingCommand]:
 
         new_afwijking = change_data["new_afwijking"]
         new_datum = _parse_date(change_data.get("new_datum"))
+        if new_datum is None:
+            new_datum = _parse_date(change_data.get("original_datum"))
+        if new_datum is None:
+            # Skip invalid entries that do not contain a valid date
+            continue
 
         commands.append(
             UpdateAfwijkingCommand(
@@ -98,9 +103,15 @@ async def commit_pending_commands() -> Dict[str, Any]:
     async with httpx.AsyncClient(base_url=api_base_url) as client:
         for command in commands:
             try:
+                payload = {
+                    "code": command.code,
+                    "new_afwijking": command.new_afwijking,
+                    "new_datum_afleveren": command.new_datum_afleveren.isoformat(),
+                }
+
                 response = await client.post(
                     api_url,
-                    json={"code": command.code, "new_afwijking": command.new_afwijking},
+                    json=payload,
                     timeout=10.0,
                 )
 
@@ -314,6 +325,9 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
             current_datum = _parse_date(row_data.get("datum_afleveren_plan_raw"))
             if current_datum is None:
                 current_datum = _parse_date(row_data.get("datum_afleveren_plan"))
+            if current_datum is None:
+                ui.notify("Geen datum beschikbaar voor wijziging", type="negative")
+                return
 
             # Get storage safely
             storage = get_storage()
@@ -343,6 +357,11 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
                 current_new_datum = _parse_date(change_data.get("new_datum"))
                 if current_new_datum is None:
                     current_new_datum = _parse_date(change_data.get("original_datum"))
+                if current_new_datum is None:
+                    current_new_datum = current_datum
+                if current_new_datum is None:
+                    ui.notify("Geen datum beschikbaar voor wijziging", type="negative")
+                    return
                 if current_new_datum:
                     new_datum_obj = current_new_datum + timedelta(days=delta)
                     storage["inspectie_changes"][code]["new_datum"] = new_datum_obj.isoformat()
@@ -529,14 +548,6 @@ def inspectie_page() -> None:
                                     )
                                 else:
                                     ui.label(str(current_afwijking)).classes("text-sm")
-
-                            # Show date change if present
-                            if valid_change and change_data.get("new_datum"):
-                                with ui.row().classes("w-full gap-2"):
-                                    ui.label("Nieuwe datum:").classes("text-sm font-semibold")
-                                    ui.label(change_data["new_datum"]).classes(
-                                        "text-sm text-accent font-bold"
-                                    )
 
                             # Action buttons
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):

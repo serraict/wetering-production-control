@@ -1,7 +1,9 @@
 """Tests for inspectie web page."""
 
 from datetime import date
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from production_control.web.pages.inspectie import router, create_afwijking_actions, get_storage
 
@@ -36,7 +38,13 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
 
     # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Current afwijking is 7
+    event_data.args = {
+        "key": "27014",
+        "row": {
+            "afwijking_afleveren": 7,
+            "datum_afleveren_plan_raw": date(2025, 10, 10),
+        },
+    }
 
     # Call handler
     plus_handler(event_data)
@@ -48,6 +56,8 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
     assert isinstance(change_data, dict)
     assert change_data["original_afwijking"] == 7
     assert change_data["new_afwijking"] == 8  # 7 + 1
+    assert change_data["original_datum"] == "2025-10-10"
+    assert change_data["new_datum"] == "2025-10-11"
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -65,7 +75,13 @@ def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
 
     # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Current afwijking is 7
+    event_data.args = {
+        "key": "27014",
+        "row": {
+            "afwijking_afleveren": 7,
+            "datum_afleveren_plan_raw": date(2025, 10, 10),
+        },
+    }
 
     # Call handler
     minus_handler(event_data)
@@ -77,6 +93,8 @@ def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
     assert isinstance(change_data, dict)
     assert change_data["original_afwijking"] == 7
     assert change_data["new_afwijking"] == 6  # 7 - 1
+    assert change_data["original_datum"] == "2025-10-10"
+    assert change_data["new_datum"] == "2025-10-09"
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -89,8 +107,8 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
             "27014": {
                 "original_afwijking": 7,
                 "new_afwijking": 9,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-10",
+                "new_datum": "2025-10-12",
             }
         }  # Already has +2 change
     }
@@ -104,17 +122,25 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
 
     # Simulate button click events with row data
     event_data = Mock()
-    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Original afwijking is 7
+    event_data.args = {
+        "key": "27014",
+        "row": {
+            "afwijking_afleveren": 7,
+            "datum_afleveren_plan_raw": date(2025, 10, 10),
+        },
+    }
 
     # Click +1 (should be 9 + 1 = 10)
     plus_handler(event_data)
     change_data = mock_storage["inspectie_changes"]["27014"]
     assert change_data["new_afwijking"] == 10
+    assert change_data["new_datum"] == "2025-10-13"
 
     # Click -1 (should be 10 - 1 = 9)
     minus_handler(event_data)
     change_data = mock_storage["inspectie_changes"]["27014"]
     assert change_data["new_afwijking"] == 9
+    assert change_data["new_datum"] == "2025-10-12"
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -137,8 +163,8 @@ def test_get_pending_commands_with_changes(mock_get_storage):
             "27014": {
                 "original_afwijking": 7,
                 "new_afwijking": 9,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-10",
+                "new_datum": "2025-10-12",
             },
             "27015": {
                 "original_afwijking": 5,
@@ -149,8 +175,8 @@ def test_get_pending_commands_with_changes(mock_get_storage):
             "27016": {
                 "original_afwijking": 0,
                 "new_afwijking": 0,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-01",
+                "new_datum": "2025-10-01",
             },
         }
     }
@@ -168,11 +194,13 @@ def test_get_pending_commands_with_changes(mock_get_storage):
     for cmd in commands:
         if cmd.code == "27014":
             assert cmd.new_afwijking == 9
+            assert cmd.new_datum_afleveren == date.fromisoformat("2025-10-12")
         elif cmd.code == "27015":
             assert cmd.new_afwijking == 4
             assert cmd.new_datum_afleveren == date.fromisoformat("2025-10-09")
         elif cmd.code == "27016":
             assert cmd.new_afwijking == 0
+            assert cmd.new_datum_afleveren == date.fromisoformat("2025-10-01")
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -185,14 +213,14 @@ def test_clear_pending_commands(mock_get_storage):
             "27014": {
                 "original_afwijking": 7,
                 "new_afwijking": 8,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-10",
+                "new_datum": "2025-10-11",
             },
             "27015": {
                 "original_afwijking": 5,
                 "new_afwijking": 4,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-12",
+                "new_datum": "2025-10-11",
             },
         },
         "other_data": "should_remain",
@@ -263,8 +291,8 @@ def test_show_pending_changes_dialog_with_changes(mock_ui, mock_get_storage):
             "27014": {
                 "original_afwijking": 7,
                 "new_afwijking": 9,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-10",
+                "new_datum": "2025-10-12",
             },
             "27015": {
                 "original_afwijking": 5,
@@ -275,8 +303,8 @@ def test_show_pending_changes_dialog_with_changes(mock_ui, mock_get_storage):
             "27016": {
                 "original_afwijking": 0,
                 "new_afwijking": 0,
-                "original_datum": None,
-                "new_datum": None,
+                "original_datum": "2025-10-01",
+                "new_datum": "2025-10-01",
             },
         }
     }
@@ -354,9 +382,15 @@ def test_changes_button_shows_count(mock_get_pending_commands):
     from production_control.inspectie.commands import UpdateAfwijkingCommand
 
     mock_get_pending_commands.return_value = [
-        UpdateAfwijkingCommand(code="27014", new_afwijking=1),
-        UpdateAfwijkingCommand(code="27015", new_afwijking=-1),
-        UpdateAfwijkingCommand(code="27016", new_afwijking=2),
+        UpdateAfwijkingCommand(
+            code="27014", new_afwijking=1, new_datum_afleveren=date(2025, 10, 10)
+        ),
+        UpdateAfwijkingCommand(
+            code="27015", new_afwijking=-1, new_datum_afleveren=date(2025, 10, 11)
+        ),
+        UpdateAfwijkingCommand(
+            code="27016", new_afwijking=2, new_datum_afleveren=date(2025, 10, 12)
+        ),
     ]
     pending_commands = get_pending_commands()
     changes_count = len(pending_commands)
@@ -399,7 +433,13 @@ def test_changes_state_updates_on_click(mock_ui, mock_get_storage):
 
     # Simulate button click event with row data
     event_data = Mock()
-    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}
+    event_data.args = {
+        "key": "27014",
+        "row": {
+            "afwijking_afleveren": 7,
+            "datum_afleveren_plan_raw": date(2025, 10, 10),
+        },
+    }
 
     # Call handler
     plus_handler(event_data)
@@ -462,7 +502,13 @@ def test_absolute_afwijking_calculation(mock_ui, mock_get_storage):
 
     # Simulate: current afwijking is 7, user clicks +1 twice
     event_data = Mock()
-    event_data.args = {"key": "27014", "row": {"afwijking_afleveren": 7}}  # Current afwijking is 7
+    event_data.args = {
+        "key": "27014",
+        "row": {
+            "afwijking_afleveren": 7,
+            "datum_afleveren_plan_raw": date(2025, 10, 10),
+        },
+    }  # Current afwijking is 7
 
     # First click: +1 (should result in 8)
     plus_handler(event_data)
@@ -524,3 +570,46 @@ def test_afwijking_plus_one_with_date_updates_storage(mock_ui, mock_get_storage)
     assert change_data["new_afwijking"] == 8
     assert change_data["original_datum"] == "2025-10-10"
     assert change_data["new_datum"] == "2025-10-11"
+
+
+@pytest.mark.asyncio
+async def test_commit_pending_commands_includes_new_date():
+    """Ensure API payload contains new date when available."""
+    from production_control.web.pages.inspectie import commit_pending_commands
+
+    mock_storage = {
+        "inspectie_changes": {
+            "27014": {
+                "original_afwijking": 7,
+                "new_afwijking": 8,
+                "original_datum": "2025-10-10",
+                "new_datum": "2025-10-11",
+            }
+        }
+    }
+
+    mock_response = Mock(status_code=200, text="OK")
+
+    with patch("production_control.web.pages.inspectie.get_storage", return_value=mock_storage):
+        with patch("production_control.web.pages.inspectie.httpx.AsyncClient") as mock_async_client:
+            client_instance = Mock()
+            client_instance.post = AsyncMock(return_value=mock_response)
+
+            async_client_context = mock_async_client.return_value
+            async_client_context.__aenter__ = AsyncMock(return_value=client_instance)
+            async_client_context.__aexit__ = AsyncMock(return_value=None)
+
+            result = await commit_pending_commands()
+
+    assert result["success"] is True
+
+    assert client_instance.post.await_count == 1
+    payload = client_instance.post.await_args.kwargs["json"]
+    assert payload == {
+        "code": "27014",
+        "new_afwijking": 8,
+        "new_datum_afleveren": "2025-10-11",
+    }
+
+    # Storage should be cleared after successful commit
+    assert "inspectie_changes" not in mock_storage

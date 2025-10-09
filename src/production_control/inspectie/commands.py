@@ -1,7 +1,6 @@
 """Commands for inspectie operations."""
 
 from datetime import date
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -13,9 +12,7 @@ class UpdateAfwijkingCommand(BaseModel):
     new_afwijking: int = Field(
         ..., description="The new afwijking value (can be positive, negative, or zero)"
     )
-    new_datum_afleveren: Optional[date] = Field(
-        None, description="The new delivery date (optional)"
-    )
+    new_datum_afleveren: date = Field(..., description="The new delivery date")
 
     @field_validator("code")
     @classmethod

@@ -24,7 +24,9 @@ async def test_update_afwijking_success(mock_execute):
     """Test successful afwijking update."""
     mock_execute.return_value = {"success": True, "message": "Command executed successfully"}
 
-    command = UpdateAfwijkingCommand(code="24096", new_afwijking=10)
+    command = UpdateAfwijkingCommand(
+        code="24096", new_afwijking=10, new_datum_afleveren=date(2025, 10, 15)
+    )
     response = await update_afwijking(command)
 
     assert response.success is True
@@ -34,7 +36,8 @@ async def test_update_afwijking_success(mock_execute):
 
     # Verify parameterized query was used
     mock_execute.assert_called_once_with(
-        "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?", (10, "24096")
+        "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
+        (10, date(2025, 10, 15), "24096"),
     )
 
 
@@ -44,7 +47,9 @@ async def test_update_afwijking_database_error(mock_execute):
     """Test afwijking update with database error."""
     mock_execute.return_value = {"success": False, "error": "Database connection failed"}
 
-    command = UpdateAfwijkingCommand(code="24096", new_afwijking=10)
+    command = UpdateAfwijkingCommand(
+        code="24096", new_afwijking=10, new_datum_afleveren=date(2025, 10, 15)
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         await update_afwijking(command)
@@ -59,12 +64,15 @@ async def test_update_afwijking_with_negative_value(mock_execute):
     """Test afwijking update with negative value."""
     mock_execute.return_value = {"success": True, "message": "Command executed successfully"}
 
-    command = UpdateAfwijkingCommand(code="24097", new_afwijking=-5)
+    command = UpdateAfwijkingCommand(
+        code="24097", new_afwijking=-5, new_datum_afleveren=date(2025, 10, 15)
+    )
     response = await update_afwijking(command)
 
     assert response.success is True
     mock_execute.assert_called_once_with(
-        "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?", (-5, "24097")
+        "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
+        (-5, date(2025, 10, 15), "24097"),
     )
 
 
@@ -74,12 +82,15 @@ async def test_update_afwijking_with_zero(mock_execute):
     """Test afwijking update with zero value."""
     mock_execute.return_value = {"success": True, "message": "Command executed successfully"}
 
-    command = UpdateAfwijkingCommand(code="24098", new_afwijking=0)
+    command = UpdateAfwijkingCommand(
+        code="24098", new_afwijking=0, new_datum_afleveren=date(2025, 10, 15)
+    )
     response = await update_afwijking(command)
 
     assert response.success is True
     mock_execute.assert_called_once_with(
-        "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?", (0, "24098")
+        "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
+        (0, date(2025, 10, 15), "24098"),
     )
 
 
@@ -91,13 +102,16 @@ async def test_update_afwijking_prevents_sql_injection(mock_execute):
 
     # Attempt SQL injection in code field
     malicious_code = "24096'; DROP TABLE TEELTPL; --"
-    command = UpdateAfwijkingCommand(code=malicious_code, new_afwijking=10)
+    command = UpdateAfwijkingCommand(
+        code=malicious_code, new_afwijking=10, new_datum_afleveren=date(2025, 10, 15)
+    )
     response = await update_afwijking(command)
 
     # The malicious code should be treated as a literal string parameter
     assert response.success is True
     mock_execute.assert_called_once_with(
-        "UPDATE TEELTPL SET AFW_AFLEV = ? WHERE TEELTNR = ?", (10, malicious_code)
+        "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
+        (10, date(2025, 10, 15), malicious_code),
     )
 
 
@@ -119,4 +133,23 @@ async def test_update_afwijking_with_date(mock_execute):
     mock_execute.assert_called_once_with(
         "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
         (10, test_date, "24096"),
+    )
+
+
+@pytest.mark.asyncio
+@patch("production_control.firebird.api.execute_firebird_command")
+async def test_update_afwijking_with_date_string_payload(mock_execute):
+    """Test afwijking update when incoming payload provides date as ISO string."""
+    mock_execute.return_value = {"success": True, "message": "Command executed successfully"}
+
+    command = UpdateAfwijkingCommand.model_validate(
+        {"code": "24099", "new_afwijking": 3, "new_datum_afleveren": "2025-11-20"}
+    )
+
+    response = await update_afwijking(command)
+
+    assert response.success is True
+    mock_execute.assert_called_once_with(
+        "UPDATE TEELTPL SET AFW_AFLEV = ?, DAT_AFLEV_PLAN = ? WHERE TEELTNR = ?",
+        (3, date(2025, 11, 20), "24099"),
     )
