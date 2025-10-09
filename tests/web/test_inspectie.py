@@ -51,6 +51,133 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
 
 @patch("production_control.web.pages.inspectie.get_storage")
 @patch("production_control.web.pages.inspectie.ui")
+def test_lambda_closure_bug_with_loop_variable(mock_ui, mock_get_storage):
+    """Test demonstrating the lambda closure bug when capturing loop variables.
+
+    This reproduces the exact bug scenario from compact view where lambdas
+    created in a loop all capture the same reference to 'item', causing all
+    buttons to use the last item's data instead of their own.
+
+    Bug: clicking +1 on records with afwijking values 7, 9, 9, 5 incorrectly
+    shows changes as "0 → 1" instead of "7 → 8", "9 → 10", etc.
+    """
+    # Setup mock storage
+    mock_storage = {}
+    mock_get_storage.return_value = mock_storage
+
+    # Create actions and get +1 handler
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
+    plus_handler = actions["plus_one"]["handler"]
+
+    # Test data: 4 records with different afwijking values
+    test_records = [
+        {"id": "27057", "afwijking_afleveren": 7, "product_naam": "Product A"},
+        {"id": "26977", "afwijking_afleveren": 9, "product_naam": "Product B"},
+        {"id": "26979", "afwijking_afleveren": 9, "product_naam": "Product C"},
+        {"id": "27040", "afwijking_afleveren": 5, "product_naam": "Product D"},
+    ]
+
+    # BUGGY CODE: Simulate the broken lambda pattern (capturing 'item' by reference)
+    # This is what was happening in compact view before the fix
+    button_handlers = []
+    for item in test_records:
+        # BAD: 'item' is captured by reference, not by value
+        # When the lambda is called later, 'item' will be the LAST item from the loop
+        handler = lambda _e: plus_handler(  # noqa: E731
+            type("Event", (), {"args": {"key": item["id"], "row": item}})()
+        )
+        button_handlers.append(handler)
+
+    # Simulate clicking the FIRST button (for code 27057, afwijking=7)
+    # BUG: This will use the LAST item's data (code 27040, afwijking=5)
+    # because 'item' in the lambda refers to whatever 'item' is NOW
+    button_handlers[0](None)
+
+    # Verify the bug: should have created change for 27057 with original=7
+    # but instead creates change for 27040 with original=5
+    assert "inspectie_changes" in mock_storage
+
+    # The bug: clicking button 0 (for 27057) actually affects the last item (27040)
+    # because all lambdas share the same 'item' reference
+    assert (
+        "27040" in mock_storage["inspectie_changes"]
+    ), "Bug demonstrated: clicked button for 27057 but got change for 27040 (last item)"
+    change = mock_storage["inspectie_changes"]["27040"]
+    assert change["original"] == 5, (
+        "Bug demonstrated: clicked button for item with afwijking=7, "
+        "but lambda used last item's value (afwijking=5)"
+    )
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+@patch("production_control.web.pages.inspectie.ui")
+def test_lambda_closure_fixed_with_default_args(mock_ui, mock_get_storage):
+    """Test demonstrating the FIX for the lambda closure bug.
+
+    By capturing the loop variable as a default argument, each lambda gets
+    its own copy of the data, fixing the bug.
+    """
+    # Setup mock storage
+    mock_storage = {}
+    mock_get_storage.return_value = mock_storage
+
+    # Create actions and get +1 handler
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
+    plus_handler = actions["plus_one"]["handler"]
+
+    # Test data: 4 records with different afwijking values
+    test_records = [
+        {"id": "27057", "afwijking_afleveren": 7, "product_naam": "Product A"},
+        {"id": "26977", "afwijking_afleveren": 9, "product_naam": "Product B"},
+        {"id": "26979", "afwijking_afleveren": 9, "product_naam": "Product C"},
+        {"id": "27040", "afwijking_afleveren": 5, "product_naam": "Product D"},
+    ]
+
+    # FIXED CODE: Capture loop variables as default arguments
+    button_handlers = []
+    for item in test_records:
+        # GOOD: 'row=item' captures the VALUE at this moment, not a reference
+        handler = lambda _e, code=item["id"], row=item: plus_handler(  # noqa: E731
+            type("Event", (), {"args": {"key": code, "row": row}})()
+        )
+        button_handlers.append(handler)
+
+    # Simulate clicking each button
+    for i, handler in enumerate(button_handlers):
+        handler(None)
+
+    # Verify the fix: each button correctly uses its own item's data
+    assert "inspectie_changes" in mock_storage
+
+    # Check 27057: should be 7 → 8
+    assert "27057" in mock_storage["inspectie_changes"]
+    change_27057 = mock_storage["inspectie_changes"]["27057"]
+    assert change_27057["original"] == 7
+    assert change_27057["new"] == 8
+
+    # Check 26977: should be 9 → 10
+    assert "26977" in mock_storage["inspectie_changes"]
+    change_26977 = mock_storage["inspectie_changes"]["26977"]
+    assert change_26977["original"] == 9
+    assert change_26977["new"] == 10
+
+    # Check 26979: should be 9 → 10
+    assert "26979" in mock_storage["inspectie_changes"]
+    change_26979 = mock_storage["inspectie_changes"]["26979"]
+    assert change_26979["original"] == 9
+    assert change_26979["new"] == 10
+
+    # Check 27040: should be 5 → 6
+    assert "27040" in mock_storage["inspectie_changes"]
+    change_27040 = mock_storage["inspectie_changes"]["27040"]
+    assert change_27040["original"] == 5
+    assert change_27040["new"] == 6
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+@patch("production_control.web.pages.inspectie.ui")
 def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
     """Test that -1 button click updates browser storage."""
     # Setup mock storage

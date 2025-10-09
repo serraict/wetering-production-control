@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed lambda closure bug in inspectieronde compact view:
+  - Button click handlers now correctly capture row data by value instead of by reference
+  - Previously all buttons would use the last item's data due to late binding
+  - Added comprehensive tests demonstrating both the bug pattern and the fix
+
+### Changed
+
+- Standardized terminology: changed "Inspectie Ronde" to "Inspectieronde" (one word in Dutch) across all files
+- Enhanced visual feedback in compact view:
+  - Cards with pending changes now show a 4px left border with accent color
+  - Change values displayed in bold accent-colored text (e.g., "7 → 8")
+
 ## [0.1.61] - 2025-10-08
 
 ### Added

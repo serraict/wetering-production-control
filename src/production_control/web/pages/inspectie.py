@@ -544,27 +544,29 @@ def inspectie_page() -> None:
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                                 ui.button(
                                     icon="add",
-                                    on_click=lambda _e, code=item.get("id"): row_actions[
+                                    on_click=lambda _e, code=item.get("id"), row=item: row_actions[
                                         "plus_one"
                                     ]["handler"](
-                                        type("Event", (), {"args": {"key": code, "row": item}})()
+                                        type("Event", (), {"args": {"key": code, "row": row}})()
                                     ),
                                 ).props("dense flat color=primary").tooltip("+1")
 
                                 ui.button(
                                     icon="remove",
-                                    on_click=lambda _e, code=item.get("id"): row_actions[
+                                    on_click=lambda _e, code=item.get("id"), row=item: row_actions[
                                         "minus_one"
                                     ]["handler"](
-                                        type("Event", (), {"args": {"key": code, "row": item}})()
+                                        type("Event", (), {"args": {"key": code, "row": row}})()
                                     ),
                                 ).props("dense flat color=primary").tooltip("-1")
 
                                 ui.button(
                                     icon="visibility",
-                                    on_click=lambda _e, code=item.get("id"): row_actions["view"][
-                                        "handler"
-                                    ](type("Event", (), {"args": {"key": code, "row": item}})()),
+                                    on_click=lambda _e, code=item.get("id"), row=item: row_actions[
+                                        "view"
+                                    ]["handler"](
+                                        type("Event", (), {"args": {"key": code, "row": row}})()
+                                    ),
                                 ).props("dense flat color=primary").tooltip("Details")
 
             @ui.refreshable
