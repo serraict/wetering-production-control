@@ -200,65 +200,77 @@ def show_pending_changes_dialog(changes_state=None) -> None:
     """Show a dialog with all pending changes."""
     storage = get_storage()
     changes = storage.get("inspectie_changes", {})
+    checked_items = storage.get("inspectie_checked", {})
+
+    # Count manually checked items (not auto-checked by afwijking)
+    manually_checked_count = sum(1 for checked in checked_items.values() if checked)
 
     with ui.dialog() as dialog, ui.card().classes("w-full max-w-4xl"):
         ui.label("Openstaande wijzigingen").classes("text-h6 mb-4")
 
-        if not changes:
+        if not changes and manually_checked_count == 0:
             ui.label("Geen openstaande wijzigingen").classes("text-center text-gray-500")
         else:
-            # Create table with pending changes
-            columns = [
-                {
-                    "name": "code",
-                    "label": "Code",
-                    "field": "code",
-                    "required": True,
-                    "align": "left",
-                },
-                {
-                    "name": "afwijking",
-                    "label": "Afwijking",
-                    "field": "afwijking",
-                    "required": True,
-                    "align": "center",
-                },
-                {
-                    "name": "datum",
-                    "label": "Datum",
-                    "field": "datum",
-                    "align": "center",
-                },
-            ]
+            # Show pending changes if any
+            if changes:
+                # Create table with pending changes
+                columns = [
+                    {
+                        "name": "code",
+                        "label": "Code",
+                        "field": "code",
+                        "required": True,
+                        "align": "left",
+                    },
+                    {
+                        "name": "afwijking",
+                        "label": "Afwijking",
+                        "field": "afwijking",
+                        "required": True,
+                        "align": "center",
+                    },
+                    {
+                        "name": "datum",
+                        "label": "Datum",
+                        "field": "datum",
+                        "align": "center",
+                    },
+                ]
 
-            rows = []
-            for code, change_data in changes.items():
-                if not isinstance(change_data, dict) or "new_afwijking" not in change_data:
-                    continue
+                rows = []
+                for code, change_data in changes.items():
+                    if not isinstance(change_data, dict) or "new_afwijking" not in change_data:
+                        continue
 
-                original_afw = change_data.get("original_afwijking", 0) or 0
-                new_afw = change_data["new_afwijking"]
-                difference = new_afw - original_afw
+                    original_afw = change_data.get("original_afwijking", 0) or 0
+                    new_afw = change_data["new_afwijking"]
+                    difference = new_afw - original_afw
 
-                # Format the afwijking change
-                afwijking_text = f"{original_afw} → {new_afw} ({difference:+d})"
+                    # Format the afwijking change
+                    afwijking_text = f"{original_afw} → {new_afw} ({difference:+d})"
 
-                # Format date change if present
-                datum_text = ""
-                new_datum = _parse_date(change_data.get("new_datum"))
-                if new_datum:
-                    original_datum = _parse_date(change_data.get("original_datum"))
-                    datum_text = f"{format_date(original_datum)} → {format_date(new_datum)}"
+                    # Format date change if present
+                    datum_text = ""
+                    new_datum = _parse_date(change_data.get("new_datum"))
+                    if new_datum:
+                        original_datum = _parse_date(change_data.get("original_datum"))
+                        datum_text = f"{format_date(original_datum)} → {format_date(new_datum)}"
 
-                rows.append({"code": code, "afwijking": afwijking_text, "datum": datum_text})
+                    rows.append({"code": code, "afwijking": afwijking_text, "datum": datum_text})
 
-            ui.table(columns=columns, rows=rows, row_key="code").classes(
-                "w-full print-preserve-columns"
-            )
+                ui.table(columns=columns, rows=rows, row_key="code").classes(
+                    "w-full print-preserve-columns"
+                )
+
+            # Show checked items count if any
+            if manually_checked_count > 0:
+                if changes:
+                    ui.separator().classes("my-4")
+                ui.label(f"{manually_checked_count} afgevinkte partijten)").classes("text-gray-600")
 
             ui.separator().classes("my-4")
 
-            # Action buttons
+            # Action buttons - show if there are changes OR checked items
             with ui.row().classes("w-full justify-between"):
                 ui.button(
                     "Alles wissen",
@@ -267,12 +279,13 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                     on_click=lambda: handle_clear_all_changes_and_close(dialog, changes_state),
                 ).props("outline")
 
-                ui.button(
-                    "Alles opslaan",
-                    icon="save",
-                    color="positive",
-                    on_click=lambda: handle_commit_changes(dialog, changes_state),
-                ).props("outline")
+                if changes:
+                    ui.button(
+                        "Alles opslaan",
+                        icon="save",
+                        color="positive",
+                        on_click=lambda: handle_commit_changes(dialog, changes_state),
+                    ).props("outline")
 
         # Close button
         with ui.row().classes("w-full justify-end mt-4"):
@@ -282,8 +295,14 @@ def show_pending_changes_dialog(changes_state=None) -> None:
 
 
 def handle_clear_all_changes(changes_state=None) -> None:
-    """Handle clearing all pending changes."""
+    """Handle clearing all pending changes and checkmarks."""
     clear_pending_commands()
+
+    # Also clear all checkmarks
+    storage = get_storage()
+    if "inspectie_checked" in storage:
+        storage["inspectie_checked"] = {}
+
     ui.notify("Alle wijzigingen gewist", type="info")
     # Update changes state if provided
     if changes_state:
@@ -518,6 +537,11 @@ def inspectie_page() -> None:
                         valid_change = (
                             isinstance(change_data, dict) and "new_afwijking" in change_data
                         )
+
+                        # Check if item is manually marked as checked (or auto-checked by afwijking)
+                        manually_checked = storage.get("inspectie_checked", {}).get(code, False)
+                        is_checked = manually_checked
+
                         card_classes = "w-full sm:w-80"
                         if valid_change:
                             card_classes += " border-l-4"
@@ -551,6 +575,20 @@ def inspectie_page() -> None:
 
                             # Action buttons
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):
+                                # Checkmark button
+                                def toggle_check(_e, code=code):
+                                    storage = get_storage()
+                                    if "inspectie_checked" not in storage:
+                                        storage["inspectie_checked"] = {}
+
+                                    current_state = storage["inspectie_checked"].get(code, False)
+                                    storage["inspectie_checked"][code] = not current_state
+                                    render_cards.refresh()
+
+                                ui.button(
+                                    icon="check" if is_checked else "check_box_outline_blank",
+                                    on_click=toggle_check,
+                                ).props("dense flat color=primary")
                                 ui.button(
                                     icon="add",
                                     on_click=lambda _e, code=item.get("id"), row=item: row_actions[
