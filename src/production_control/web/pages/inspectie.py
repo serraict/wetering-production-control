@@ -1,6 +1,7 @@
 """Inspectie page implementation."""
 
 import os
+from datetime import date, timedelta
 from typing import Dict, Any, List
 import httpx
 
@@ -39,13 +40,27 @@ def get_pending_commands() -> List[UpdateAfwijkingCommand]:
     commands = []
     for code, change_data in storage["inspectie_changes"].items():
         if isinstance(change_data, dict):
-            # New format with original and new values
-            new_afwijking = change_data["new"]
+            # New format with dates
+            if "new_afwijking" in change_data:
+                new_afwijking = change_data["new_afwijking"]
+                new_datum = change_data.get("new_datum")
+
+                # Convert date string back to date object if present
+                if isinstance(new_datum, str):
+                    new_datum = date.fromisoformat(new_datum)
+
+                commands.append(
+                    UpdateAfwijkingCommand(
+                        code=code, new_afwijking=new_afwijking, new_datum_afleveren=new_datum
+                    )
+                )
+            else:
+                # Old format with just "new" key (backward compatibility)
+                new_afwijking = change_data.get("new", change_data.get("original", 0))
+                commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking))
         else:
             # Legacy format (fallback)
-            new_afwijking = change_data
-
-        commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking))
+            commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=change_data))
 
     return commands
 
@@ -277,9 +292,10 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
             ui.notify("Geen code gevonden", type="negative")
             return
 
-        # Get the current afwijking from the row data
+        # Get the current afwijking and date from the row data
         row_data = e.args.get("row", {})
         current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
+        current_datum = row_data.get("datum_afleveren_plan_raw")
 
         # Get storage safely
         storage = get_storage()
@@ -290,30 +306,42 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
 
         # Check if this is the first change for this code
         if code not in storage["inspectie_changes"]:
-            # First change: store both original and new value
+            # First change: store both original and new values for afwijking and date
             new_afwijking = current_afwijking + 1
+            new_datum = current_datum + timedelta(days=1) if current_datum else None
+
             storage["inspectie_changes"][code] = {
-                "original": current_afwijking,
-                "new": new_afwijking,
+                "original_afwijking": current_afwijking,
+                "new_afwijking": new_afwijking,
+                "original_datum": current_datum.isoformat() if current_datum else None,
+                "new_datum": new_datum.isoformat() if new_datum else None,
             }
         else:
-            # Subsequent change: increment the new value
+            # Subsequent change: increment the new values
             change_data = storage["inspectie_changes"][code]
-            if isinstance(change_data, dict):
-                new_afwijking = change_data["new"] + 1
-                storage["inspectie_changes"][code]["new"] = new_afwijking
+            if isinstance(change_data, dict) and "new_afwijking" in change_data:
+                new_afwijking = change_data["new_afwijking"] + 1
+                storage["inspectie_changes"][code]["new_afwijking"] = new_afwijking
+
+                # Update the date too
+                current_new_datum = change_data.get("new_datum")
+                if current_new_datum:
+                    if isinstance(current_new_datum, str):
+                        current_new_datum = date.fromisoformat(current_new_datum)
+                    new_datum = current_new_datum + timedelta(days=1)
+                    storage["inspectie_changes"][code]["new_datum"] = new_datum.isoformat()
             else:
                 # Handle legacy format (just in case)
                 new_afwijking = current_afwijking + 1
+                new_datum = current_datum + timedelta(days=1) if current_datum else None
                 storage["inspectie_changes"][code] = {
-                    "original": current_afwijking,
-                    "new": new_afwijking,
+                    "original_afwijking": current_afwijking,
+                    "new_afwijking": new_afwijking,
+                    "original_datum": current_datum.isoformat() if current_datum else None,
+                    "new_datum": new_datum.isoformat() if new_datum else None,
                 }
 
-        # Create and store command
-        command = UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking)
-
-        ui.notify(f"Afwijking +1 voor {code} (totaal: {command.new_afwijking})", type="positive")
+        ui.notify(f"Afwijking +1 voor {code} (totaal: {new_afwijking})", type="positive")
 
         # Update changes state if provided
         if changes_state:
@@ -326,9 +354,10 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
             ui.notify("Geen code gevonden", type="negative")
             return
 
-        # Get the current afwijking from the row data
+        # Get the current afwijking and date from the row data
         row_data = e.args.get("row", {})
         current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
+        current_datum = row_data.get("datum_afleveren_plan_raw")
 
         # Get storage safely
         storage = get_storage()
@@ -339,30 +368,42 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
 
         # Check if this is the first change for this code
         if code not in storage["inspectie_changes"]:
-            # First change: store both original and new value
+            # First change: store both original and new values for afwijking and date
             new_afwijking = current_afwijking - 1
+            new_datum = current_datum - timedelta(days=1) if current_datum else None
+
             storage["inspectie_changes"][code] = {
-                "original": current_afwijking,
-                "new": new_afwijking,
+                "original_afwijking": current_afwijking,
+                "new_afwijking": new_afwijking,
+                "original_datum": current_datum.isoformat() if current_datum else None,
+                "new_datum": new_datum.isoformat() if new_datum else None,
             }
         else:
-            # Subsequent change: decrement the new value
+            # Subsequent change: decrement the new values
             change_data = storage["inspectie_changes"][code]
-            if isinstance(change_data, dict):
-                new_afwijking = change_data["new"] - 1
-                storage["inspectie_changes"][code]["new"] = new_afwijking
+            if isinstance(change_data, dict) and "new_afwijking" in change_data:
+                new_afwijking = change_data["new_afwijking"] - 1
+                storage["inspectie_changes"][code]["new_afwijking"] = new_afwijking
+
+                # Update the date too
+                current_new_datum = change_data.get("new_datum")
+                if current_new_datum:
+                    if isinstance(current_new_datum, str):
+                        current_new_datum = date.fromisoformat(current_new_datum)
+                    new_datum = current_new_datum - timedelta(days=1)
+                    storage["inspectie_changes"][code]["new_datum"] = new_datum.isoformat()
             else:
                 # Handle legacy format (just in case)
                 new_afwijking = current_afwijking - 1
+                new_datum = current_datum - timedelta(days=1) if current_datum else None
                 storage["inspectie_changes"][code] = {
-                    "original": current_afwijking,
-                    "new": new_afwijking,
+                    "original_afwijking": current_afwijking,
+                    "new_afwijking": new_afwijking,
+                    "original_datum": current_datum.isoformat() if current_datum else None,
+                    "new_datum": new_datum.isoformat() if new_datum else None,
                 }
 
-        # Create and store command
-        command = UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking)
-
-        ui.notify(f"Afwijking -1 voor {code} (totaal: {command.new_afwijking})", type="positive")
+        ui.notify(f"Afwijking -1 voor {code} (totaal: {new_afwijking})", type="positive")
 
         # Update changes state if provided
         if changes_state:

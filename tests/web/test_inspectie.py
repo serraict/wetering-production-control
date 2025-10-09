@@ -1,5 +1,6 @@
 """Tests for inspectie web page."""
 
+from datetime import date
 from unittest.mock import Mock, patch
 
 from production_control.web.pages.inspectie import router, create_afwijking_actions, get_storage
@@ -45,8 +46,8 @@ def test_afwijking_plus_one_updates_storage(mock_ui, mock_get_storage):
     assert "27014" in mock_storage["inspectie_changes"]
     change_data = mock_storage["inspectie_changes"]["27014"]
     assert isinstance(change_data, dict)
-    assert change_data["original"] == 7
-    assert change_data["new"] == 8  # 7 + 1
+    assert change_data["original_afwijking"] == 7
+    assert change_data["new_afwijking"] == 8  # 7 + 1
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -104,7 +105,7 @@ def test_lambda_closure_bug_with_loop_variable(mock_ui, mock_get_storage):
         "27040" in mock_storage["inspectie_changes"]
     ), "Bug demonstrated: clicked button for 27057 but got change for 27040 (last item)"
     change = mock_storage["inspectie_changes"]["27040"]
-    assert change["original"] == 5, (
+    assert change["original_afwijking"] == 5, (
         "Bug demonstrated: clicked button for item with afwijking=7, "
         "but lambda used last item's value (afwijking=5)"
     )
@@ -154,26 +155,26 @@ def test_lambda_closure_fixed_with_default_args(mock_ui, mock_get_storage):
     # Check 27057: should be 7 → 8
     assert "27057" in mock_storage["inspectie_changes"]
     change_27057 = mock_storage["inspectie_changes"]["27057"]
-    assert change_27057["original"] == 7
-    assert change_27057["new"] == 8
+    assert change_27057["original_afwijking"] == 7
+    assert change_27057["new_afwijking"] == 8
 
     # Check 26977: should be 9 → 10
     assert "26977" in mock_storage["inspectie_changes"]
     change_26977 = mock_storage["inspectie_changes"]["26977"]
-    assert change_26977["original"] == 9
-    assert change_26977["new"] == 10
+    assert change_26977["original_afwijking"] == 9
+    assert change_26977["new_afwijking"] == 10
 
     # Check 26979: should be 9 → 10
     assert "26979" in mock_storage["inspectie_changes"]
     change_26979 = mock_storage["inspectie_changes"]["26979"]
-    assert change_26979["original"] == 9
-    assert change_26979["new"] == 10
+    assert change_26979["original_afwijking"] == 9
+    assert change_26979["new_afwijking"] == 10
 
     # Check 27040: should be 5 → 6
     assert "27040" in mock_storage["inspectie_changes"]
     change_27040 = mock_storage["inspectie_changes"]["27040"]
-    assert change_27040["original"] == 5
-    assert change_27040["new"] == 6
+    assert change_27040["original_afwijking"] == 5
+    assert change_27040["new_afwijking"] == 6
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -201,8 +202,8 @@ def test_afwijking_minus_one_updates_storage(mock_ui, mock_get_storage):
     assert "27014" in mock_storage["inspectie_changes"]
     change_data = mock_storage["inspectie_changes"]["27014"]
     assert isinstance(change_data, dict)
-    assert change_data["original"] == 7
-    assert change_data["new"] == 6  # 7 - 1
+    assert change_data["original_afwijking"] == 7
+    assert change_data["new_afwijking"] == 6  # 7 - 1
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -211,7 +212,14 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
     """Test that multiple clicks accumulate in storage."""
     # Setup mock storage with existing change in new format
     mock_storage = {
-        "inspectie_changes": {"27014": {"original": 7, "new": 9}}  # Already has +2 change
+        "inspectie_changes": {
+            "27014": {
+                "original_afwijking": 7,
+                "new_afwijking": 9,
+                "original_datum": None,
+                "new_datum": None,
+            }
+        }  # Already has +2 change
     }
     mock_get_storage.return_value = mock_storage
 
@@ -228,12 +236,12 @@ def test_multiple_clicks_accumulate_changes(mock_ui, mock_get_storage):
     # Click +1 (should be 9 + 1 = 10)
     plus_handler(event_data)
     change_data = mock_storage["inspectie_changes"]["27014"]
-    assert change_data["new"] == 10
+    assert change_data["new_afwijking"] == 10
 
     # Click -1 (should be 10 - 1 = 9)
     minus_handler(event_data)
     change_data = mock_storage["inspectie_changes"]["27014"]
-    assert change_data["new"] == 9
+    assert change_data["new_afwijking"] == 9
 
 
 @patch("production_control.web.pages.inspectie.get_storage")
@@ -542,14 +550,14 @@ def test_absolute_afwijking_calculation(mock_ui, mock_get_storage):
     # First click: +1 (should result in 8)
     plus_handler(event_data)
     change_data = mock_storage["inspectie_changes"]["27014"]
-    assert change_data["original"] == 7
-    assert change_data["new"] == 8
+    assert change_data["original_afwijking"] == 7
+    assert change_data["new_afwijking"] == 8
 
     # Second click: +1 (should result in 9)
     plus_handler(event_data)
     change_data = mock_storage["inspectie_changes"]["27014"]
-    assert change_data["original"] == 7
-    assert change_data["new"] == 9
+    assert change_data["original_afwijking"] == 7
+    assert change_data["new_afwijking"] == 9
 
     # Verify the command contains absolute value 9, not relative +2
     from production_control.web.pages.inspectie import get_pending_commands
@@ -569,3 +577,33 @@ def test_inspectie_page_has_fullscreen_button():
 
     # The fullscreen functionality is tested by checking that the page loads without errors
     # The actual fullscreen API testing would require browser integration tests
+
+
+@patch("production_control.web.pages.inspectie.get_storage")
+@patch("production_control.web.pages.inspectie.ui")
+def test_afwijking_plus_one_with_date_updates_storage(mock_ui, mock_get_storage):
+    """Test that +1 button click updates both afwijking and date in storage."""
+    mock_storage = {}
+    mock_get_storage.return_value = mock_storage
+
+    mock_repository = Mock()
+    actions = create_afwijking_actions(mock_repository)
+    plus_handler = actions["plus_one"]["handler"]
+
+    test_date = date(2025, 10, 10)
+    event_data = Mock()
+    event_data.args = {
+        "key": "27014",
+        "row": {"afwijking_afleveren": 7, "datum_afleveren_plan_raw": test_date},
+    }
+
+    plus_handler(event_data)
+
+    assert "inspectie_changes" in mock_storage
+    assert "27014" in mock_storage["inspectie_changes"]
+    change_data = mock_storage["inspectie_changes"]["27014"]
+    assert isinstance(change_data, dict)
+    assert change_data["original_afwijking"] == 7
+    assert change_data["new_afwijking"] == 8
+    assert change_data["original_datum"] == "2025-10-10"
+    assert change_data["new_datum"] == "2025-10-11"
