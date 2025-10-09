@@ -1,5 +1,7 @@
 """Tests for inspectie commands."""
 
+from datetime import date
+
 import pytest
 from pydantic import ValidationError
 
@@ -50,3 +52,10 @@ def test_update_afwijking_command_validation_large_values():
     command_neg = UpdateAfwijkingCommand(code="27014", new_afwijking=-100)
     assert command_pos.new_afwijking == 100
     assert command_neg.new_afwijking == -100
+
+
+def test_update_afwijking_command_with_optional_date():
+    """Test command accepts optional new_datum_afleveren field."""
+    test_date = date(2025, 10, 15)
+    command = UpdateAfwijkingCommand(code="27014", new_afwijking=1, new_datum_afleveren=test_date)
+    assert command.new_datum_afleveren == test_date
