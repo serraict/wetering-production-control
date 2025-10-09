@@ -201,11 +201,10 @@ def test_format_row_with_dates():
     row = format_row(model)
 
     # Then
-    assert row == {
-        "id": 1,
-        "name": "Test",
-        "created_at": "25w01-1",  # Date should be formatted
-    }
+    assert row["id"] == 1
+    assert row["name"] == "Test"
+    assert row["created_at"] == "25w01-1"  # Date should be formatted
+    assert row["created_at_raw"] == date(2024, 12, 30)
 
 
 def test_get_table_columns_with_dates():

@@ -14,6 +14,7 @@ from ..components import frame
 from ..components.model_list_page import display_model_list_page
 from ..components.model_detail_page import create_model_view_action
 from ..components.styles import add_print_styles
+from ..components.table_utils import format_date
 
 
 router = APIRouter(prefix="/inspectie")
@@ -39,28 +40,19 @@ def get_pending_commands() -> List[UpdateAfwijkingCommand]:
 
     commands = []
     for code, change_data in storage["inspectie_changes"].items():
-        if isinstance(change_data, dict):
-            # New format with dates
-            if "new_afwijking" in change_data:
-                new_afwijking = change_data["new_afwijking"]
-                new_datum = change_data.get("new_datum")
+        if not isinstance(change_data, dict) or "new_afwijking" not in change_data:
+            continue
 
-                # Convert date string back to date object if present
-                if isinstance(new_datum, str):
-                    new_datum = date.fromisoformat(new_datum)
+        new_afwijking = change_data["new_afwijking"]
+        new_datum = _parse_date(change_data.get("new_datum"))
 
-                commands.append(
-                    UpdateAfwijkingCommand(
-                        code=code, new_afwijking=new_afwijking, new_datum_afleveren=new_datum
-                    )
-                )
-            else:
-                # Old format with just "new" key (backward compatibility)
-                new_afwijking = change_data.get("new", change_data.get("original", 0))
-                commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=new_afwijking))
-        else:
-            # Legacy format (fallback)
-            commands.append(UpdateAfwijkingCommand(code=code, new_afwijking=change_data))
+        commands.append(
+            UpdateAfwijkingCommand(
+                code=code,
+                new_afwijking=new_afwijking,
+                new_datum_afleveren=new_datum,
+            )
+        )
 
     return commands
 
@@ -70,6 +62,17 @@ def clear_pending_commands() -> None:
     storage = get_storage()
     if "inspectie_changes" in storage:
         del storage["inspectie_changes"]
+
+
+def _parse_date(value):
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+    return None
 
 
 async def commit_pending_commands() -> Dict[str, Any]:
@@ -187,7 +190,7 @@ def show_pending_changes_dialog(changes_state=None) -> None:
     storage = get_storage()
     changes = storage.get("inspectie_changes", {})
 
-    with ui.dialog() as dialog, ui.card().classes("w-96"):
+    with ui.dialog() as dialog, ui.card().classes("w-full max-w-4xl"):
         ui.label("Openstaande wijzigingen").classes("text-h6 mb-4")
 
         if not changes:
@@ -203,44 +206,40 @@ def show_pending_changes_dialog(changes_state=None) -> None:
                     "align": "left",
                 },
                 {
-                    "name": "change",
-                    "label": "Wijziging",
-                    "field": "change",
+                    "name": "afwijking",
+                    "label": "Afwijking",
+                    "field": "afwijking",
                     "required": True,
+                    "align": "center",
+                },
+                {
+                    "name": "datum",
+                    "label": "Datum",
+                    "field": "datum",
                     "align": "center",
                 },
             ]
 
             rows = []
             for code, change_data in changes.items():
-                if isinstance(change_data, dict):
-                    # New format with dates
-                    if "new_afwijking" in change_data:
-                        original_afw = change_data.get("original_afwijking", 0) or 0
-                        new_afw = change_data["new_afwijking"]
-                        difference = new_afw - original_afw
+                if not isinstance(change_data, dict) or "new_afwijking" not in change_data:
+                    continue
 
-                        # Format the change display
-                        change_text = f"Afw: {original_afw} → {new_afw} ({difference:+d})"
+                original_afw = change_data.get("original_afwijking", 0) or 0
+                new_afw = change_data["new_afwijking"]
+                difference = new_afw - original_afw
 
-                        # Add date change if present
-                        if change_data.get("new_datum"):
-                            original_datum = change_data.get("original_datum", "")
-                            new_datum = change_data["new_datum"]
-                            change_text += f" | Datum: {original_datum} → {new_datum}"
+                # Format the afwijking change
+                afwijking_text = f"{original_afw} → {new_afw} ({difference:+d})"
 
-                        rows.append({"code": code, "change": change_text})
-                    else:
-                        # Old format with just "original" and "new" keys
-                        original = change_data.get("original", 0) or 0
-                        new_value = change_data.get("new", 0)
-                        difference = new_value - original
-                        rows.append(
-                            {"code": code, "change": f"{original} → {new_value} ({difference:+d})"}
-                        )
-                else:
-                    # Legacy format
-                    rows.append({"code": code, "change": f"{change_data:+d}"})
+                # Format date change if present
+                datum_text = ""
+                new_datum = _parse_date(change_data.get("new_datum"))
+                if new_datum:
+                    original_datum = _parse_date(change_data.get("original_datum"))
+                    datum_text = f"{format_date(original_datum)} → {format_date(new_datum)}"
+
+                rows.append({"code": code, "afwijking": afwijking_text, "datum": datum_text})
 
             ui.table(columns=columns, rows=rows, row_key="code").classes(
                 "w-full print-preserve-columns"
@@ -302,129 +301,65 @@ async def handle_commit_changes(dialog, changes_state=None) -> None:
 def create_afwijking_actions(repository: InspectieRepository, changes_state=None) -> Dict[str, Any]:
     """Create row actions for +1/-1 buttons and view details."""
 
-    def handle_plus_one(e: Dict[str, Any]) -> None:
-        """Handle +1 button click."""
-        code = e.args.get("key")
-        if not code:
-            ui.notify("Geen code gevonden", type="negative")
-            return
+    def build_handler(delta: int, label: str):
+        def handler(e: Dict[str, Any]) -> None:
+            code = e.args.get("key")
+            if not code:
+                ui.notify("Geen code gevonden", type="negative")
+                return
 
-        # Get the current afwijking and date from the row data
-        row_data = e.args.get("row", {})
-        current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
-        current_datum = row_data.get("datum_afleveren_plan_raw")
+            # Get the current afwijking and date from the row data
+            row_data = e.args.get("row", {})
+            current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
+            current_datum = _parse_date(row_data.get("datum_afleveren_plan_raw"))
+            if current_datum is None:
+                current_datum = _parse_date(row_data.get("datum_afleveren_plan"))
 
-        # Get storage safely
-        storage = get_storage()
+            # Get storage safely
+            storage = get_storage()
 
-        # Initialize storage if needed
-        if "inspectie_changes" not in storage:
-            storage["inspectie_changes"] = {}
+            # Initialize storage if needed
+            if "inspectie_changes" not in storage:
+                storage["inspectie_changes"] = {}
 
-        # Check if this is the first change for this code
-        if code not in storage["inspectie_changes"]:
-            # First change: store both original and new values for afwijking and date
-            new_afwijking = current_afwijking + 1
-            new_datum = current_datum + timedelta(days=1) if current_datum else None
+            change_data = storage["inspectie_changes"].get(code)
 
-            storage["inspectie_changes"][code] = {
-                "original_afwijking": current_afwijking,
-                "new_afwijking": new_afwijking,
-                "original_datum": current_datum.isoformat() if current_datum else None,
-                "new_datum": new_datum.isoformat() if new_datum else None,
-            }
-        else:
-            # Subsequent change: increment the new values
-            change_data = storage["inspectie_changes"][code]
-            if isinstance(change_data, dict) and "new_afwijking" in change_data:
-                new_afwijking = change_data["new_afwijking"] + 1
-                storage["inspectie_changes"][code]["new_afwijking"] = new_afwijking
+            if change_data is None:
+                # First change: store both original and new values for afwijking and date
+                new_afwijking = current_afwijking + delta
+                new_datum_obj = current_datum + timedelta(days=delta) if current_datum else None
 
-                # Update the date too
-                current_new_datum = change_data.get("new_datum")
-                if current_new_datum:
-                    if isinstance(current_new_datum, str):
-                        current_new_datum = date.fromisoformat(current_new_datum)
-                    new_datum = current_new_datum + timedelta(days=1)
-                    storage["inspectie_changes"][code]["new_datum"] = new_datum.isoformat()
-            else:
-                # Handle legacy format (just in case)
-                new_afwijking = current_afwijking + 1
-                new_datum = current_datum + timedelta(days=1) if current_datum else None
                 storage["inspectie_changes"][code] = {
                     "original_afwijking": current_afwijking,
                     "new_afwijking": new_afwijking,
                     "original_datum": current_datum.isoformat() if current_datum else None,
-                    "new_datum": new_datum.isoformat() if new_datum else None,
+                    "new_datum": new_datum_obj.isoformat() if new_datum_obj else None,
                 }
-
-        ui.notify(f"Afwijking +1 voor {code} (totaal: {new_afwijking})", type="positive")
-
-        # Update changes state if provided
-        if changes_state:
-            changes_state.update()
-
-    def handle_minus_one(e: Dict[str, Any]) -> None:
-        """Handle -1 button click."""
-        code = e.args.get("key")
-        if not code:
-            ui.notify("Geen code gevonden", type="negative")
-            return
-
-        # Get the current afwijking and date from the row data
-        row_data = e.args.get("row", {})
-        current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
-        current_datum = row_data.get("datum_afleveren_plan_raw")
-
-        # Get storage safely
-        storage = get_storage()
-
-        # Initialize storage if needed
-        if "inspectie_changes" not in storage:
-            storage["inspectie_changes"] = {}
-
-        # Check if this is the first change for this code
-        if code not in storage["inspectie_changes"]:
-            # First change: store both original and new values for afwijking and date
-            new_afwijking = current_afwijking - 1
-            new_datum = current_datum - timedelta(days=1) if current_datum else None
-
-            storage["inspectie_changes"][code] = {
-                "original_afwijking": current_afwijking,
-                "new_afwijking": new_afwijking,
-                "original_datum": current_datum.isoformat() if current_datum else None,
-                "new_datum": new_datum.isoformat() if new_datum else None,
-            }
-        else:
-            # Subsequent change: decrement the new values
-            change_data = storage["inspectie_changes"][code]
-            if isinstance(change_data, dict) and "new_afwijking" in change_data:
-                new_afwijking = change_data["new_afwijking"] - 1
+            else:
+                # Subsequent change: update new values only
+                new_afwijking = change_data["new_afwijking"] + delta
                 storage["inspectie_changes"][code]["new_afwijking"] = new_afwijking
 
-                # Update the date too
-                current_new_datum = change_data.get("new_datum")
+                current_new_datum = _parse_date(change_data.get("new_datum"))
+                if current_new_datum is None:
+                    current_new_datum = _parse_date(change_data.get("original_datum"))
                 if current_new_datum:
-                    if isinstance(current_new_datum, str):
-                        current_new_datum = date.fromisoformat(current_new_datum)
-                    new_datum = current_new_datum - timedelta(days=1)
-                    storage["inspectie_changes"][code]["new_datum"] = new_datum.isoformat()
-            else:
-                # Handle legacy format (just in case)
-                new_afwijking = current_afwijking - 1
-                new_datum = current_datum - timedelta(days=1) if current_datum else None
-                storage["inspectie_changes"][code] = {
-                    "original_afwijking": current_afwijking,
-                    "new_afwijking": new_afwijking,
-                    "original_datum": current_datum.isoformat() if current_datum else None,
-                    "new_datum": new_datum.isoformat() if new_datum else None,
-                }
+                    new_datum_obj = current_new_datum + timedelta(days=delta)
+                    storage["inspectie_changes"][code]["new_datum"] = new_datum_obj.isoformat()
 
-        ui.notify(f"Afwijking -1 voor {code} (totaal: {new_afwijking})", type="positive")
+            ui.notify(
+                f"Afwijking {label} voor {code} (totaal: {new_afwijking})",
+                type="positive",
+            )
 
-        # Update changes state if provided
-        if changes_state:
-            changes_state.update()
+            # Update changes state if provided
+            if changes_state:
+                changes_state.update()
+
+        return handler
+
+    handle_plus_one = build_handler(delta=1, label="+1")
+    handle_minus_one = build_handler(delta=-1, label="-1")
 
     # Create view action for showing all details
     view_action = create_model_view_action(
@@ -560,15 +495,18 @@ def inspectie_page() -> None:
                 with ui.row().classes("w-full gap-4 flex-wrap"):
                     for item in table_state.rows:
                         code = item.get("id")
-                        has_pending_change = code in changes
+                        change_data = changes.get(code)
+                        valid_change = (
+                            isinstance(change_data, dict) and "new_afwijking" in change_data
+                        )
                         card_classes = "w-full sm:w-80"
-                        if has_pending_change:
+                        if valid_change:
                             card_classes += " border-l-4"
 
                         with (
                             ui.card()
                             .classes(card_classes)
-                            .style("border-left-color: #f39c21" if has_pending_change else None)
+                            .style("border-left-color: #f39c21" if valid_change else None)
                         ):
                             with ui.row().classes("w-full justify-between items-center"):
                                 ui.label(item.get("product_naam", "")).classes("text-lg font-bold")
@@ -584,36 +522,21 @@ def inspectie_page() -> None:
                                 ui.label("Afwijking:").classes("text-sm font-semibold")
                                 current_afwijking = item.get("afwijking_afleveren") or 0
 
-                                if has_pending_change:
-                                    change_data = changes[code]
-                                    if isinstance(change_data, dict):
-                                        if "new_afwijking" in change_data:
-                                            new_value = change_data["new_afwijking"]
-                                            ui.label(f"{current_afwijking} → {new_value}").classes(
-                                                "text-base font-bold text-accent"
-                                            )
-                                        else:
-                                            # Old format
-                                            new_value = change_data.get("new", current_afwijking)
-                                            ui.label(f"{current_afwijking} → {new_value}").classes(
-                                                "text-base font-bold text-accent"
-                                            )
-                                    else:
-                                        ui.label(f"{current_afwijking} ({change_data:+d})").classes(
-                                            "text-base font-bold text-accent"
-                                        )
+                                if valid_change:
+                                    new_value = change_data["new_afwijking"]
+                                    ui.label(f"{current_afwijking} → {new_value}").classes(
+                                        "text-base font-bold text-accent"
+                                    )
                                 else:
                                     ui.label(str(current_afwijking)).classes("text-sm")
 
                             # Show date change if present
-                            if has_pending_change:
-                                change_data = changes[code]
-                                if isinstance(change_data, dict) and change_data.get("new_datum"):
-                                    with ui.row().classes("w-full gap-2"):
-                                        ui.label("Nieuwe datum:").classes("text-sm font-semibold")
-                                        ui.label(change_data["new_datum"]).classes(
-                                            "text-sm text-accent font-bold"
-                                        )
+                            if valid_change and change_data.get("new_datum"):
+                                with ui.row().classes("w-full gap-2"):
+                                    ui.label("Nieuwe datum:").classes("text-sm font-semibold")
+                                    ui.label(change_data["new_datum"]).classes(
+                                        "text-sm text-accent font-bold"
+                                    )
 
                             # Action buttons
                             with ui.row().classes("w-full justify-end gap-2 mt-2"):

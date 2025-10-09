@@ -174,6 +174,7 @@ def format_row(model: SQLModel) -> Dict[str, Any]:
         value = getattr(model, field_name)
         if is_date_field(field.annotation) and value:
             row[field_name] = format_date(value)
+            row[f"{field_name}_raw"] = value
         else:
             row[field_name] = value
 
