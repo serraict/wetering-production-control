@@ -62,6 +62,13 @@ def index_page() -> None:
                         )
                         ui.link("Ga naar Inspectieronde", "/inspectie").classes(LINK_CLASSES)
 
+                    with ui.card().classes(NAV_CARD_CLASSES):
+                        ui.label("Scan Batch").classes(HEADER_CLASSES + " mb-2")
+                        ui.label("Scan batch labels om batch informatie te bekijken").classes(
+                            SUBHEADER_CLASSES + " mb-4"
+                        )
+                        ui.link("Ga naar Scanner", "/scan").classes(LINK_CLASSES)
+
 
 @root_router.page("/about")
 def about_page() -> None:
