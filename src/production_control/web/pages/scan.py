@@ -22,23 +22,15 @@ def get_repository() -> PottingLotRepository:
 
 
 @router.page("")
-def scan_page() -> None:
+def scan_page(autostart: bool = False) -> None:
     """Mobile-optimized scanning page for viewing batch information."""
-    with frame("Scan Batch"):
+    with frame("Scan"):
         with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
-            # Header
-            ui.label("Scan Batch Label").classes("text-2xl font-bold mb-2")
-            ui.label("Scan the QR code on a batch label to view information").classes(
-                "text-gray-600 mb-4"
-            )
-
             # Scanner card
             with ui.card().classes("w-full"):
-                ui.label("Camera Scanner").classes("text-lg font-semibold mb-2")
-                create_barcode_scanner_ui(on_scan=lambda barcode: handle_scan(barcode))
-
-            # Results container (initially empty)
-            ui.label("").props("id=scan-results")
+                create_barcode_scanner_ui(
+                    on_scan=lambda barcode: handle_scan(barcode), autostart=autostart
+                )
 
 
 def handle_scan(barcode: str) -> None:

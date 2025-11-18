@@ -9,7 +9,7 @@ from nicegui_scanner import BarcodeScanner
 logger = logging.getLogger(__name__)
 
 
-def create_barcode_scanner_ui(on_scan: Callable[[str], None]) -> ui.column:
+def create_barcode_scanner_ui(on_scan: Callable[[str], None], autostart: bool = False) -> ui.column:
     with ui.column() as container:
 
         def on_scanner_event(event):
@@ -19,5 +19,8 @@ def create_barcode_scanner_ui(on_scan: Callable[[str], None]) -> ui.column:
 
         scanner = BarcodeScanner(on_scan=on_scanner_event)
         scanner.create_control_buttons()
+
+        if autostart:
+            scanner.start_scanning()
 
     return container

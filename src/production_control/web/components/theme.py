@@ -38,9 +38,9 @@ def frame(navigation_title: str):
         # Right section: Scan button and User menu
         with ui.row().classes("items-center gap-4"):
             # Scan button
-            ui.button(icon="qr_code_scanner", on_click=lambda: ui.navigate.to("/scan")).props(
-                "flat"
-            ).classes("text-white").tooltip("Scan Batch")
+            ui.button(
+                icon="qr_code_scanner", on_click=lambda: ui.navigate.to("/scan?autostart=true")
+            ).props("flat").classes("text-white").tooltip("Scan Batch")
 
             # User menu with icon
             user = get_current_user()

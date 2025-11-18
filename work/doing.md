@@ -52,8 +52,6 @@ Paul can scan batch labels from his smartphone and quickly view batch informatio
   - [x] Batch not found
   - [x] Camera access denied
 - [ ] Add "Scan another" button for sequential scanning
-- [ ] Test on mobile devices (iOS Safari and Android Chrome)
-- [ ] Add navigation link to scanning page from main menu
 
 ## Notes
 
