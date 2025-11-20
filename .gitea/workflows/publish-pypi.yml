@@ -14,23 +14,31 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for setuptools_scm
 
+      - name: Cache Python virtual environment
+        id: cache-venv
+        uses: https://gitea.potlilium.serraict.me/actions/cache@v3
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-build-${{ hashFiles('pyproject.toml') }}
+
+      - name: Create virtual environment
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: python3 -m venv .venv
+
       - name: Install build dependencies
-        run: |
-          pip install build twine setuptools_scm
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: .venv/bin/pip install build twine setuptools_scm
 
       - name: Verify version
-        run: |
-          python -m setuptools_scm
+        run: .venv/bin/python -m setuptools_scm
 
       - name: Build package
         run: |
-          # NOTE: Use system python, not 'uv run python'
-          # python -m build creates its own isolated environment
-          python -m build
+          .venv/bin/python -m build
 
       - name: Publish to Gitea
         env:
           TWINE_USERNAME: gitea
           TWINE_PASSWORD: ${{ secrets.GITEA_TOKEN }}
         run: |
-          twine upload --repository-url ${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/pypi dist/*
+          .venv/bin/twine upload --repository-url ${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/pypi dist/*
