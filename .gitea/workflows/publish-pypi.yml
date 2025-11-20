@@ -3,28 +3,30 @@ name: Publish Python Package
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: https://gitea.potlilium.serraict.me/actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for setuptools_scm
+          fetch-depth: 0 # Fetch all history for setuptools_scm
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
-          pip install build twine
+          pip install build twine setuptools_scm
+
+      - name: Verify version
+        run: |
+          python -m setuptools_scm
 
       - name: Build package
-        run: python -m build
+        run: |
+          # NOTE: Use system python, not 'uv run python'
+          # python -m build creates its own isolated environment
+          python -m build
 
       - name: Publish to Gitea
         env:
