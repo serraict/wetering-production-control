@@ -39,6 +39,6 @@ jobs:
       - name: Publish to Gitea
         env:
           TWINE_USERNAME: ${{ gitea.actor }}
-          TWINE_PASSWORD: ${{ secrets.GITEA_TOKEN }}
+          TWINE_PASSWORD: ${{ gitea.token }}
         run: |
           .venv/bin/twine upload --repository-url ${{ gitea.server_url }}/api/packages/${{ gitea.repository_owner }}/pypi dist/*
