@@ -73,7 +73,7 @@ jobs:
 
           server_url = "${{ gitea.server_url }}"
           owner = "${{ gitea.repository_owner }}"
-          url = f"{server_url}/api/packages/{owner}/pypi"
+          url = f"{server_url}/api/packages/{owner}/pypi/simple/"
 
           creds = f"{os.environ['TWINE_USERNAME']}:{os.environ['TWINE_PASSWORD']}"
           token = base64.b64encode(creds.encode()).decode()
