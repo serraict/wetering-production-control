@@ -41,6 +41,14 @@ The system consists of the following main components:
 - **Maintenance Commands**: Tools for fixing data issues
 - **Reporting**: Display of product and spacing information
 
+### OPC/UA Machine Communication
+
+- **PottingLineController**: Async service for communicating with potting line PLCs via OPC/UA
+- **asyncua Library**: Python OPC/UA client for reading/writing PLC node values
+- **Configuration**: `OPCConfig` with endpoint, retry, and security settings (overridable via environment variables)
+- **Node Addressing**: Uses string-based NodeIds with runtime namespace resolution to avoid index mismatch bugs (see `docs/notes/nodesets-namespace-index-mismatch-bug.md`)
+- **Field Test Guide**: See `docs/notes/plc-connection-field-test-guide.md` for setup and verification
+
 ### Integration
 
 - **OpTech Client**: Integration with OpTech API for spacing control
@@ -85,10 +93,16 @@ graph TD
         Reporting[Reporting Tools]
     end
     
+    subgraph "OPC/UA"
+        LineController[PottingLineController]
+        OPCConfig[OPCConfig]
+    end
+
     subgraph "External Systems"
         Dremio[Dremio Instance]
         OpTech[OpTech API]
         Technison[Technison Application]
+        PLC[Potting Line PLC]
     end
 
     NiceGUI --> Pages
@@ -117,6 +131,10 @@ graph TD
     Spacing --> OpTech
     OpTech --> Technison
 
+    PottingLots --> LineController
+    LineController --> OPCConfig
+    LineController --> PLC
+
     style NiceGUI fill:#f9f,stroke:#333
     style SQLModel fill:#bbf,stroke:#333
     style Templates fill:#fbf,stroke:#333
@@ -140,6 +158,7 @@ graph TD
 1. **Data Access**: Repositories retrieve and store data via SQLModel and Dremio
 1. **Label Generation**: HTML templates are rendered and converted to PDF
 1. **Integration**: Changes to spacing data are sent to OpTech API
+1. **Machine Communication**: Active lot numbers are written to the potting line PLC via OPC/UA
 
 ## Performance Considerations
 
