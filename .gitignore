@@ -1,3 +1,8 @@
+# Certificates and keys
+certs/
+*.pem
+*.der
+
 # Python
 __pycache__/
 *.py[cod]
