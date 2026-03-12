@@ -137,13 +137,14 @@ def load_ca(output_dir: Path):
 
 def generate_client_cert(
     output_dir: Path,
-    ca_cert,
-    ca_key,
+    ca_cert=None,
+    ca_key=None,
     hostname: str = "localhost",
     application_uri: str = DEFAULT_APPLICATION_URI,
     days_valid: int = 365 * 5,
+    self_signed: bool = False,
 ):
-    """Generate a client certificate signed by the CA."""
+    """Generate a client certificate, either self-signed or signed by a CA."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Generating client key pair...")
@@ -170,10 +171,21 @@ def generate_client_cert(
     except ValueError:
         pass
 
+    if self_signed:
+        issuer_name = subject
+        signing_key = client_key
+        authority_public_key = client_key.public_key()
+        logger.info("Generating self-signed client certificate")
+    else:
+        issuer_name = ca_cert.subject
+        signing_key = ca_key
+        authority_public_key = ca_key.public_key()
+        logger.info("Generating CA-signed client certificate")
+
     client_cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
-        .issuer_name(ca_cert.subject)  # Signed by CA
+        .issuer_name(issuer_name)
         .public_key(client_key.public_key())
         .serial_number(random.randint(1, 2**31 - 1))
         .not_valid_before(now)
@@ -214,10 +226,10 @@ def generate_client_cert(
             critical=False,
         )
         .add_extension(
-            x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key()),
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(authority_public_key),
             critical=False,
         )
-        .sign(ca_key, hashes.SHA256())  # Signed with CA's key
+        .sign(signing_key, hashes.SHA256())
     )
 
     der_path, pem_path, key_path = _write_cert_and_key(output_dir, "client_cert", client_cert, client_key)
@@ -264,34 +276,46 @@ def main():
         action="store_true",
         help="Only regenerate client cert (reuse existing CA)",
     )
+    parser.add_argument(
+        "--self-signed",
+        action="store_true",
+        help="Generate a self-signed client cert (no CA)",
+    )
     args = parser.parse_args()
 
-    if args.client_only:
-        ca_cert, ca_key = load_ca(args.output_dir)
+    if args.self_signed:
+        generate_client_cert(
+            output_dir=args.output_dir,
+            hostname=args.hostname,
+            application_uri=args.application_uri,
+            days_valid=args.days,
+            self_signed=True,
+        )
     else:
-        ca_cert, ca_key = generate_ca(args.output_dir)
+        if args.client_only:
+            ca_cert, ca_key = load_ca(args.output_dir)
+        else:
+            ca_cert, ca_key = generate_ca(args.output_dir)
 
-    generate_client_cert(
-        output_dir=args.output_dir,
-        ca_cert=ca_cert,
-        ca_key=ca_key,
-        hostname=args.hostname,
-        application_uri=args.application_uri,
-        days_valid=args.days,
-    )
+        generate_client_cert(
+            output_dir=args.output_dir,
+            ca_cert=ca_cert,
+            ca_key=ca_key,
+            hostname=args.hostname,
+            application_uri=args.application_uri,
+            days_valid=args.days,
+        )
 
     print()
-    if not args.client_only:
+    if args.self_signed:
+        print("1. Upload client_cert.der to the device's trusted certificates.")
+    elif not args.client_only:
         print("1. Upload ca.der to the PLC's 'Trusted Issuers' in Sysmac Studio")
         print("   and transfer to controller.")
-        print()
-    print("2. To connect, use:")
-    print(f"   export OPC_USE_SECURITY=true")
-    print(f"   export OPC_CERTIFICATE_PATH=certs/client_cert.pem")
-    print(f"   export OPC_PRIVATE_KEY_PATH=certs/client_cert_key.pem")
     print()
-    print("3. To regenerate a new client cert (same CA):")
-    print(f"   python scripts/generate_opcua_certificate.py --client-only --hostname {args.hostname}")
+    print("2. To connect, use:")
+    print(f"   export OPC_CERTIFICATE_PATH=certs/client_cert.der")
+    print(f"   export OPC_PRIVATE_KEY_PATH=certs/client_cert_key.pem")
 
 
 if __name__ == "__main__":

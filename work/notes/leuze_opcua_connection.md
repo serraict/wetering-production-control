@@ -55,6 +55,11 @@ asyncio.run(read_leuze())
 - Username: `Martin` (capital M, case-sensitive!)
 - Password: `12345678`
 
+### Leuze OPC monitor status
+In the Leuze web UI, the OPC monitor status must show a green checkmark.
+This is toggled with an action button. Without it, connections are rejected
+with `BadSecurityChecksFailed`.
+
 ### Why standard uabrowse doesn't work
 The Leuze scanner's server certificate has a non-standard character in a
 PrintableString ASN.1 field. Python's `cryptography` library rejects it with:
