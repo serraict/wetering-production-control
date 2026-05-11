@@ -30,16 +30,17 @@ Field-test details: `work/notes/leuze_opcua_connection.md`, `work/notes/onstapel
 
 Before field tests, prove the round-trip on serraserver: build → push → pull → run a script inside the container → see output.
 
-- [ ] Pick a trivial canary script (e.g. `work/scripts/browse_plc.py`, retargeted to the production PLC once known)
-- [ ] `make docker_push` builds and pushes `ghcr.io/serraict/wetering-production-control:latest`
-- [ ] On serraserver: pull the new image and restart the container
-- [ ] Exec into the container and run the canary — confirm it reaches the production PLC
-- [ ] Make a one-line visible change in the canary, redeploy, confirm the new output appears
+- [x] Pick a trivial canary script (e.g. `work/scripts/browse_plc.py`, retargeted to the production PLC once known)
+- [x] `make docker_push` builds and pushes `ghcr.io/serraict/wetering-production-control:latest`
+- [x] On serraserver: pull the new image and restart the container
+- [x] Exec into the container and run the canary — confirm it reaches the production PLC
+- [x] Make a one-line visible change in the canary, redeploy, confirm the new output appears
 
 ### B. Production certificates
 
 - [ ] Confirm the production PLC + scanner IPs/ports on site
-- [ ] Regenerate the client cert/key for the production deployment (CN, SAN URI, hostname all matching what the container will present); include both `clientAuth` and `serverAuth` EKUs
+- [ ] Add the `opcua_test` sibling service to `docker-compose.yml` on serraserver (image, env_file, certs volume — see "Commands to run on serraserver" below)
+- [ ] Regenerate the client cert/key for the production deployment via the `opcua_test` service (CN, SAN URI, hostname all matching what the container will present); include both `clientAuth` and `serverAuth` EKUs
 - [ ] Place certs where the container can read them (volume mount, not baked into the image)
 - [ ] Trust the new client cert on the Omron PLC (Sysmac Studio → Client Authentication → Move to Trusted)
 - [ ] Configure user accounts on the PLC and scanner; store the credentials in `.env` for the container
@@ -80,31 +81,28 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 
 ### Commands to run on serraserver
 
-From your laptop:
-
 ```sh
-# Build and push the latest image (scripts/ is now baked in — see Dockerfile)
-make docker_push
+# update 
+docker compose pull opcua_test
 ```
 
-On serraserver (10.0.0.3):
+Then, from the deployment dir:
 
 ```sh
-# 1. ssh in
-ssh serraserver
+docker compose run --rm opcua_test python scripts/show_opcua_config.py
 
-# 2. go to the compose dir for production_control (adjust path as needed)
-cd /opt/serra-vine/production_control     # or wherever docker-compose.yml lives
+# generate the client cert into the shared certs volume
+docker compose run --rm opcua_test \
+  python scripts/generate_client_cert.py --out-dir /app/certs --hostname "$(hostname)"
 
-# 3. pull the new image and restart the service
-docker compose pull production_control
+# probe both endpoints (URLs come from the container's env_file)
+docker compose run --rm opcua_test sh -c \
+  'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_PLC_URL"'
+docker compose run --rm opcua_test sh -c \
+  'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_LEUZE_URL"'
+
+# once the cert is trusted on the PLC
 docker compose up -d production_control
-
-# 4. run the OPC UA config canary inside the container
-docker compose exec production_control python scripts/show_opcua_config.py
-
-# 5. tail container logs while testing
-docker compose logs -f production_control
 ```
 
 [Working docs]: https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratatie-Onstapelmachine-met-oppotproces-256?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5
