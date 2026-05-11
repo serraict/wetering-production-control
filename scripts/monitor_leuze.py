@@ -1,10 +1,9 @@
 """Browse the Leuze scanner's user namespaces and subscribe to every variable.
 
 Goal 4 from work/doing.md: log datachange notifications from the scanner.
-Mirrors monitor_plc.py. The test-setup Leuze required a monkey-patch for a
-malformed server cert (see scripts/browse_leuze.py) — try the plain path
-first against the production scanner; if you hit a cert-parsing error,
-port the LenientCertificate patch over.
+Mirrors monitor_plc.py, plus the LenientCertificate monkey-patch from
+scripts/browse_leuze.py — the Leuze ships a malformed server certificate
+that the strict asn1 parser rejects.
 
 Env vars (all required except where noted):
     VINEAPP_OPCUA_LEUZE_URL       opc.tcp://<leuze-host>:4840
@@ -23,10 +22,77 @@ import logging
 import os
 import sys
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import Encoding, load_der_public_key
+from cryptography.x509 import load_der_x509_certificate
+
 from asyncua import Client, Node, ua
+from asyncua.crypto import uacrypto
 from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 
 DEFAULT_APP_URI = "urn:serra:production-control-client"
+
+logger = logging.getLogger(__name__)
+
+
+class LenientCertificate:
+    """Wraps malformed DER cert bytes — extracts the public key via minimal
+    ASN.1 parsing so asyncua can complete the handshake."""
+
+    def __init__(self, der_bytes: bytes):
+        self._der_bytes = der_bytes
+        from pyasn1.codec.der import decoder as der_decoder, encoder as der_encoder
+        from pyasn1.type import univ
+
+        cert_seq, _ = der_decoder.decode(der_bytes, asn1Spec=univ.Sequence())
+        tbs = cert_seq.getComponentByPosition(0)
+        spki = tbs.getComponentByPosition(6)
+        self._public_key = load_der_public_key(der_encoder.encode(spki), default_backend())
+
+    def public_key(self):
+        return self._public_key
+
+    def public_bytes(self, encoding):
+        if encoding == Encoding.DER:
+            return self._der_bytes
+        raise ValueError(f"Unsupported encoding: {encoding}")
+
+
+def _lenient_x509_from_der(data):
+    if not data:
+        return None
+    try:
+        return load_der_x509_certificate(data, default_backend())
+    except Exception:
+        logger.info("Using lenient certificate parser for malformed server cert")
+        return LenientCertificate(data)
+
+
+_orig_der_from_x509 = uacrypto.der_from_x509
+_orig_load_certificate = uacrypto.load_certificate
+
+
+def _patched_der_from_x509(cert):
+    if isinstance(cert, LenientCertificate):
+        return cert.public_bytes(Encoding.DER)
+    return _orig_der_from_x509(cert)
+
+
+async def _lenient_load_certificate(path_or_content, extension=None):
+    try:
+        return await _orig_load_certificate(path_or_content, extension)
+    except Exception:
+        if isinstance(path_or_content, bytes):
+            content = path_or_content
+        else:
+            content = await uacrypto.get_content(path_or_content)
+        logger.info("Using lenient certificate loader for malformed cert")
+        return LenientCertificate(content)
+
+
+uacrypto.x509_from_der = _lenient_x509_from_der
+uacrypto.der_from_x509 = _patched_der_from_x509
+uacrypto.load_certificate = _lenient_load_certificate
 
 
 class Handler:
