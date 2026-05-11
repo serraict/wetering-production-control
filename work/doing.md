@@ -6,12 +6,13 @@ Field-test details: `work/notes/leuze_opcua_connection.md`, `work/notes/onstapel
 
 ## Context
 
-- Omron PLC (production): IP/port **TBD** — to be confirmed on site.
-  Protocol nodes (from test setup, expected to match): `ns=4;s=GoodRead`, `ns=4;s=Resultaat`, `ns=4;s=Trigger`.
-  Credentials: to be set on the production PLC.
-- Leuze DCR 202iC scanner (production): IP/port **TBD** — to be confirmed on site.
-  Scan node (from test setup): `ns=5;i=6122` (LastScanData). Requires asyncua monkey-patch (see `scripts/browse_leuze.py`).
-  Credentials: to be set on the production scanner.
+- Omron PLC (production): `opc.tcp://10.0.0.190:4840`.
+  Protocol nodes: `ns=4;s=GoodRead`, `ns=4;s=Resultaat`, `ns=4;s=Trigger`.
+  Client cert trusted on the PLC; reading values works.
+  **Open safety issue:** the configured user can read/write **all** exposed nodes — needs PLC-side access control tightening (restrict role to the protocol nodes) **before** any write scripts (Goal 3 / 5) or production rollout.
+- Leuze DCR 202iC scanner (production): `opc.tcp://10.0.0.191:4840`.
+  Monitored nodes: `LastScanData` (`ns=5;i=6122`), `ScanActive` (`ns=5;i=6199`), `DeviceTemperature` (`ns=5;i=6116`).
+  Same malformed-cert quirk as the test unit — monkey-patch in `scripts/monitor_leuze.py` / `scripts/browse_leuze.py`.
 - **Certificates must be regenerated** for the production setup — the test certs in `certs/` are not reusable. Generate with both `clientAuth` and `serverAuth` EKUs (per opcua-examples Findings); our own cert is the authentication path — no UaExpert-style workaround.
 - Production control runs in a docker container on `serraserver` (10.0.0.3) under Serra Vine.
 - Field tests today (2026-05-11), later this morning. Existing tests live in `work/scripts/` and were written against the test setup (Omron @ 192.168.50.36, Leuze @ 192.168.50.41) — keep as reference but rewire to the production endpoints.
@@ -42,18 +43,19 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 - [x] Add the `opcua_test` sibling service to `docker-compose.yml` on serraserver (image, env_file, certs volume — see "Commands to run on serraserver" below)
 - [x] Regenerate the client cert/key for the production deployment via the `opcua_test` service (CN, SAN URI, hostname all matching what the container will present); include both `clientAuth` and `serverAuth` EKUs
 - [x] Place certs where the container can read them (volume mount, not baked into the image)
-- [ ] Trust the new client cert on the Omron PLC (Sysmac Studio → Client Authentication → Move to Trusted)
-- [ ] Configure user accounts on the PLC and scanner; store the credentials in `.env` for the container
+- [x] Trust the new client cert on the Omron PLC (Sysmac Studio → Client Authentication → Move to Trusted)
+- [x] Configure user accounts on the PLC and scanner; store the credentials in `.env` for the container
+- [ ] **Tighten PLC access control** — current user can read/write all exposed nodes; restrict to the three protocol nodes (`GoodRead`, `Resultaat`, `Trigger`) before enabling writes
 
 ## Acceptance criteria
 
-- [ ] Connection settings (URL, user, password, cert paths, app URI) read from env vars / `.env` in one place — pattern from `docs/notes/opcua-examples/client/common.py`
-- [ ] Certificates and credentials accessible inside the deployed container (volume-mounted or baked in deliberately)
-- [ ] Goal 1: PLC and Leuze connect scripts each print a success line from inside the container
-- [ ] Goal 2: monitor logs datachange notifications for `GoodRead`, `Resultaat`, `Trigger`
-- [ ] Goal 3: a write script sets a chosen PLC field; the monitor (goal 2) observes the new value
-- [ ] Goal 4: monitor logs scans as they arrive from `ns=5;i=6122`
-- [ ] Goal 5: combined script reads scans from Leuze and writes them to a PLC field; observed end-to-end
+- [x] Connection settings (URL, user, password, cert paths, app URI) read from env vars / `.env` in one place — pattern from `docs/notes/opcua-examples/client/common.py`
+- [x] Certificates and credentials accessible inside the deployed container (volume-mounted or baked in deliberately)
+- [x] Goal 1: PLC and Leuze connect scripts each print a success line from inside the container
+- [x] Goal 2: monitor logs datachange notifications for `GoodRead`, `Resultaat`, `Trigger` (`scripts/monitor_plc.py`)
+- [ ] Goal 3: a write script sets a chosen PLC field; the monitor (goal 2) observes the new value — **blocked on PLC access-control tightening**
+- [x] Goal 4: monitor logs scans as they arrive from `ns=5;i=6122` (`scripts/monitor_leuze.py`)
+- [ ] Goal 5: combined script reads scans from Leuze and writes them to a PLC field; observed end-to-end — **blocked on PLC access-control tightening**
 
 ## Technical requirements
 
@@ -65,14 +67,21 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 
 ## Implementation steps
 
-- [ ] Verify deploy + run path on serraserver (prerequisite above)
-- [ ] Consolidate connection config in one env-driven module mirroring `opcua-examples/client/common.py`
-- [ ] Goal 1 — connect smoke tests: PLC + Leuze (reuse `work/scripts/browse_plc.py`, `scripts/browse_leuze.py`)
-- [ ] Goal 2 — PLC monitor on the three protocol fields (build on `work/scripts/test_00c_plc_protocol_vars.py`)
-- [ ] Goal 3 — PLC write (build on `work/scripts/write_plc_vars.py` / `test_01_write_actieve_partij.py`); verify via goal 2 monitor
-- [ ] Goal 4 — Leuze monitor on `LastScanData` (build on `work/scripts/test_02_read_leuze_scan.py`)
+- [x] Verify deploy + run path on serraserver
+- [x] Consolidate connection config — all scripts read `VINEAPP_OPCUA_*` env vars
+- [x] Goal 1 — PLC + Leuze connect smoke tests (`scripts/probe_opcua_endpoint.py`, `scripts/monitor_plc.py`, `scripts/monitor_leuze.py`)
+- [x] Goal 2 — PLC monitor on the three protocol fields (`scripts/monitor_plc.py`)
+- [x] Goal 4 — Leuze monitor (`scripts/monitor_leuze.py`)
+- [ ] **PLC access control:** restrict the OPC UA user to read/write only the three protocol nodes — current setup exposes everything, unsafe for writes
+- [ ] Goal 3 — PLC write script (build on `work/scripts/write_plc_vars.py` / `test_01_write_actieve_partij.py`); verify via goal 2 monitor
 - [ ] Goal 5 — scan-to-PLC bridge (build on `test_04_read_scan_resultaat.py` / `test_05_write_scan_resultaat.py`)
-- [ ] Run each script in the container against live devices during the field test; capture output in `work/notes/onstapelmachine/`
+- [ ] Capture field-test output in `work/notes/onstapelmachine/`
+
+## Hardening / follow-ups
+
+- [ ] **Longer-lived client cert.** Current cert generated by `scripts/generate_client_cert.py` is valid for only 365 days (asyncua's `setup_self_signed_certificate` hardcodes `days=365`). Regenerate with a multi-year validity (e.g., 10 years) so we don't get surprised by an expiry. Likely path: stop using the convenience helper and call `asyncua.crypto.cert_gen.generate_self_signed_app_certificate(..., days=3650)` directly, then write key + DER cert ourselves.
+- [ ] **Cert expiry check.** Add a script (or extend `scripts/show_opcua_config.py`) that reports `notBefore` / `notAfter` for `VINEAPP_OPCUA_CLIENT_CERT` and warns when expiry is within N days. Wire it into a routine on serraserver (cron, healthcheck, or oncall checklist).
+- [ ] **Runbook: cert renewal.** Document in `work/notes/onstapelmachine/` what to do when the cert expires (or is about to): regenerate via the `opcua_test` service into `production-control/certs/`, re-trust the new cert on the Omron PLC (Sysmac Studio → Client Authentication), restart `production_control`, verify with `monitor_plc.py` / `monitor_leuze.py`.
 
 ## Notes
 
