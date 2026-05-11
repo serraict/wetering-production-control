@@ -26,7 +26,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, load_der_public_key
 from cryptography.x509 import load_der_x509_certificate
 
-from asyncua import Client, Node, ua
+from asyncua import Client, ua
 from asyncua.crypto import uacrypto
 from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 
@@ -108,30 +108,6 @@ def env(name: str) -> str:
     return value
 
 
-async def collect_variables(node: Node, indent: int = 0) -> list[Node]:
-    """Recurse from `node`, print structure, return all Variable nodes."""
-    name = (await node.read_display_name()).Text
-    node_class = await node.read_node_class()
-    variables: list[Node] = []
-
-    if node_class == ua.NodeClass.Variable:
-        try:
-            value = await node.read_value()
-        except ua.UaError:
-            value = "?"
-        print(f"{'  ' * indent}{name} = {value}")
-        variables.append(node)
-    else:
-        print(f"{'  ' * indent}{name}/")
-
-    for child in await node.get_children():
-        child_class = await child.read_node_class()
-        if child_class in (ua.NodeClass.Object, ua.NodeClass.Variable):
-            variables.extend(await collect_variables(child, indent + 1))
-
-    return variables
-
-
 async def main() -> None:
     url = env("VINEAPP_OPCUA_LEUZE_URL")
     client = Client(url=url)
@@ -146,21 +122,29 @@ async def main() -> None:
         mode=ua.MessageSecurityMode.SignAndEncrypt,
     )
 
+    # Fixed set: the protocol field plus a couple of debug fields.
+    # Subscribing to the full browse tree trips BadEncodingLimitsExceeded
+    # on this firmware.
+    NODES = {
+        "LastScanData":      "ns=5;i=6122",   # protocol: scanned value
+        "ScanActive":        "ns=5;i=6199",   # debug:    scanning on/off
+        "DeviceTemperature": "ns=5;i=6116",   # debug:    sanity / health
+    }
+
     print(f"Connecting to {url} ...", flush=True)
     async with client:
-        variables: list[Node] = []
-        for child in await client.nodes.objects.get_children():
-            if child.nodeid.NamespaceIndex == 0:
-                continue
-            variables.extend(await collect_variables(child))
-
-        if not variables:
-            print("No user-namespace variables found.", flush=True)
-            return
+        nodes = [client.get_node(nid) for nid in NODES.values()]
+        # initial read
+        for label, nid in NODES.items():
+            try:
+                value = await client.get_node(nid).read_value()
+            except Exception as exc:
+                value = f"<read error: {exc}>"
+            print(f"  {label} ({nid}) = {value}")
 
         subscription = await client.create_subscription(500, Handler())
-        await subscription.subscribe_data_change(variables)
-        print(f"\nSubscribed to {len(variables)} variables (Ctrl+C to stop)", flush=True)
+        await subscription.subscribe_data_change(nodes)
+        print(f"\nSubscribed to {len(nodes)} nodes (Ctrl+C to stop)", flush=True)
         try:
             while True:
                 await asyncio.sleep(1)
