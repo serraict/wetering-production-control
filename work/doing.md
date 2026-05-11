@@ -38,10 +38,10 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 
 ### B. Production certificates
 
-- [ ] Confirm the production PLC + scanner IPs/ports on site
-- [ ] Add the `opcua_test` sibling service to `docker-compose.yml` on serraserver (image, env_file, certs volume — see "Commands to run on serraserver" below)
-- [ ] Regenerate the client cert/key for the production deployment via the `opcua_test` service (CN, SAN URI, hostname all matching what the container will present); include both `clientAuth` and `serverAuth` EKUs
-- [ ] Place certs where the container can read them (volume mount, not baked into the image)
+- [x] Confirm the production PLC + scanner IPs/ports on site
+- [x] Add the `opcua_test` sibling service to `docker-compose.yml` on serraserver (image, env_file, certs volume — see "Commands to run on serraserver" below)
+- [x] Regenerate the client cert/key for the production deployment via the `opcua_test` service (CN, SAN URI, hostname all matching what the container will present); include both `clientAuth` and `serverAuth` EKUs
+- [x] Place certs where the container can read them (volume mount, not baked into the image)
 - [ ] Trust the new client cert on the Omron PLC (Sysmac Studio → Client Authentication → Move to Trusted)
 - [ ] Configure user accounts on the PLC and scanner; store the credentials in `.env` for the container
 
@@ -103,6 +103,9 @@ docker compose run --rm opcua_test sh -c \
 
 # monitor PLC protocol fields (GoodRead / Resultaat / Trigger)
 docker compose run --rm opcua_test python scripts/monitor_plc.py
+
+# monitor Leuze scanner variables
+docker compose run --rm opcua_test python scripts/monitor_leuze.py
 
 # once the cert is trusted on the PLC
 docker compose up -d production_control
