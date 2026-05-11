@@ -101,6 +101,9 @@ docker compose run --rm opcua_test sh -c \
 docker compose run --rm opcua_test sh -c \
   'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_LEUZE_URL"'
 
+# monitor PLC protocol fields (GoodRead / Resultaat / Trigger)
+docker compose run --rm opcua_test python scripts/monitor_plc.py
+
 # once the cert is trusted on the PLC
 docker compose up -d production_control
 ```
