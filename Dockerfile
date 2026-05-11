@@ -27,6 +27,7 @@ COPY --from=builder /app/dist/.venv /app/.venv
 # Copy only runtime necessities
 COPY docker-entrypoint.sh ./
 COPY src/production_control/assets ./src/production_control/assets
+COPY scripts ./scripts
 # Add any other runtime-only files as needed
 
 # Set up environment

@@ -78,4 +78,33 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 - Keep scripts minimal and closely aligned with `opcua-examples` patterns.
 - Update `work/notes/onstapelmachine/references.md` with the confirmed production IPs, ports, and cert paths once known.
 
+### Commands to run on serraserver
+
+From your laptop:
+
+```sh
+# Build and push the latest image (scripts/ is now baked in — see Dockerfile)
+make docker_push
+```
+
+On serraserver (10.0.0.3):
+
+```sh
+# 1. ssh in
+ssh serraserver
+
+# 2. go to the compose dir for production_control (adjust path as needed)
+cd /opt/serra-vine/production_control     # or wherever docker-compose.yml lives
+
+# 3. pull the new image and restart the service
+docker compose pull production_control
+docker compose up -d production_control
+
+# 4. run the OPC UA config canary inside the container
+docker compose exec production_control python scripts/show_opcua_config.py
+
+# 5. tail container logs while testing
+docker compose logs -f production_control
+```
+
 [Working docs]: https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratatie-Onstapelmachine-met-oppotproces-256?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5
