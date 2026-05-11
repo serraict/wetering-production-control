@@ -1,0 +1,3 @@
+[submodule "docs/notes/opcua-examples"]
+	path = docs/notes/opcua-examples
+	url = https://github.com/serraict/opcua-examples.git
