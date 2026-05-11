@@ -1,6 +1,6 @@
-"""Subscribe to datachange notifications on the Omron PLC protocol fields.
+"""Browse the Omron PLC's user namespaces and subscribe to every variable.
 
-Goal 2 from work/doing.md: log GoodRead / Resultaat / Trigger as they change.
+Goal 2 from work/doing.md: log datachange notifications from the PLC.
 Connects with SignAndEncrypt + Basic256Sha256 using the client cert/key from
 the env (same pattern as docs/notes/opcua-examples/client/client_sign_and_encrypt.py).
 
@@ -21,10 +21,9 @@ import logging
 import os
 import sys
 
-from asyncua import Client, ua
+from asyncua import Client, Node, ua
 from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 
-NODES = ["ns=4;s=GoodRead", "ns=4;s=Resultaat", "ns=4;s=Trigger"]
 DEFAULT_APP_URI = "urn:serra:production-control-client"
 
 
@@ -39,6 +38,30 @@ def env(name: str) -> str:
         print(f"missing env var: {name}", file=sys.stderr)
         sys.exit(2)
     return value
+
+
+async def collect_variables(node: Node, indent: int = 0) -> list[Node]:
+    """Recurse from `node`, print structure, return all Variable nodes."""
+    name = (await node.read_display_name()).Text
+    node_class = await node.read_node_class()
+    variables: list[Node] = []
+
+    if node_class == ua.NodeClass.Variable:
+        try:
+            value = await node.read_value()
+        except ua.UaError:
+            value = "?"
+        print(f"{'  ' * indent}{name} = {value}")
+        variables.append(node)
+    else:
+        print(f"{'  ' * indent}{name}/")
+
+    for child in await node.get_children():
+        child_class = await child.read_node_class()
+        if child_class in (ua.NodeClass.Object, ua.NodeClass.Variable):
+            variables.extend(await collect_variables(child, indent + 1))
+
+    return variables
 
 
 async def main() -> None:
@@ -57,10 +80,19 @@ async def main() -> None:
 
     print(f"Connecting to {url} ...", flush=True)
     async with client:
-        nodes = [client.get_node(nid) for nid in NODES]
+        variables: list[Node] = []
+        for child in await client.nodes.objects.get_children():
+            if child.nodeid.NamespaceIndex == 0:
+                continue
+            variables.extend(await collect_variables(child))
+
+        if not variables:
+            print("No user-namespace variables found.", flush=True)
+            return
+
         subscription = await client.create_subscription(500, Handler())
-        await subscription.subscribe_data_change(nodes)
-        print(f"Subscribed to {len(nodes)} nodes (Ctrl+C to stop)", flush=True)
+        await subscription.subscribe_data_change(variables)
+        print(f"\nSubscribed to {len(variables)} variables (Ctrl+C to stop)", flush=True)
         try:
             while True:
                 await asyncio.sleep(1)
