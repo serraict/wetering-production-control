@@ -7,9 +7,9 @@ Field-test details: `work/notes/leuze_opcua_connection.md`, `work/notes/onstapel
 ## Context
 
 - Omron PLC (production): `opc.tcp://10.0.0.190:4840`.
-  Protocol nodes: `ns=4;s=GoodRead`, `ns=4;s=Resultaat`, `ns=4;s=Trigger`.
-  Client cert trusted on the PLC; reading values works.
-  **Open safety issue:** the configured user can read/write **all** exposed nodes — needs PLC-side access control tightening (restrict role to the protocol nodes) **before** any write scripts (Goal 3 / 5) or production rollout.
+  Protocol nodes (under `ns=4;s=OPCScanner/fbOPC/`): `ScanResultaat`, `ActievePartijnummer1`, `ActievePartijnummer2`, `Ziftmaat1`, `Ziftmaat2`, `vDummy`. (Names may change as the PLC program evolves.)
+  Client cert trusted on the PLC; reads work; writes work via `scripts/write_plc.py`.
+  PLC-side access control was tightened on 2026-05-12 — the OPC UA user is restricted to the protocol nodes, so writes are now safe.
 - Leuze DCR 202iC scanner (production): `opc.tcp://10.0.0.191:4840`.
   Monitored nodes: `LastScanData` (`ns=5;i=6122`), `ScanActive` (`ns=5;i=6199`), `DeviceTemperature` (`ns=5;i=6116`).
   Same malformed-cert quirk as the test unit — monkey-patch in `scripts/monitor_leuze.py` / `scripts/browse_leuze.py`.
@@ -45,7 +45,7 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 - [x] Place certs where the container can read them (volume mount, not baked into the image)
 - [x] Trust the new client cert on the Omron PLC (Sysmac Studio → Client Authentication → Move to Trusted)
 - [x] Configure user accounts on the PLC and scanner; store the credentials in `.env` for the container
-- [ ] **Tighten PLC access control** — current user can read/write all exposed nodes; restrict to the three protocol nodes (`GoodRead`, `Resultaat`, `Trigger`) before enabling writes
+- [x] **Tighten PLC access control** — done on PLC side 2026-05-12; OPC UA user is restricted to the protocol nodes
 
 ## Acceptance criteria
 
@@ -53,9 +53,9 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 - [x] Certificates and credentials accessible inside the deployed container (volume-mounted or baked in deliberately)
 - [x] Goal 1: PLC and Leuze connect scripts each print a success line from inside the container
 - [x] Goal 2: monitor logs datachange notifications for `GoodRead`, `Resultaat`, `Trigger` (`scripts/monitor_plc.py`)
-- [ ] Goal 3: a write script sets a chosen PLC field; the monitor (goal 2) observes the new value — **blocked on PLC access-control tightening**
+- [x] Goal 3: a write script sets a chosen PLC field; the monitor (goal 2) observes the new value (`scripts/write_plc.py`)
 - [x] Goal 4: monitor logs scans as they arrive from `ns=5;i=6122` (`scripts/monitor_leuze.py`)
-- [ ] Goal 5: combined script reads scans from Leuze and writes them to a PLC field; observed end-to-end — **blocked on PLC access-control tightening**
+- [ ] Goal 5: combined script reads scans from Leuze and writes them to a PLC field; observed end-to-end
 
 ## Technical requirements
 
@@ -72,8 +72,8 @@ Before field tests, prove the round-trip on serraserver: build → push → pull
 - [x] Goal 1 — PLC + Leuze connect smoke tests (`scripts/probe_opcua_endpoint.py`, `scripts/monitor_plc.py`, `scripts/monitor_leuze.py`)
 - [x] Goal 2 — PLC monitor on the three protocol fields (`scripts/monitor_plc.py`)
 - [x] Goal 4 — Leuze monitor (`scripts/monitor_leuze.py`)
-- [ ] **PLC access control:** restrict the OPC UA user to read/write only the three protocol nodes — current setup exposes everything, unsafe for writes
-- [ ] Goal 3 — PLC write script (build on `work/scripts/write_plc_vars.py` / `test_01_write_actieve_partij.py`); verify via goal 2 monitor
+- [x] **PLC access control:** OPC UA user restricted to the protocol nodes (done on PLC side 2026-05-12)
+- [x] Goal 3 — PLC write script (`scripts/write_plc.py`); verify via goal 2 monitor
 - [ ] Goal 5 — scan-to-PLC bridge (build on `test_04_read_scan_resultaat.py` / `test_05_write_scan_resultaat.py`)
 - [ ] Capture field-test output in `work/notes/onstapelmachine/`
 

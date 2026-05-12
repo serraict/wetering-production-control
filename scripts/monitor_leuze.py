@@ -99,6 +99,12 @@ class Handler:
     def datachange_notification(self, node, val, data):
         print(f"  {node} -> {val}", flush=True)
 
+    def status_change_notification(self, status):
+        print(f"  status change: {status}", flush=True)
+
+    def event_notification(self, event):
+        print(f"  event: {event}", flush=True)
+
 
 def env(name: str) -> str:
     value = os.environ.get(name)
