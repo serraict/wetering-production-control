@@ -1,7 +1,7 @@
 """Inspectie page implementation."""
 
 import os
-from datetime import date, timedelta
+from datetime import date
 from typing import Dict, Any, List
 import httpx
 
@@ -10,7 +10,9 @@ from nicegui import APIRouter, ui, app
 from ...inspectie.repositories import InspectieRepository
 from ...inspectie.models import InspectieRonde
 from ...inspectie.commands import UpdateAfwijkingCommand
+from ...inspectie.changes import STORAGE_KEY, apply_delta, parse_date as _parse_date
 from ..components import frame
+from ..components.model_card import display_model_card
 from ..components.model_list_page import display_model_list_page
 from ..components.model_detail_page import create_model_view_action
 from ..components.styles import add_print_styles
@@ -35,11 +37,11 @@ def get_storage() -> Dict[str, Any]:
 def get_pending_commands() -> List[UpdateAfwijkingCommand]:
     """Get all pending afwijking commands from browser storage."""
     storage = get_storage()
-    if "inspectie_changes" not in storage:
+    if STORAGE_KEY not in storage:
         return []
 
     commands = []
-    for code, change_data in storage["inspectie_changes"].items():
+    for code, change_data in storage[STORAGE_KEY].items():
         if not isinstance(change_data, dict) or "new_afwijking" not in change_data:
             continue
 
@@ -65,19 +67,8 @@ def get_pending_commands() -> List[UpdateAfwijkingCommand]:
 def clear_pending_commands() -> None:
     """Clear all pending commands from browser storage."""
     storage = get_storage()
-    if "inspectie_changes" in storage:
-        del storage["inspectie_changes"]
-
-
-def _parse_date(value):
-    if isinstance(value, date):
-        return value
-    if isinstance(value, str):
-        try:
-            return date.fromisoformat(value)
-        except ValueError:
-            return None
-    return None
+    if STORAGE_KEY in storage:
+        del storage[STORAGE_KEY]
 
 
 async def commit_pending_commands() -> Dict[str, Any]:
@@ -199,7 +190,7 @@ def create_enhanced_repository() -> InspectieRepository:
 def show_pending_changes_dialog(changes_state=None) -> None:
     """Show a dialog with all pending changes."""
     storage = get_storage()
-    changes = storage.get("inspectie_changes", {})
+    changes = storage.get(STORAGE_KEY, {})
     checked_items = storage.get("inspectie_checked", {})
 
     # Count manually checked items (not auto-checked by afwijking)
@@ -328,6 +319,55 @@ async def handle_commit_changes(dialog, changes_state=None) -> None:
         ui.notify(result["message"], type="negative")
 
 
+def _scan_url_for_code(code: str) -> str:
+    """Build the URL the barcode scanner expects for a given InspectieRonde code."""
+    try:
+        base_url = getattr(ui.context.client, "base_url", "http://localhost:8080")
+    except (AttributeError, RuntimeError):
+        base_url = "http://localhost:8080"
+    return f"{base_url}/potting-lots/scan/{code}"
+
+
+def show_lot_qr_dialog(inspectie: InspectieRonde) -> None:
+    """Open a dialog with a QR code for the lot plus code, article and #plt."""
+    import base64
+    from io import BytesIO
+
+    import qrcode
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=6,
+        border=4,
+    )
+    qr.add_data(_scan_url_for_code(inspectie.code))
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = BytesIO()
+    qr_img.save(buffer, format="PNG")
+    img_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    with ui.dialog() as dialog, ui.card().classes("items-center p-6 gap-2"):
+        ui.image(f"data:image/png;base64,{img_base64}").classes("w-64 h-64")
+        ui.label(inspectie.code).classes("text-xl font-bold")
+        ui.label(inspectie.product_naam or "-").classes("text-base")
+        ui.label(f"{inspectie.aantal_in_kas or 0} plt").classes("text-base")
+        ui.button("Sluiten", on_click=dialog.close).props("flat")
+    dialog.open()
+
+
+def display_inspectie_with_qr_button(record: InspectieRonde) -> None:
+    """Render the inspectieronde detail card with a 'Toon QR code' button."""
+    display_model_card(record)
+    ui.button(
+        "Toon QR code",
+        icon="qr_code_2",
+        on_click=lambda: show_lot_qr_dialog(record),
+    ).props("outline")
+
+
 def create_afwijking_actions(repository: InspectieRepository, changes_state=None) -> Dict[str, Any]:
     """Create row actions for +1/-1 buttons and view details."""
 
@@ -338,59 +378,24 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
                 ui.notify("Geen code gevonden", type="negative")
                 return
 
-            # Get the current afwijking and date from the row data
             row_data = e.args.get("row", {})
             current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
-            current_datum = _parse_date(row_data.get("datum_afleveren_plan_raw"))
-            if current_datum is None:
-                current_datum = _parse_date(row_data.get("datum_afleveren_plan"))
+            current_datum = _parse_date(
+                row_data.get("datum_afleveren_plan_raw")
+            ) or _parse_date(row_data.get("datum_afleveren_plan"))
             if current_datum is None:
                 ui.notify("Geen datum beschikbaar voor wijziging", type="negative")
                 return
 
-            # Get storage safely
-            storage = get_storage()
-
-            # Initialize storage if needed
-            if "inspectie_changes" not in storage:
-                storage["inspectie_changes"] = {}
-
-            change_data = storage["inspectie_changes"].get(code)
-
-            if change_data is None:
-                # First change: store both original and new values for afwijking and date
-                new_afwijking = current_afwijking + delta
-                new_datum_obj = current_datum + timedelta(days=delta) if current_datum else None
-
-                storage["inspectie_changes"][code] = {
-                    "original_afwijking": current_afwijking,
-                    "new_afwijking": new_afwijking,
-                    "original_datum": current_datum.isoformat() if current_datum else None,
-                    "new_datum": new_datum_obj.isoformat() if new_datum_obj else None,
-                }
-            else:
-                # Subsequent change: update new values only
-                new_afwijking = change_data["new_afwijking"] + delta
-                storage["inspectie_changes"][code]["new_afwijking"] = new_afwijking
-
-                current_new_datum = _parse_date(change_data.get("new_datum"))
-                if current_new_datum is None:
-                    current_new_datum = _parse_date(change_data.get("original_datum"))
-                if current_new_datum is None:
-                    current_new_datum = current_datum
-                if current_new_datum is None:
-                    ui.notify("Geen datum beschikbaar voor wijziging", type="negative")
-                    return
-                if current_new_datum:
-                    new_datum_obj = current_new_datum + timedelta(days=delta)
-                    storage["inspectie_changes"][code]["new_datum"] = new_datum_obj.isoformat()
+            new_afwijking, _ = apply_delta(
+                get_storage(), code, current_afwijking, current_datum, delta
+            )
 
             ui.notify(
                 f"Afwijking {label} voor {code} (totaal: {new_afwijking})",
                 type="positive",
             )
 
-            # Update changes state if provided
             if changes_state:
                 changes_state.update()
 
@@ -404,6 +409,7 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
         repository=repository,
         id_field="code",
         dialog=True,
+        custom_display_function=display_inspectie_with_qr_button,
     )
 
     return {
@@ -528,7 +534,7 @@ def inspectie_page() -> None:
             @ui.refreshable
             def render_cards():
                 storage = get_storage()
-                changes = storage.get("inspectie_changes", {})
+                changes = storage.get(STORAGE_KEY, {})
 
                 with ui.row().classes("w-full gap-4 flex-wrap"):
                     for item in table_state.rows:

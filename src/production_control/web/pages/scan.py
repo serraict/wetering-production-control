@@ -4,11 +4,21 @@ import logging
 
 from nicegui import APIRouter, ui
 
+from ...inspectie.changes import (
+    STORAGE_KEY,
+    apply_delta,
+    get_pending_change,
+    parse_date,
+)
+from ...inspectie.models import InspectieRonde
+from ...inspectie.repositories import InspectieRepository
 from ...potting_lots.models import PottingLot
 from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.url_parser import extract_lot_id_from_barcode
 from ..components.barcode_scanner import create_barcode_scanner_ui
 from ..components import frame
+from ..components.table_utils import format_date
+from .inspectie import display_inspectie_with_qr_button, get_storage
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +78,15 @@ def display_batch_info(lot: PottingLot) -> None:
     ui.navigate.to(f"/scan/view/{lot.id}")
 
 
+LBL_STYLE = "text-xs text-gray-600 uppercase"
+VAL_STYLE = "text-sm font-medium"
+VAL_STYLE_DIRTY = "text-sm font-medium text-accent"
+
+
 def col_for_field(label, value):
-    lbl_style = "text-xs text-gray-600 uppercase"
-    val_style = "text-sm font-medium"
     with ui.column().classes("gap-1"):
-        ui.label(label).classes(lbl_style)
-        ui.label(str(value)).classes(val_style)
+        ui.label(label).classes(LBL_STYLE)
+        ui.label(str(value)).classes(VAL_STYLE)
 
 
 def card_for_fields(kv):
@@ -83,11 +96,93 @@ def card_for_fields(kv):
                 col_for_field(k, v)
 
 
+def _open_inspectie_detail(inspectie: InspectieRonde) -> None:
+    """Show the full InspectieRonde detail in a modal dialog."""
+    fresh = InspectieRepository().get_by_id(inspectie.code) or inspectie
+    with ui.dialog() as dialog, ui.card():
+        display_inspectie_with_qr_button(fresh)
+        ui.button("Sluiten", on_click=dialog.close)
+    dialog.open()
+
+
+def render_klant_afleverdatum_card(lot: PottingLot, inspectie: InspectieRonde | None) -> None:
+    """Render the Klantcode / Afleverdatum / Acties card.
+
+    When there is no matching InspectieRonde the action column is omitted
+    and the date shows '-'.
+    """
+    @ui.refreshable
+    def card() -> None:
+        storage = get_storage()
+        with ui.card().classes("w-full p-4"):
+            with ui.grid(columns=3).classes("w-full gap-3"):
+                col_for_field("Klantcode", lot.klant_code or "-")
+
+                with ui.column().classes("gap-1"):
+                    ui.label("Afleverdatum").classes(LBL_STYLE)
+                    if inspectie is None or inspectie.datum_afleveren_plan is None:
+                        ui.label("--").classes(VAL_STYLE)
+                    else:
+                        original = inspectie.datum_afleveren_plan
+                        change = get_pending_change(storage, inspectie.code)
+                        if change:
+                            new_datum = parse_date(change.get("new_datum")) or original
+                            ui.label(
+                                f"{format_date(original)} → {format_date(new_datum)}"
+                            ).classes(VAL_STYLE_DIRTY)
+                        else:
+                            ui.label(format_date(original)).classes(VAL_STYLE)
+
+                if inspectie is not None and inspectie.datum_afleveren_plan is not None:
+                    with ui.column().classes("gap-1"):
+                        ui.label("Acties").classes(LBL_STYLE)
+                        with ui.row().classes("items-center gap-1"):
+
+                            def on_delta(delta: int) -> None:
+                                base_afwijking = inspectie.afwijking_afleveren or 0
+                                new_afw, _ = apply_delta(
+                                    get_storage(),
+                                    inspectie.code,
+                                    base_afwijking,
+                                    inspectie.datum_afleveren_plan,
+                                    delta,
+                                )
+                                ui.notify(
+                                    f"Afwijking {delta:+d} voor {inspectie.code} "
+                                    f"(totaal: {new_afw})",
+                                    type="positive",
+                                )
+                                card.refresh()
+
+                            ui.button(icon="remove", on_click=lambda: on_delta(-1)).props(
+                                "dense flat color=primary"
+                            ).tooltip("Eerder afleveren (-1 dag)")
+                            ui.button(icon="add", on_click=lambda: on_delta(1)).props(
+                                "dense flat color=primary"
+                            ).tooltip("Later afleveren (+1 dag)")
+                            ui.button(
+                                icon="visibility",
+                                on_click=lambda: _open_inspectie_detail(inspectie),
+                            ).props("dense flat color=primary").tooltip("Details")
+
+                            count = len(storage.get(STORAGE_KEY, {}))
+                            if count > 0:
+                                ui.button(
+                                    str(count),
+                                    on_click=lambda: ui.navigate.to("/inspectie"),
+                                ).props("dense flat color=accent").tooltip(
+                                    f"{count} openstaande wijzigingen"
+                                )
+
+    card()
+
+
 @router.page("/view/{id}")
 def view_batch(id: int) -> None:
     """Mobile-optimized view of batch information."""
     try:
         lot = get_repository().get_by_id(id)
+        inspectie = InspectieRepository().get_by_id(str(id)) if lot is not None else None
 
         if lot is None:
             with frame("Batch Not Found"):
@@ -116,16 +211,12 @@ def view_batch(id: int) -> None:
                 card_for_fields(
                     {
                         "Oppotweek": lot.oppot_week,
-                        "Oppotdatum": lot.oppot_datum,
+                        "Oppotdatum": format_date(lot.oppot_datum),
                         "Stuks": lot.aantal_pot,
                     }
                 )
 
-                with ui.card().classes("w-full p-4"):
-                    with ui.grid(columns=3).classes("w-full gap-3"):
-                        col_for_field("Klantcode", lot.klant_code)
-                        col_for_field("Afleverdatum", "-")
-                        # add column here with inspectieronde actions (+, -, view)
+                render_klant_afleverdatum_card(lot, inspectie)
 
                 # Remarks section (if exists)
                 if lot.opmerking:
