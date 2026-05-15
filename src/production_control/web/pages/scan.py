@@ -68,114 +68,76 @@ def display_batch_info(lot: PottingLot) -> None:
     ui.navigate.to(f"/scan/view/{lot.id}")
 
 
+def col_for_field(label, value):
+    lbl_style = "text-xs text-gray-600 uppercase"
+    val_style = "text-sm font-medium"
+    with ui.column().classes("gap-1"):
+        ui.label(label).classes(lbl_style)
+        ui.label(str(value)).classes(val_style)
+
+
+def card_for_fields(kv):
+    with ui.card().classes("w-full p-4"):
+        with ui.grid(columns=3).classes("w-full gap-3"):
+            for k, v in kv.items():
+                col_for_field(k, v)
+
+
 @router.page("/view/{id}")
 def view_batch(id: int) -> None:
     """Mobile-optimized view of batch information."""
     try:
         lot = get_repository().get_by_id(id)
+
         if lot is None:
             with frame("Batch Not Found"):
                 with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
-                    ui.label("Batch Not Found").classes(
-                        "text-2xl font-bold text-red-600"
-                    )
-                    ui.label(f"Batch {id} could not be found").classes(
-                        "text-gray-600 mb-4"
-                    )
-                    ui.button(
-                        "Scan Another", on_click=lambda: ui.navigate.to("/scan")
-                    ).props("icon=qr_code_scanner").classes("w-full")
+                    ui.label("Batch Not Found").classes("text-2xl font-bold text-red-600")
+                    ui.label(f"Batch {id} could not be found").classes("text-gray-600 mb-4")
+                    ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
+                        "icon=qr_code_scanner"
+                    ).classes("w-full")
             return
 
+        title = f"{lot.product_groep} · {lot.naam} · {lot.id} · {lot.oppot_week}"
         # Display batch information in mobile-optimized format
-        with frame(f"Batch: {lot.naam}"):
+        with frame(title):
             with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
-                # Header with article name
-                ui.label(lot.naam).classes("text-2xl font-bold mb-2")
+                ui.label(title).classes("text-lg font-semibold mb-3")
 
-                # Key information in large, easy-to-read cards
+                card_for_fields(
+                    {
+                        "Bolmaat": lot.bolmaat,
+                        "Certificaat": lot.cert_nr,
+                        "Code": lot.bollen_code,
+                    }
+                )
+
+                card_for_fields(
+                    {
+                        "Oppotweek": lot.oppot_week,
+                        "Oppotdatum": lot.oppot_datum,
+                        "Stuks": lot.aantal_pot,
+                    }
+                )
+
                 with ui.card().classes("w-full p-4"):
-                    ui.label("Lot Code").classes("text-sm text-gray-600 uppercase")
-                    ui.label(str(lot.bollen_code)).classes("text-3xl font-bold")
-
-                with ui.card().classes("w-full p-4"):
-                    ui.label("Article Name").classes("text-sm text-gray-600 uppercase")
-                    ui.label(lot.naam).classes("text-xl font-semibold")
-
-                # Additional details in a compact grid
-                with ui.card().classes("w-full p-4"):
-                    ui.label("Details").classes("text-lg font-semibold mb-3")
-
-                    with ui.grid(columns=2).classes("w-full gap-3"):
-                        # Potting date
-                        if lot.oppot_datum:
-                            with ui.column().classes("gap-1"):
-                                ui.label("Oppot Datum").classes(
-                                    "text-xs text-gray-600 uppercase"
-                                )
-                                ui.label(str(lot.oppot_datum)).classes(
-                                    "text-sm font-medium"
-                                )
-
-                        # Bulb size
-                        if lot.bolmaat:
-                            with ui.column().classes("gap-1"):
-                                ui.label("Bolmaat").classes(
-                                    "text-xs text-gray-600 uppercase"
-                                )
-                                ui.label(str(lot.bolmaat)).classes(
-                                    "text-sm font-medium"
-                                )
-
-                        # Customer code
-                        if lot.klant_code:
-                            with ui.column().classes("gap-1"):
-                                ui.label("Klant Code").classes(
-                                    "text-xs text-gray-600 uppercase"
-                                )
-                                ui.label(lot.klant_code).classes("text-sm font-medium")
-
-                        # Product group
-                        if lot.product_groep:
-                            with ui.column().classes("gap-1"):
-                                ui.label("Product Groep").classes(
-                                    "text-xs text-gray-600 uppercase"
-                                )
-                                ui.label(lot.product_groep).classes(
-                                    "text-sm font-medium"
-                                )
-
-                        # Number of pots
-                        if lot.aantal_pot:
-                            with ui.column().classes("gap-1"):
-                                ui.label("Aantal Potten").classes(
-                                    "text-xs text-gray-600 uppercase"
-                                )
-                                ui.label(str(lot.aantal_pot)).classes(
-                                    "text-sm font-medium"
-                                )
-
-                        # Certification number
-                        if lot.cert_nr:
-                            with ui.column().classes("gap-1"):
-                                ui.label("Certificatie Nummer").classes(
-                                    "text-xs text-gray-600 uppercase"
-                                )
-                                ui.label(lot.cert_nr).classes("text-sm font-medium")
+                    with ui.grid(columns=3).classes("w-full gap-3"):
+                        col_for_field("Klantcode", lot.klant_code)
+                        col_for_field("Afleverdatum", "-")
+                        # add column here with inspectieronde actions (+, -, view)
 
                 # Remarks section (if exists)
                 if lot.opmerking:
                     with ui.card().classes("w-full p-4"):
-                        ui.label("Opmerkingen").classes(
-                            "text-sm text-gray-600 uppercase mb-2"
-                        )
+                        ui.label("Opmerkingen").classes("text-sm text-gray-600 uppercase mb-2")
                         ui.label(lot.opmerking).classes("text-sm")
 
                 # Action buttons
                 with ui.row().classes("w-full gap-2 mt-4"):
-                    ui.button(
-                        "Scan Another", on_click=lambda: ui.navigate.to("/scan")
-                    ).props("icon=qr_code_scanner").classes("flex-1")
+                    ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
+                        "icon=qr_code_scanner"
+                    ).classes("flex-1")
                     ui.button(
                         "View Details",
                         on_click=lambda: ui.navigate.to(f"/potting-lots/{id}"),
@@ -185,10 +147,8 @@ def view_batch(id: int) -> None:
         logger.error(f"Error displaying batch {id}: {e}", exc_info=True)
         with frame("Error"):
             with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
-                ui.label("Error Loading Batch").classes(
-                    "text-2xl font-bold text-red-600"
-                )
+                ui.label("Error Loading Batch").classes("text-2xl font-bold text-red-600")
                 ui.label(f"An error occurred: {str(e)}").classes("text-gray-600 mb-4")
-                ui.button(
-                    "Scan Another", on_click=lambda: ui.navigate.to("/scan")
-                ).props("icon=qr_code_scanner").classes("w-full")
+                ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
+                    "icon=qr_code_scanner"
+                ).classes("w-full")
