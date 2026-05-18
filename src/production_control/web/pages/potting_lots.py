@@ -16,6 +16,7 @@ from ..components.model_list_page import display_model_list_page
 from ..components import potting_lot_label_printer
 from ..components.barcode_scanner import create_barcode_scanner_ui
 from ...potting_lots.url_parser import extract_lot_id_from_barcode
+from .scan import router as scan_router
 
 
 router = APIRouter(prefix="/potting-lots")
@@ -423,4 +424,4 @@ def active_lot_details(line: int) -> None:
 
 @router.page("/scan/{id}")
 def potting_lot_scan(id: int) -> None:
-    ui.navigate.to(router.url_path_for("potting_lot_detail", id=id))
+    ui.navigate.to(scan_router.url_path_for("view_batch", id=id))
