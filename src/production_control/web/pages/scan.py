@@ -17,6 +17,7 @@ from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.url_parser import extract_lot_id_from_barcode
 from ..components.barcode_scanner import create_barcode_scanner_ui
 from ..components import frame
+from ..components.communication_card import render_communication_card
 from ..components.table_utils import format_date
 from .inspectie import display_inspectie_with_qr_button, get_storage
 
@@ -223,6 +224,8 @@ def view_batch(id: int) -> None:
                     with ui.card().classes("w-full p-4"):
                         ui.label("Opmerkingen").classes("text-sm text-gray-600 uppercase mb-2")
                         ui.label(lot.opmerking).classes("text-sm")
+
+                render_communication_card(lot)
 
                 # Action buttons
                 with ui.row().classes("w-full gap-2 mt-4"):

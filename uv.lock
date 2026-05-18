@@ -658,6 +658,15 @@ wheels = [
 ]
 
 [[package]]
+name = "distro"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/f8/98eea607f65de6527f8a2e8885fc8015d3e6f5775df186e443e0964a11c3/distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed", size = 60722, upload-time = "2023-12-24T09:54:32.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/b3/231ffd4ab1fc9d679809f356cebee130ac7daa00d6d6f3206dd4fd137e9e/distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2", size = 20277, upload-time = "2023-12-24T09:54:30.421Z" },
+]
+
+[[package]]
 name = "docutils"
 version = "0.21.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1839,6 +1848,7 @@ dependencies = [
     { name = "sqlmodel" },
     { name = "typer" },
     { name = "weasyprint" },
+    { name = "zulip" },
 ]
 
 [package.optional-dependencies]
@@ -1887,6 +1897,7 @@ requires-dist = [
     { name = "toml", marker = "extra == 'dev'", specifier = ">=0.10.2" },
     { name = "typer" },
     { name = "weasyprint" },
+    { name = "zulip", specifier = ">=0.9.0" },
 ]
 provides-extras = ["dev"]
 
@@ -3133,4 +3144,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/61/db/9502c4256f126ccf0fc4686f1f59f2696cdaec079d7d57231bf120422ba6/zopfli-0.2.3.post1-pp310-pypy310_pp73-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:48dba9251060289101343110ab47c0756f66f809bb4d1ddbb6d5c7e7752115c5", size = 130129, upload-time = "2024-10-18T15:41:54.255Z" },
     { url = "https://files.pythonhosted.org/packages/a3/7d/1e8c36825798269a9271ac4477b592622fddc2948772fd2fcaceb54a7178/zopfli-0.2.3.post1-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:89899641d4de97dbad8e0cde690040d078b6aea04066dacaab98e0b5a23573f2", size = 126242, upload-time = "2024-10-18T15:41:55.302Z" },
     { url = "https://files.pythonhosted.org/packages/7e/6a/2c1ae9972f2745c074938d6a610e71ed47c36f911220d592f1e403822084/zopfli-0.2.3.post1-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:3654bfc927bc478b1c3f3ff5056ed7b20a1a37fa108ca503256d0a699c03bbb1", size = 99378, upload-time = "2024-10-18T15:41:56.39Z" },
+]
+
+[[package]]
+name = "zulip"
+version = "0.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "distro" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/74/3fbf8dab5035724f32c7c8c39a20f1e5b1a081fa8bfe4883d8f64d560999/zulip-0.9.1.tar.gz", hash = "sha256:abeba4147625107f690bb633143fdf36cd665fe037b3871011fd4b1e3dc081e8", size = 149751, upload-time = "2025-09-30T22:01:44.693Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/41/0507da59eae2ebb4641895a189eb6438b76610c06c65aa06310b755d3aa7/zulip-0.9.1-py3-none-any.whl", hash = "sha256:37682bad54714a53f9286586a534c2e13217b2bbddf0b4e71c60ef67d43b9043", size = 332200, upload-time = "2025-09-30T22:01:40.154Z" },
 ]
