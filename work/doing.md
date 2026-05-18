@@ -25,29 +25,29 @@ already renders the lot's high-level details on a mobile-friendly layout.
 
 ## Acceptance criteria
 
-- [ ] On `/scan/view/{id}`, below the existing lot detail cards, a
+- [x] On `/scan/view/{id}`, below the existing lot detail cards, a
       "Communicatie" card lists recent messages from the lot's Zulip topic
       (sender + relative timestamp + content), newest at the bottom.
-- [ ] The card has a text input + send button that posts a message to that
+- [x] The card has a text input + send button that posts a message to that
       topic via the bot. After posting, the new message appears in the list
       without a full-page reload.
-- [ ] A link "Open in Zulip" jumps to the topic in the Zulip web client (uses
+- [x] A link "Open in Zulip" jumps to the topic in the Zulip web client (uses
       Zulip's narrow URL with the stream + topic name).
-- [ ] If the bot can't reach Zulip, the card degrades to a non-blocking error
+- [x] If the bot can't reach Zulip, the card degrades to a non-blocking error
       state ("Zulip onbereikbaar") and the rest of the page still renders.
-- [ ] Topic naming is deterministic: the topic name is exactly the lot id as
+- [x] Topic naming is deterministic: the topic name is exactly the lot id as
       a string (e.g. `"12345"`). No mapping table.
-- [ ] Posts are attributed to the logged-in user: the message body is
+- [x] Posts are attributed to the logged-in user: the message body is
       prefixed with `**{user_name}**: ` where `user_name` comes from
       `web/auth.py:get_current_user()`. The Zulip account is still the bot.
-- [ ] Archived / completed lots behave the same as active lots — the card is
+- [x] Archived / completed lots behave the same as active lots — the card is
       always shown and writable.
-- [ ] Zulip credentials live in env vars (`ZULIP_*`), loaded via a
+- [x] Zulip credentials live in env vars (`ZULIP_*`), loaded via a
       `ZulipConfig` dataclass following the pattern of
       `src/production_control/config/opc_config.py`.
-- [ ] Integration tests against a real Zulip env, marked
+- [x] Integration tests against a real Zulip env, marked
       `@pytest.mark.integration`, mirroring `tests/test_opc_integration.py`.
-- [ ] Unit tests for topic-name derivation and the rendering helper, with the
+- [x] Unit tests for topic-name derivation and the rendering helper, with the
       Zulip client stubbed.
 
 ## Design
@@ -146,36 +146,54 @@ manager-singleton pattern as `OPCConfigManager`.
 
 ## Implementation steps
 
-- [ ] Add `zulip` to `pyproject.toml` dependencies; `uv sync`.
-- [ ] Create `src/production_control/config/zulip_config.py` with
+- [x] Add `zulip` to `pyproject.toml` dependencies; `uv sync`.
+- [x] Create `src/production_control/config/zulip_config.py` with
       `ZulipConfig` + `ZulipConfigManager` + `get_zulip_config()`, copying the
       OPC config pattern.
-- [ ] Create `src/production_control/zulip/topics.py` with
+- [x] Create `src/production_control/zulip_chat/topics.py` with
       `topic_name_for(lot) -> str` and unit tests in
-      `tests/zulip/test_topics.py`.
-- [ ] Create `src/production_control/zulip/client.py` — a thin
+      `tests/zulip_chat/test_topics.py`. (Module is `zulip_chat`, not
+      `zulip`, to avoid shadowing the upstream SDK.)
+- [x] Create `src/production_control/zulip_chat/client.py` — a thin
       `ZulipClient` wrapping the SDK, with `get_messages_in_topic(stream,
       topic, limit)` and `send_message(stream, topic, content)`. Connection
       lazy + reused.
-- [ ] Create `src/production_control/zulip/service.py` exposing
-      `get_messages(lot) -> list[ZulipMessage]`, `post(lot, content) -> None`,
+- [x] Create `src/production_control/zulip_chat/service.py` exposing
+      `get_messages(lot) -> list[ZulipMessage]`, `post(lot, content) -> int`,
       `narrow_url(lot) -> str`. Returns dataclasses, hides the SDK.
-- [ ] Extend `src/production_control/web/pages/scan.py:view_batch` with a
-      `render_communication_card(lot)` block inserted before the action
-      buttons (around line 227). Uses `ui.timer(0.0, ..., once=True)` or
-      `run.io_bound` for the initial fetch.
-- [ ] Wire the send button → `service.post(lot, content)` →  re-fetch →
+- [x] Extend `src/production_control/web/pages/scan.py:view_batch` with a
+      `render_communication_card(lot)` block (lives in
+      `web/components/communication_card.py`).
+- [x] Wire the send button → `service.post(lot, content)` →  re-fetch →
       update the message list.
-- [ ] Add a refresh button + "Open in Zulip" link.
-- [ ] Failure-mode handling: catch in `service`, return an error dataclass,
+- [x] Add a refresh button + "Open in Zulip" link.
+- [x] Failure-mode handling: catch in `service`, return an error dataclass,
       render a one-line state in the card.
-- [ ] Integration test `tests/test_zulip_integration.py`
+- [x] Integration test `tests/test_zulip_integration.py`
       (`@pytest.mark.integration`) that, against a real Zulip env, posts a
       message to a throw-away topic and reads it back.
-- [ ] Unit tests for `service` with the client mocked: empty topic, populated
-      topic, post path, error path.
-- [ ] Docs: short note in `work/notes/zulip_backend.md` covering the bot
-      account, required env vars, and how to rotate the API key.
+- [x] Unit tests for `service` with the client mocked: empty topic, populated
+      topic, post path, error path, prefix parse + fallback.
+- [x] Docs: messaging decisions captured as an ADR
+      (`docs/adr/0001-zulip-messaging-backend.md`) instead of a `work/notes`
+      page. ADR README sits at `docs/adr/README.md`.
+
+## Deltas from the original plan
+
+- Backend module is named `zulip_chat` (not `zulip`) so it doesn't shadow
+  the upstream `zulip` SDK package.
+- The UI uses `ui.chat_message` bubbles rather than a stack of `ui.html`
+  blocks — gives a chat-like look, with `sent=True` aligning the current
+  user's bubbles to the right and `name` suppressed on own messages.
+- The service parses the leading `**name**: ` prefix on read and exposes
+  `author_name` / `body_html`, so the bubble shows the human author rather
+  than the bot's account name.
+- The standalone "Opmerkingen" card was removed; `lot.opmerking` now
+  renders as a pinned bubble at the top of the Communicatie card with
+  author "Teeltopmerking" and no stamp.
+- Documentation took the form of an ADR rather than a `work/notes/`
+  scratchpad — better fit for the decisions that need to outlive this work
+  item.
 
 ## Out of scope (v1)
 
