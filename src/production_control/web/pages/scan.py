@@ -219,12 +219,6 @@ def view_batch(id: int) -> None:
 
                 render_klant_afleverdatum_card(lot, inspectie)
 
-                # Remarks section (if exists)
-                if lot.opmerking:
-                    with ui.card().classes("w-full p-4"):
-                        ui.label("Opmerkingen").classes("text-sm text-gray-600 uppercase mb-2")
-                        ui.label(lot.opmerking).classes("text-sm")
-
                 render_communication_card(lot)
 
                 # Action buttons

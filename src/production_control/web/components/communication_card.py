@@ -27,28 +27,42 @@ def _format_timestamp(message: ZulipMessage) -> str:
     return local.strftime("%Y-%m-%d %H:%M")
 
 
+def _render_pinned_remark(lot: Any) -> None:
+    """Render the lot's `opmerking` as a pinned message at the top of the thread."""
+    remark = (getattr(lot, "opmerking", None) or "").strip()
+    if not remark:
+        return
+    ui.chat_message(text=remark, name="Teeltopmerking").classes("w-full")
+
+
 @ui.refreshable
 def _messages_block(lot: Any, current_user_name: str) -> None:
     try:
         messages = zulip_service.get_messages(lot)
     except ZulipServiceError as e:
         logger.warning("Zulip get_messages failed for lot %s: %s", lot.id, e)
+        _render_pinned_remark(lot)
         ui.label(f"Zulip onbereikbaar: {e}").classes("text-sm text-red-600")
         return
 
-    if not messages:
-        ui.label("Nog geen berichten in deze topic.").classes("text-sm text-gray-500")
-        return
-
     with ui.column().classes("w-full gap-2"):
+        _render_pinned_remark(lot)
+
+        if not messages:
+            ui.label("Nog geen berichten in deze topic.").classes(
+                "text-sm text-gray-500"
+            )
+            return
+
         for message in messages:
+            is_own = message.author_name == current_user_name
             ui.chat_message(
                 text=message.body_html,
-                name=message.author_name,
+                name=None if is_own else message.author_name,
                 stamp=_format_timestamp(message),
-                sent=message.author_name == current_user_name,
+                sent=is_own,
                 text_html=True,
-            )
+            ).classes("w-full")
 
 
 def render_communication_card(lot: Any) -> None:
