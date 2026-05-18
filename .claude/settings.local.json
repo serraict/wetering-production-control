@@ -7,7 +7,9 @@
       "Bash(gh run view:*)",
       "Bash(git log:*)",
       "WebFetch(domain:nicegui.io)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "deny": [],
     "ask": []
