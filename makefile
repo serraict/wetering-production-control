@@ -1,4 +1,4 @@
-.PHONY: all opc-server opc-monitor
+.PHONY: all opc-server opc-monitor next-work-item
 
 VERSION := $(shell git describe --tags 2>/dev/null || echo "")
 ifeq ($(strip $(VERSION)),)
@@ -20,7 +20,7 @@ update:
 lock:
 	uv lock
 
-console:
+console: server
 
 format-python:
 	uv run black src tests scripts
@@ -192,3 +192,6 @@ opc-client:
 test-qr-codes:
 	@echo "Generating test QR codes PDF..."
 	uv run python scripts/generate_test_qr_codes.py ./test_qr_codes.pdf
+
+next-work-item:
+	cp work/templates/doing.md work/doing.md

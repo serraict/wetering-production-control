@@ -21,17 +21,17 @@ sharing storage and commit path with `/inspectie`.
 
 ## Acceptance criteria
 
-- [ ] After scanning, one click changes afleverdatum by ±1 day.
-- [ ] Pending change is stored in `app.storage.user["inspectie_changes"]`
+- [x] After scanning, one click changes afleverdatum by ±1 day.
+- [x] Pending change is stored in `app.storage.user["inspectie_changes"]`
       under the same `code` the inspectieronde page uses, so both screens
       see the same pending state and commit through the same endpoint.
-- [ ] If the scanned lot has no matching InspectieRonde row, the afleverdatum
+- [x] If the scanned lot has no matching InspectieRonde row, the afleverdatum
       card is not rendered.
-- [ ] Scan view shows current effective afleverdatum: pending value if any,
+- [x] Scan view shows current effective afleverdatum: pending value if any,
       else the stored `datum_afleveren_plan`.
-- [ ] A pending-changes count badge sits inline next to the ± / view
+- [x] A pending-changes count badge sits inline next to the ± / view
       buttons, linking to `/inspectie` (no commit dialog on scan view).
-- [ ] Existing inspectieronde flow (table + card view, "Openstaande
+- [x] Existing inspectieronde flow (table + card view, "Openstaande
       wijzigingen" dialog, commit) is unchanged.
 
 ## Design
