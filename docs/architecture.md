@@ -2,6 +2,8 @@
 
 This document describes the high-level architecture of the Production Control application.
 
+Significant cross-cutting decisions are recorded as ADRs in [`adr/`](adr/README.md).
+
 ## Overview
 
 The Production Control application helps track the production of potted lilies at Wetering Potlilium. It provides interfaces for managing potting lots, bulb picklists, products, and spacing operations.

@@ -33,9 +33,9 @@ def test_get_messages_returns_dataclasses(config: ZulipConfig) -> None:
     client.get_messages_in_topic.return_value = [
         {
             "id": 1,
-            "sender_full_name": "Marijn",
+            "sender_full_name": "production-bot",
             "timestamp": 1_700_000_000,
-            "content": "<p>hallo</p>",
+            "content": "<p><strong>Marijn</strong>: hallo</p>",
         }
     ]
 
@@ -43,10 +43,28 @@ def test_get_messages_returns_dataclasses(config: ZulipConfig) -> None:
 
     client.get_messages_in_topic.assert_called_once_with("teelt", "42", 10)
     assert len(messages) == 1
-    assert messages[0].id == 1
-    assert messages[0].sender_full_name == "Marijn"
-    assert messages[0].content_html == "<p>hallo</p>"
-    assert messages[0].timestamp == datetime.fromtimestamp(1_700_000_000, tz=timezone.utc)
+    msg = messages[0]
+    assert msg.id == 1
+    assert msg.sender_full_name == "production-bot"
+    assert msg.content_html == "<p><strong>Marijn</strong>: hallo</p>"
+    assert msg.author_name == "Marijn"
+    assert msg.body_html == "<p>hallo</p>"
+    assert msg.timestamp == datetime.fromtimestamp(1_700_000_000, tz=timezone.utc)
+
+
+def test_get_messages_falls_back_when_no_prefix(config: ZulipConfig) -> None:
+    client = MagicMock()
+    client.get_messages_in_topic.return_value = [
+        {
+            "id": 2,
+            "sender_full_name": "production-bot",
+            "timestamp": 1_700_000_000,
+            "content": "<p>plain message</p>",
+        }
+    ]
+    msg = zulip_service.get_messages(FakeLot(), client=client, config=config)[0]
+    assert msg.author_name == "production-bot"
+    assert msg.body_html == "<p>plain message</p>"
 
 
 def test_get_messages_empty(config: ZulipConfig) -> None:

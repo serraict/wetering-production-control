@@ -8,10 +8,11 @@ callers get a `ZulipServiceError` on any failure.
 from __future__ import annotations
 
 import logging
+import re
 import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from ..config.zulip_config import ZulipConfig, get_zulip_config
 from .client import ZulipClient, ZulipClientError, get_client
@@ -26,12 +27,37 @@ class ZulipServiceError(RuntimeError):
 
 @dataclass
 class ZulipMessage:
-    """A single message in a lot's topic."""
+    """A single message in a lot's topic.
+
+    `sender_full_name` / `content_html` are the raw values returned by Zulip
+    (the sender is the bot account in our setup). `author_name` and
+    `body_html` are the human author and body after stripping the
+    `**name**: ` prefix that `post()` adds; if the prefix isn't present they
+    fall back to the bot's name and the full body.
+    """
 
     id: int
     sender_full_name: str
     timestamp: datetime
-    content_html: str  # Zulip's server-rendered, sanitized HTML
+    content_html: str
+    author_name: str
+    body_html: str
+
+
+# Matches Zulip's rendering of `**name**: rest`, which looks like:
+#   <p><strong>name</strong>: rest…</p>
+_AUTHOR_PREFIX_RE = re.compile(
+    r"^\s*<p>\s*<strong>(?P<author>[^<]+)</strong>\s*:\s*(?P<rest>.*)$",
+    flags=re.DOTALL,
+)
+
+
+def _split_author_prefix(content_html: str) -> Tuple[Optional[str], str]:
+    """Pull the leading `**author**: ` prefix out of a rendered message."""
+    match = _AUTHOR_PREFIX_RE.match(content_html)
+    if not match:
+        return None, content_html
+    return match.group("author").strip() or None, "<p>" + match.group("rest")
 
 
 def _to_message(raw: Any) -> ZulipMessage:
@@ -41,11 +67,16 @@ def _to_message(raw: Any) -> ZulipMessage:
         if ts is not None
         else datetime.now(tz=timezone.utc)
     )
+    sender = raw.get("sender_full_name", "Unknown")
+    content_html = raw.get("content", "")
+    author, body_html = _split_author_prefix(content_html)
     return ZulipMessage(
         id=int(raw["id"]),
-        sender_full_name=raw.get("sender_full_name", "Unknown"),
+        sender_full_name=sender,
         timestamp=when,
-        content_html=raw.get("content", ""),
+        content_html=content_html,
+        author_name=author or sender,
+        body_html=body_html,
     )
 
 

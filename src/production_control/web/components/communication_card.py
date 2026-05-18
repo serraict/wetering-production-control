@@ -7,6 +7,7 @@ Rendered on the scan view; reusable from any page that has a lot-like object
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from nicegui import ui
@@ -19,11 +20,15 @@ logger = logging.getLogger(__name__)
 
 
 def _format_timestamp(message: ZulipMessage) -> str:
-    return message.timestamp.astimezone().strftime("%Y-%m-%d %H:%M")
+    today = datetime.now().astimezone().date()
+    local = message.timestamp.astimezone()
+    if local.date() == today:
+        return local.strftime("%H:%M")
+    return local.strftime("%Y-%m-%d %H:%M")
 
 
 @ui.refreshable
-def _messages_block(lot: Any) -> None:
+def _messages_block(lot: Any, current_user_name: str) -> None:
     try:
         messages = zulip_service.get_messages(lot)
     except ZulipServiceError as e:
@@ -35,17 +40,21 @@ def _messages_block(lot: Any) -> None:
         ui.label("Nog geen berichten in deze topic.").classes("text-sm text-gray-500")
         return
 
-    with ui.column().classes("w-full gap-3"):
+    with ui.column().classes("w-full gap-2"):
         for message in messages:
-            with ui.column().classes("w-full gap-0"):
-                with ui.row().classes("w-full items-baseline gap-2"):
-                    ui.label(message.sender_full_name).classes("text-sm font-semibold")
-                    ui.label(_format_timestamp(message)).classes("text-xs text-gray-500")
-                ui.html(message.content_html).classes("text-sm zulip-message-body")
+            ui.chat_message(
+                text=message.body_html,
+                name=message.author_name,
+                stamp=_format_timestamp(message),
+                sent=message.author_name == current_user_name,
+                text_html=True,
+            )
 
 
 def render_communication_card(lot: Any) -> None:
     """Render the Zulip conversation card for `lot`."""
+    user_name = get_current_user().get("name", "Guest")
+
     with ui.card().classes("w-full p-4"):
         with ui.row().classes("w-full items-center justify-between mb-2"):
             ui.label("Communicatie").classes("text-sm text-gray-600 uppercase")
@@ -53,7 +62,7 @@ def render_communication_card(lot: Any) -> None:
             if narrow:
                 ui.link("Open in Zulip", narrow, new_tab=True).classes("text-xs")
 
-        _messages_block(lot)
+        _messages_block(lot, user_name)
 
         with ui.row().classes("w-full items-end gap-2 mt-3 flex-nowrap"):
             textarea = ui.textarea(placeholder="Schrijf een bericht…").props(
@@ -64,9 +73,8 @@ def render_communication_card(lot: Any) -> None:
                 content = (textarea.value or "").strip()
                 if not content:
                     return
-                user = get_current_user()
                 try:
-                    zulip_service.post(lot, content, user_name=user.get("name", "Guest"))
+                    zulip_service.post(lot, content, user_name=user_name)
                 except ZulipServiceError as e:
                     logger.warning("Zulip post failed for lot %s: %s", lot.id, e)
                     ui.notify(f"Versturen mislukt: {e}", type="negative")
