@@ -60,7 +60,15 @@ def _split_author_prefix(content_html: str) -> Tuple[Optional[str], str]:
     return match.group("author").strip() or None, "<p>" + match.group("rest")
 
 
-def _to_message(raw: Any) -> ZulipMessage:
+def _absolutize_uploads(html: str, site: str) -> str:
+    """Rewrite relative `/user_uploads/...` URLs to absolute against `site`."""
+    if not site or "/user_uploads/" not in html:
+        return html
+    prefix = site.rstrip("/")
+    return html.replace('"/user_uploads/', f'"{prefix}/user_uploads/')
+
+
+def _to_message(raw: Any, *, site: str = "") -> ZulipMessage:
     ts = raw.get("timestamp")
     when = (
         datetime.fromtimestamp(int(ts), tz=timezone.utc)
@@ -68,7 +76,7 @@ def _to_message(raw: Any) -> ZulipMessage:
         else datetime.now(tz=timezone.utc)
     )
     sender = raw.get("sender_full_name", "Unknown")
-    content_html = raw.get("content", "")
+    content_html = _absolutize_uploads(raw.get("content", ""), site)
     author, body_html = _split_author_prefix(content_html)
     return ZulipMessage(
         id=int(raw["id"]),
@@ -101,7 +109,7 @@ def get_messages(
         )
     except ZulipClientError as e:
         raise ZulipServiceError(str(e)) from e
-    return [_to_message(m) for m in raw_messages]
+    return [_to_message(m, site=cfg.site) for m in raw_messages]
 
 
 def post(

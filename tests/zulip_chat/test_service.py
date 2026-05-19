@@ -67,6 +67,28 @@ def test_get_messages_falls_back_when_no_prefix(config: ZulipConfig) -> None:
     assert msg.body_html == "<p>plain message</p>"
 
 
+def test_get_messages_absolutizes_user_upload_urls(config: ZulipConfig) -> None:
+    client = MagicMock()
+    client.get_messages_in_topic.return_value = [
+        {
+            "id": 3,
+            "sender_full_name": "production-bot",
+            "timestamp": 1_700_000_000,
+            "content": (
+                '<p><strong>Marijn</strong>: kijk</p>'
+                '<div class="message_inline_image">'
+                '<a href="/user_uploads/2/ab/cd/foo.png" title="foo.png">'
+                '<img src="/user_uploads/thumbnail/2/ab/cd/foo.png/840x560.webp"/>'
+                '</a></div>'
+            ),
+        }
+    ]
+    msg = zulip_service.get_messages(FakeLot(), client=client, config=config)[0]
+    assert 'src="https://zulip.test/user_uploads/thumbnail/' in msg.body_html
+    assert 'href="https://zulip.test/user_uploads/2/ab/cd/foo.png"' in msg.body_html
+    assert "/user_uploads/" not in msg.body_html.replace("https://zulip.test/user_uploads/", "")
+
+
 def test_get_messages_empty(config: ZulipConfig) -> None:
     client = MagicMock()
     client.get_messages_in_topic.return_value = []
