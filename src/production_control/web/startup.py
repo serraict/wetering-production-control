@@ -3,7 +3,7 @@
 import logging
 from nicegui import app, ui
 
-from .pages import home, products, spacing, bulb_picklist, potting_lots, inspectie, scan
+from .pages import home, products, spacing, bulb_picklist, potting_lots, inspectie, scan, uitrijden
 from ..firebird.api import router as firebird_router
 
 
@@ -29,4 +29,5 @@ def startup() -> None:
     app.include_router(potting_lots.router)
     app.include_router(inspectie.router)
     app.include_router(scan.router)
+    app.include_router(uitrijden.router)
     app.include_router(firebird_router)

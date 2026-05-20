@@ -1,12 +1,43 @@
 """Base repository for Dremio data access."""
 
 import os
+from datetime import datetime
 from typing import Optional, Union, Tuple, TypeVar, List, Sequence, Generic, Type
 
-from sqlalchemy import Engine, create_engine, Integer, bindparam, Select, text, desc
+import pandas as pd
+from sqlalchemy import Engine, DateTime, create_engine, Integer, bindparam, Select, text, desc
+from sqlalchemy.types import TypeDecorator
 from sqlmodel import Session, SQLModel
 
 from .pagination import Pagination
+
+# sqlalchemy_dremio's _type_map ships with 'datetime64[ns]' but not 'datetime64[ms]',
+# which is what Dremio Flight returns for TIMESTAMP columns. Without this, any model
+# selecting a TIMESTAMP column raises KeyError: 'datetime64[ms]' inside the driver.
+import sqlalchemy_dremio.query as _dremio_query  # noqa: E402
+
+_dremio_query._type_map.setdefault("datetime64[ms]", _dremio_query.types.DATETIME)
+
+
+class DateFromTimestamp(TypeDecorator):
+    """For Dremio TIMESTAMP columns that should be modeled as Python `date`.
+
+    The Flight driver returns TIMESTAMPs as pandas `Timestamp` / `NaT`, which
+    crashes downstream code that expects `date` / `None` (e.g. strftime on NaT).
+    Use on a TIMESTAMP-backed field via `sa_column=Column("...", DateFromTimestamp(), ...)`.
+    """
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_result_value(self, value, dialect):
+        if value is None or value is pd.NaT:
+            return None
+        if isinstance(value, pd.Timestamp):
+            return value.date()
+        if isinstance(value, datetime):
+            return value.date()
+        return value
 
 
 T = TypeVar("T", bound=SQLModel)

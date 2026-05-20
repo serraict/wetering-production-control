@@ -1,0 +1,1 @@
+"""Vloerplan data domain."""

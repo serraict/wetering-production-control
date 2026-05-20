@@ -13,6 +13,7 @@ def menu() -> None:
                 ui.menu_item("Oppotlijst", lambda: ui.navigate.to("/potting-lots"))
                 ui.menu_item("Wijderzetten", lambda: ui.navigate.to("/spacing"))
                 ui.menu_item("Inspectieronde", lambda: ui.navigate.to("/inspectie"))
+                ui.menu_item("Uitrijden", lambda: ui.navigate.to("/uitrijden"))
                 with ui.menu_item("Info", auto_close=False):
                     with ui.item_section().props("side"):
                         ui.icon("keyboard_arrow_right")
