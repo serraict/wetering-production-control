@@ -16,6 +16,7 @@ async def test_uitrijden_page_shows_table(user: User) -> None:
     ) as mock_repo_class:
         mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
+        mock_repo.count_pending_olsthoorn_sync.return_value = 0
         mock_repo.get_paginated.return_value = (
             [
                 Vloerplan19cm(

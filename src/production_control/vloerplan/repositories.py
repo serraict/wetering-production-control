@@ -65,3 +65,22 @@ class Vloerplan19cmRepository(DremioRepository[Vloerplan19cm]):
             return session.exec(
                 select(Vloerplan19cm).where(text(f"id = {id}"))
             ).first()
+
+    _PENDING_SYNC_WHERE = (
+        "tuin_nr_plan IS NOT NULL AND "
+        "(tuin_nr_olsthoorn IS NULL OR tuin_nr_olsthoorn <> tuin_nr_plan)"
+    )
+
+    def get_pending_olsthoorn_sync(self) -> List[Vloerplan19cm]:
+        """Rows where tuin_nr_plan is set and Olsthoorn doesn't match it yet."""
+        with Session(self.engine) as session:
+            query = self._apply_default_sorting(
+                select(Vloerplan19cm).where(text(self._PENDING_SYNC_WHERE))
+            )
+            return list(session.exec(query).all())
+
+    def count_pending_olsthoorn_sync(self) -> int:
+        """How many rows still need their TUINNUMMER synced to Olsthoorn."""
+        with Session(self.engine) as session:
+            stmt = select(func.count(Vloerplan19cm.id)).where(text(self._PENDING_SYNC_WHERE))
+            return session.exec(stmt).one()

@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..inspectie.commands import UpdateAfwijkingCommand
+from ..vloerplan.commands import UpdateTuinNrCommand
 from .connection import execute_firebird_command
 
 router = APIRouter(prefix="/api/firebird", tags=["firebird"])
@@ -54,6 +55,22 @@ async def update_afwijking(command: UpdateAfwijkingCommand) -> ApiResponse:
             )
     else:
         raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+
+
+@router.post("/update-tuin-nr", response_model=ApiResponse)
+async def update_tuin_nr(command: UpdateTuinNrCommand) -> ApiResponse:
+    """Overwrite TEELTPL.TUINNUMMER for a single teelt."""
+    sql = "UPDATE TEELTPL SET TUINNUMMER = ? WHERE TEELTNR = ?"
+    params = (command.new_tuinnummer, command.teeltnr)
+
+    result = execute_firebird_command(sql, params)
+
+    if result["success"]:
+        return ApiResponse(
+            success=True,
+            message=f"Updated TUINNUMMER for TEELTNR {command.teeltnr} to {command.new_tuinnummer}",
+        )
+    raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
 
 
 @router.get("/health")
