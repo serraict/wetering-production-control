@@ -36,7 +36,7 @@ def get_repository() -> PottingLotRepository:
 def scan_page(autostart: bool = False) -> None:
     """Mobile-optimized scanning page for viewing batch information."""
     with frame("Scan"):
-        with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
+        with ui.column().classes("w-full max-w-2xl mx-auto p-1 sm:p-4 gap-2 sm:gap-4"):
             # Scanner card
             with ui.card().classes("w-full"):
                 create_barcode_scanner_ui(
@@ -91,7 +91,7 @@ def col_for_field(label, value):
 
 
 def card_for_fields(kv):
-    with ui.card().classes("w-full p-4"):
+    with ui.card().classes("w-full p-2 sm:p-4"):
         with ui.grid(columns=3).classes("w-full gap-3"):
             for k, v in kv.items():
                 col_for_field(k, v)
@@ -115,7 +115,7 @@ def render_klant_afleverdatum_card(lot: PottingLot, inspectie: InspectieRonde | 
     @ui.refreshable
     def card() -> None:
         storage = get_storage()
-        with ui.card().classes("w-full p-4"):
+        with ui.card().classes("w-full p-2 sm:p-4"):
             with ui.grid(columns=3).classes("w-full gap-3"):
                 col_for_field("Klantcode", lot.klant_code or "-")
 
@@ -187,7 +187,7 @@ def view_batch(id: int) -> None:
 
         if lot is None:
             with frame("Batch Not Found"):
-                with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
+                with ui.column().classes("w-full max-w-2xl mx-auto p-1 sm:p-4 gap-2 sm:gap-4"):
                     ui.label("Batch Not Found").classes("text-2xl font-bold text-red-600")
                     ui.label(f"Batch {id} could not be found").classes("text-gray-600 mb-4")
                     ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
@@ -198,7 +198,7 @@ def view_batch(id: int) -> None:
         title = f"{lot.product_groep} · {lot.naam} · {lot.id} · {lot.oppot_week}"
         # Display batch information in mobile-optimized format
         with frame(title):
-            with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
+            with ui.column().classes("w-full max-w-2xl mx-auto p-1 sm:p-4 gap-2 sm:gap-4"):
                 ui.label(title).classes("text-lg font-semibold mb-3")
 
                 card_for_fields(
@@ -234,7 +234,7 @@ def view_batch(id: int) -> None:
     except Exception as e:
         logger.error(f"Error displaying batch {id}: {e}", exc_info=True)
         with frame("Error"):
-            with ui.column().classes("w-full max-w-2xl mx-auto p-4 gap-4"):
+            with ui.column().classes("w-full max-w-2xl mx-auto p-1 sm:p-4 gap-2 sm:gap-4"):
                 ui.label("Error Loading Batch").classes("text-2xl font-bold text-red-600")
                 ui.label(f"An error occurred: {str(e)}").classes("text-gray-600 mb-4")
                 ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(

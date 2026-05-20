@@ -69,7 +69,7 @@ def render_communication_card(lot: Any) -> None:
     """Render the Zulip conversation card for `lot`."""
     user_name = get_current_user().get("name", "Guest")
 
-    with ui.card().classes("w-full p-4"):
+    with ui.card().classes("w-full p-2 sm:p-4"):
         with ui.row().classes("w-full items-center justify-between mb-2"):
             ui.label("Communicatie").classes("text-sm text-gray-600 uppercase")
             narrow = zulip_service.narrow_url(lot)

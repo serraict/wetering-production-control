@@ -27,16 +27,21 @@ def frame(navigation_title: str):
         warning="#d38334",
     )
 
-    with ui.header().classes("w-full px-6 py-2 bg-primary flex justify-between items-center"):
+    with ui.header().classes(
+        "w-full px-2 sm:px-6 py-2 bg-primary flex flex-nowrap "
+        "justify-between items-center gap-2"
+    ):
         # Left section: Navigation menu
-        with ui.row().classes("items-center gap-8"):
+        with ui.row().classes("items-center gap-8 flex-nowrap shrink-0"):
             menu()
 
-        # Center section: Page title
-        ui.label(navigation_title).classes("text-lg text-white/90")
+        # Center section: Page title (truncates on narrow screens)
+        ui.label(navigation_title).classes(
+            "text-base sm:text-lg text-white/90 truncate min-w-0 flex-1 text-center"
+        )
 
         # Right section: Scan button and User menu
-        with ui.row().classes("items-center gap-4"):
+        with ui.row().classes("items-center gap-1 sm:gap-4 flex-nowrap shrink-0"):
             # Scan button
             ui.button(
                 icon="qr_code_scanner", on_click=lambda: ui.navigate.to("/scan?autostart=true")
@@ -69,7 +74,7 @@ def frame(navigation_title: str):
 
     # Main content with error handling
     with ui.element("main").classes("w-full flex-grow"):
-        with ui.column().classes("w-full items-center p-4"):
+        with ui.column().classes("w-full items-center p-0 sm:p-4"):
             try:
                 yield
             except Exception as e:
