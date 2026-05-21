@@ -21,7 +21,7 @@ from asyncua import Client, Node, ua
 from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 
 DEFAULT_APP_URI = "urn:serra:production-control-client"
-MAX_BROWSE_DEPTH = 6
+MAX_BROWSE_DEPTH = 20
 RECONNECT_DELAY_S = 5
 SUBSCRIPTION_INTERVAL_MS = 500
 
@@ -164,12 +164,21 @@ async def run_plc() -> None:
     logger.info("connecting to %s", url)
     async with client:
         objects = client.nodes.objects
-        variables: list[tuple[Node, str]] = []
-        seen: set[str] = set()
+        # Walk each top-level subtree with its own `seen` set (for cycle
+        # safety). Dedupe variables by NodeId after — the Omron tree exposes
+        # the same Wetering_Portaal subtree from two paths (DeviceSet/.../
+        # vs top-level), and the same variables appear in both. Walking with
+        # a shared seen would prune one of the paths and miss vars only
+        # reachable within MAX_BROWSE_DEPTH of the short path.
+        by_id: dict[str, tuple[Node, str]] = {}
         for child in await objects.get_children():
             if child.nodeid.NamespaceIndex == 0:
                 continue
-            variables.extend(await discover_variables(child, seen=seen))
+            for node, name in await discover_variables(child):
+                key = node.nodeid.to_string()
+                if key not in by_id:
+                    by_id[key] = (node, name)
+        variables = list(by_id.values())
 
         if not variables:
             logger.warning("no user-namespace variables found; nothing to subscribe to")
@@ -203,7 +212,10 @@ async def supervise(name: str, run) -> None:
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
         except Exception as exc:
-            logger.warning("%s: connection error: %s; reconnecting in %ds", name, exc, RECONNECT_DELAY_S)
+            logger.warning(
+                "%s: %s: %r; reconnecting in %ds",
+                name, type(exc).__name__, exc, RECONNECT_DELAY_S,
+            )
         await asyncio.sleep(RECONNECT_DELAY_S)
 
 
