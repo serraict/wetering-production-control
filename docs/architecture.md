@@ -48,8 +48,7 @@ The system consists of the following main components:
 - **PottingLineController**: Async service for communicating with potting line PLCs via OPC/UA
 - **asyncua Library**: Python OPC/UA client for reading/writing PLC node values
 - **Configuration**: `OPCConfig` with endpoint, retry, and security settings (overridable via environment variables)
-- **Node Addressing**: Uses string-based NodeIds with runtime namespace resolution to avoid index mismatch bugs (see `docs/notes/nodesets-namespace-index-mismatch-bug.md`)
-- **Field Test Guide**: See `docs/notes/plc-connection-field-test-guide.md` for setup and verification
+- **Node Addressing**: Uses string-based NodeIds with runtime namespace resolution to avoid index mismatch bugs
 
 ### Integration
 

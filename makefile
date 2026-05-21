@@ -128,10 +128,6 @@ opc-server:
 	@echo "Starting programmatic OPC/UA server for potting lines..."
 	uv run python scripts/opc_test_server.py
 
-opc-monitor:
-	@echo "Starting OPC/UA server monitor..."
-	uv run python scripts/opc_monitor.py
-
 # OPC UA development tools using asyncua built-ins
 opc-discover:
 	@echo "Discovering OPC/UA servers and endpoints..."
@@ -144,46 +140,6 @@ opc-browse:
 opc-browse-potting:
 	@echo "Browsing potting lines structure..."
 	uv run uabrowse -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=PottingLines"
-
-opc-read-line1-pc:
-	@echo "Reading Line 1 PC active lot..."
-	uv run uaread -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn1_PC_nr_actieve_partij"
-
-opc-read-line1-os:
-	@echo "Reading Line 1 OS active pallet..."
-	uv run uaread -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn1_OS_partij_nr_actieve_pallet"
-
-opc-read-line2-pc:
-	@echo "Reading Line 2 PC active lot..."
-	uv run uaread -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn2_PC_nr_actieve_partij"
-
-opc-read-line2-os:
-	@echo "Reading Line 2 OS active pallet..."
-	uv run uaread -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn2_OS_partij_nr_actieve_pallet"
-
-opc-write-line1-pc:
-	@echo "Writing test value to Line 1 PC..."
-	uv run uawrite -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn1_PC_nr_actieve_partij" -t int32 12345
-
-opc-write-line1-os:
-	@echo "Writing test value to Line 1 OS..."
-	uv run uawrite -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn1_OS_partij_nr_actieve_pallet" -t int32 11111
-
-opc-write-line2-pc:
-	@echo "Writing test value to Line 2 PC..."
-	uv run uawrite -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn2_PC_nr_actieve_partij" -t int32 67890
-
-opc-write-line2-os:
-	@echo "Writing test value to Line 2 OS..."
-	uv run uawrite -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn2_OS_partij_nr_actieve_pallet" -t int32 22222
-
-opc-subscribe-line1-pc:
-	@echo "Subscribing to Line 1 PC changes..."
-	uv run uasubscribe -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn1_PC_nr_actieve_partij"
-
-opc-subscribe-line2-pc:
-	@echo "Subscribing to Line 2 PC changes..."
-	uv run uasubscribe -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=Lijn2_PC_nr_actieve_partij"
 
 opc-client:
 	@echo "Starting interactive OPC/UA client shell..."

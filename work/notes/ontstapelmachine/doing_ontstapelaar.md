@@ -2,8 +2,8 @@
 
 See the [Working docs] for full description of the work. Reference patterns:
 `docs/notes/opcua-examples/` (especially `docs/omron-connection-guide.md`).
-Field-test details: `work/notes/leuze_opcua_connection.md`,
-`work/notes/onstapelmachine/references.md`.
+Field-test details: `work/notes/ontstapelmachine/archive/leuze_opcua_connection.md`,
+`work/notes/ontstapelmachine/references.md`.
 
 ## Context
 
@@ -122,7 +122,7 @@ run a script inside the container → see output.
       monitor
 - [ ] Goal 5 — scan-to-PLC bridge (build on `test_04_read_scan_resultaat.py` /
       `test_05_write_scan_resultaat.py`)
-- [ ] Capture field-test output in `work/notes/onstapelmachine/`
+- [ ] Capture field-test output in `work/notes/ontstapelmachine/`
 
 ## Hardening / follow-ups
 
@@ -137,7 +137,7 @@ run a script inside the container → see output.
       `scripts/show_opcua_config.py`) that reports `notBefore` / `notAfter` for
       `VINEAPP_OPCUA_CLIENT_CERT` and warns when expiry is within N days. Wire
       it into a routine on serraserver (cron, healthcheck, or oncall checklist).
-- [ ] **Runbook: cert renewal.** Document in `work/notes/onstapelmachine/` what
+- [ ] **Runbook: cert renewal.** Document in `work/notes/ontstapelmachine/` what
       to do when the cert expires (or is about to): regenerate via the
       `opcua_test` service into `production-control/certs/`, re-trust the new
       cert on the Omron PLC (Sysmac Studio → Client Authentication), restart
@@ -146,7 +146,7 @@ run a script inside the container → see output.
 ## Notes
 
 - Keep scripts minimal and closely aligned with `opcua-examples` patterns.
-- Update `work/notes/onstapelmachine/references.md` with the confirmed
+- Update `work/notes/ontstapelmachine/references.md` with the confirmed
   production IPs, ports, and cert paths once known.
 
 ### Commands to run on serraserver
