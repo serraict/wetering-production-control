@@ -22,8 +22,15 @@ from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 
 DEFAULT_APP_URI = "urn:serra:production-control-client"
 MAX_BROWSE_DEPTH = 20
-RECONNECT_DELAY_S = 5
 SUBSCRIPTION_INTERVAL_MS = 500
+
+# Reconnect backoff: start at BASE, double up to MAX. Reset to BASE if a run
+# lasts at least RESET_AFTER seconds (it was healthy, treat next failure as
+# fresh). Give up entirely after MAX_ATTEMPTS consecutive failures.
+RECONNECT_BASE_DELAY_S = 5
+RECONNECT_MAX_DELAY_S = 60
+RECONNECT_RESET_AFTER_S = 60
+RECONNECT_MAX_ATTEMPTS = 10
 
 logger = logging.getLogger("opcua_monitor")
 
@@ -204,19 +211,47 @@ async def run_plc() -> None:
 
 
 async def supervise(name: str, run) -> None:
-    """Run `run` forever; on error, log and retry after RECONNECT_DELAY_S."""
+    """Run `run` with exponential backoff on failure. Give up after
+    RECONNECT_MAX_ATTEMPTS consecutive failures. A run that lasted at least
+    RECONNECT_RESET_AFTER_S seconds resets the backoff and attempt counter."""
+
+    loop = asyncio.get_event_loop()
+    delay = RECONNECT_BASE_DELAY_S
+    attempt = 0
+
     while True:
+        attempt += 1
+        started = loop.time()
         try:
             await run()
-            logger.warning("%s: connection closed cleanly; reconnecting in %ds", name, RECONNECT_DELAY_S)
+            elapsed = loop.time() - started
+            logger.warning(
+                "%s: connection closed cleanly after %.0fs (attempt %d); reconnecting in %ds",
+                name, elapsed, attempt, delay,
+            )
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
         except Exception as exc:
+            elapsed = loop.time() - started
             logger.warning(
-                "%s: %s: %r; reconnecting in %ds",
-                name, type(exc).__name__, exc, RECONNECT_DELAY_S,
+                "%s: %s after %.0fs (attempt %d/%d): %r; reconnecting in %ds",
+                name, type(exc).__name__, elapsed, attempt, RECONNECT_MAX_ATTEMPTS,
+                exc, delay,
             )
-        await asyncio.sleep(RECONNECT_DELAY_S)
+
+        if elapsed >= RECONNECT_RESET_AFTER_S:
+            delay = RECONNECT_BASE_DELAY_S
+            attempt = 0
+        elif attempt >= RECONNECT_MAX_ATTEMPTS:
+            logger.error(
+                "%s: giving up after %d consecutive failures within %.0fs",
+                name, attempt, loop.time() - started,
+            )
+            return
+
+        await asyncio.sleep(delay)
+        if elapsed < RECONNECT_RESET_AFTER_S:
+            delay = min(delay * 2, RECONNECT_MAX_DELAY_S)
 
 
 async def main() -> None:
