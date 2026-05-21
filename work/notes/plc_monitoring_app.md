@@ -142,17 +142,30 @@ JSON lines, one record per datachange notification:
   per-node update-rate cap (sampling interval) or a "noisy nodes" exclude
   list? Defer until we see it happen.
 
-## Acceptance criteria (proposed)
+## Slice plan
 
-- [ ] `production_control.opcua.monitor` package with TUI and headless modes.
-- [ ] **PLC discovery:** on connect, browses the user namespaces, subscribes
-      to every primitive variable found; new variables appear automatically
-      on the next reconnect.
-- [ ] **Leuze:** subscribes to the fixed three-node list.
-- [ ] Survives a disconnect/reconnect cycle without crashing.
-- [ ] JSONL log written under `VINEAPP_OPCUA_MONITOR_LOG_DIR`, rotated.
+Small shippable slices, one at a time. Each slice gets a `work/doing.md`,
+gets shipped, gets a capture/review, then we pick the next.
+
+- [x] **v1 — Discover + JSONL on PLC.** See
+      [`ontstapelmachine/plc_monitor_v1_capture.md`](ontstapelmachine/plc_monitor_v1_capture.md).
+- [ ] **v2 — Leuze as a second source** on the same JSONL stream. Independent
+      reconnect supervision.
+- [ ] **v3 — Textual TUI** (operator-facing view; the JSONL stream stays).
+- [ ] **v4 — File logging** under `VINEAPP_OPCUA_MONITOR_LOG_DIR`, rotated.
+- [ ] **v5 — Persistent run on serraserver** (compose service, or a cron /
+      background command — decide when we get there based on what's least
+      operational overhead).
+
+## Cross-slice acceptance criteria
+
+- [ ] Survives a disconnect/reconnect cycle on either source without
+      crashing. *(Reconnect test deferred to the on-site session with the
+      PLC engineer.)*
 - [ ] Smoke test against the test server passes in CI (proves discovery).
-- [ ] Compose service added; documented in `docs/architecture.md` and in
-      `work/notes/ontstapelmachine/doing_ontstapelaar.md` "Commands to run on
-      serraserver".
+      *(Test server still on stale `Lijn{n}/PC/OS` shape; fix when we
+      touch it for the protocol work.)*
+- [ ] Documented in `docs/architecture.md` and in
+      `work/notes/ontstapelmachine/doing_ontstapelaar.md` "Commands to run
+      on serraserver".
 - [ ] One-page operator doc: how to attach the TUI, how to tail the log.
