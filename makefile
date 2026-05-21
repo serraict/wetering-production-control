@@ -124,6 +124,10 @@ dev-test:
 dev-test-integration:
 	pytest --cov=src/production_control --cov-report=term
 
+behave:
+	@echo "Running OS↔PC protocol behave suite (features/protocol)..."
+	uv run behave features/protocol
+
 opc-server:
 	@echo "Starting programmatic OPC/UA server for potting lines..."
 	uv run python scripts/opc_test_server.py
