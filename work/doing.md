@@ -68,15 +68,17 @@ malformed server certificate and the fixed-list workaround for
 
 ## Implementation steps
 
-- [ ] `production_control/opcua/leuze.py` with `subscribe_leuze` and the
-      LenientCertificate workaround.
-- [ ] Refactor `monitor.py`: split the PLC-specific connect loop into its
-      own coroutine; introduce a top-level task supervisor that runs PLC +
-      Leuze concurrently and handles "Leuze unset → skip" cleanly.
-- [ ] Local sanity check: run against `opc_test_server.py` with
-      `VINEAPP_OPCUA_SECURITY=none` and no `VINEAPP_OPCUA_LEUZE_URL` —
-      confirm the PLC stream still works and "leuze not configured, skipping"
-      shows up in stderr.
+- [x] `production_control/opcua/leuze.py` with `run_leuze` (one connection
+      lifetime) and the LenientCertificate monkey-patch applied at import
+      time.
+- [x] Refactor `monitor.py`: split into `run_plc()` + generic `supervise()`
+      + `main()` that gathers both supervised tasks. Leuze import is lazy
+      (only when `VINEAPP_OPCUA_LEUZE_URL` is set), so the cert monkey-patch
+      stays out of the PLC-only path.
+- [x] Local sanity check:
+      - Leuze unset → "Leuze source skipped" + PLC stream works.
+      - Leuze pointed at a bogus URL → Leuze supervisor retries every 5s,
+        PLC stream still flows. Failure isolation confirmed.
 - [ ] Build + push image (`make docker_push`).
 - [ ] On serraserver:
       `docker compose run --rm opcua_test python -m production_control.opcua.monitor`

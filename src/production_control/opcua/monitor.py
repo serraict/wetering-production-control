@@ -147,7 +147,10 @@ def _build_client(url: str, *, secure: bool) -> Client:
     return client
 
 
-async def _connect_and_run(url: str) -> None:
+async def run_plc() -> None:
+    """One PLC connection lifetime: connect, discover, subscribe, stream
+    until the connection drops. Reconnects are handled by `supervise`."""
+    url = _env("VINEAPP_OPCUA_PLC_URL")
     secure = os.environ.get("VINEAPP_OPCUA_SECURITY", "").lower() != "none"
     client = _build_client(url, secure=secure)
     if secure:
@@ -191,17 +194,39 @@ async def _connect_and_run(url: str) -> None:
                 pass
 
 
-async def main() -> None:
-    url = _env("VINEAPP_OPCUA_PLC_URL")
+async def supervise(name: str, run) -> None:
+    """Run `run` forever; on error, log and retry after RECONNECT_DELAY_S."""
     while True:
         try:
-            await _connect_and_run(url)
-            logger.warning("connection closed cleanly; reconnecting in %ds", RECONNECT_DELAY_S)
+            await run()
+            logger.warning("%s: connection closed cleanly; reconnecting in %ds", name, RECONNECT_DELAY_S)
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
         except Exception as exc:
-            logger.warning("connection error: %s; reconnecting in %ds", exc, RECONNECT_DELAY_S)
+            logger.warning("%s: connection error: %s; reconnecting in %ds", name, exc, RECONNECT_DELAY_S)
         await asyncio.sleep(RECONNECT_DELAY_S)
+
+
+async def main() -> None:
+    tasks: list[asyncio.Task] = [
+        asyncio.create_task(supervise("plc", run_plc), name="plc"),
+    ]
+
+    if os.environ.get("VINEAPP_OPCUA_LEUZE_URL"):
+        # Import lazily so the LenientCertificate monkey-patch only takes effect
+        # when we actually plan to talk to a Leuze.
+        from .leuze import run_leuze
+
+        tasks.append(asyncio.create_task(supervise("leuze", run_leuze), name="leuze"))
+    else:
+        logger.info("VINEAPP_OPCUA_LEUZE_URL not set; Leuze source skipped")
+
+    try:
+        await asyncio.gather(*tasks)
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        for t in tasks:
+            t.cancel()
+        raise
 
 
 def cli() -> None:
