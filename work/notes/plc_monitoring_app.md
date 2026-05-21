@@ -21,11 +21,22 @@ state.
 namespaces, monitor all variables.** On startup the monitor browses the user
 namespaces (skipping the OPC-UA standard `Server` / type tree) and subscribes
 to every primitive variable it finds. New PLC variables that appear after a
-restart get picked up automatically. The protocol surface (`ScanResultaat`,
-`ActievePartijnummer{1,2}`, eventually `bolmaat` — see
-[[os_pc_protocol_implementation]]) is therefore included by construction,
-along with anything else the PLC exposes (`Ziftmaat{1,2}`, `vDummy`, future
-fields).
+restart get picked up automatically.
+
+Confirmed against the production PLC on 2026-05-21 (see
+[`ontstapelmachine/plc_monitor_v1_capture.md`](ontstapelmachine/plc_monitor_v1_capture.md)) —
+9 unique variables across two subtrees:
+
+- *Protocol surface (under `OPCScanner/fbOPC/`):* `ScanResultaat`,
+  `ActievePartijnummer1`, `ActievePartijnummer2`, plus `AantalBollenPerKrat`
+  (the PLC's existing slot for what the draft calls `bolmaat` — deferred from
+  the protocol but already a monitor signal).
+- *Operational:* `DeviceStatus.{Mode, ErrorStatus, UnpublishedVariablesStatus}`,
+  `NumOfVars`, `NumOfValues`.
+
+`Ziftmaat1/2` and `vDummy` are **not** exposed on the production PLC
+(contradicting earlier notes) — nothing to do, the discovery walker just won't
+see them.
 
 **Leuze (`opc.tcp://10.0.0.191:4840`): fixed curated list.** Subscribing to
 the full browse tree fails with `BadEncodingLimitsExceeded` on this device
@@ -59,16 +70,22 @@ Textual (Textualize). Justification:
 Layout sketch:
 
 ```
-┌─ Potting PLC (10.0.0.190) ─── connected, last upd 0.4s ago ─┐
-│ Node                  Value        Server ts                │
-│ ScanResultaat         27246        2026-05-21 14:02:11.213  │
-│ ActievePartijnummer1  12345        ...                      │
-│ ...                                                         │
-├─ Leuze (10.0.0.191) ─── connected, last upd 12s ago ────────┤
-│ LastScanData          .../27246    ...                      │
-│ ...                                                         │
-└─ q: quit  l: toggle log tail  r: reconnect ────────────────┘
+┌─ Potting PLC (10.0.0.190) ─── connected, Mode RUN, last upd 0.4s ago ─┐
+│ Node                       Value        Server ts                     │
+│ ScanResultaat              27246        2026-05-21 14:02:11.213       │
+│ ActievePartijnummer1       12345        ...                           │
+│ ActievePartijnummer2       0            ...                           │
+│ AantalBollenPerKrat        80           ...                           │
+│ DeviceStatus.ErrorStatus   None         ...                           │
+│ ...                                                                   │
+├─ Leuze (10.0.0.191) ─── connected, last upd 12s ago ──────────────────┤
+│ LastScanData               .../27246    ...                           │
+│ ...                                                                   │
+└─ q: quit  l: toggle log tail  r: reconnect ──────────────────────────┘
 ```
+
+`DeviceStatus.Mode` and `DeviceStatus.ErrorStatus` are good candidates for the
+header row (always visible) rather than just another table entry.
 
 Reconnect on disconnect (with exponential backoff); the footer should always
 make stale data obvious.

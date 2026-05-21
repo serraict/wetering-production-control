@@ -39,10 +39,12 @@ long-running compose service) is speculation.
 - [x] Subscribes to all of them; prints one JSONL line per datachange to
       stdout: `{"ts":..., "source":"plc", "node":..., "value":..., "server_ts":..., "status":...}`.
 - [ ] Survives one disconnect → reconnect cycle without crashing (kill the
-      network briefly, see it recover).
-- [ ] Runs end-to-end on serraserver via
+      network briefly, see it recover). **Deferred** — user can't test alone;
+      will be done on-site with the PLC engineer.
+- [x] Runs end-to-end on serraserver via
       `docker compose run --rm opcua_test python -m production_control.opcua.monitor`
-      and produces JSONL we can grep — captured to `work/notes/ontstapelmachine/`.
+      against the production PLC. Capture written to
+      [`work/notes/ontstapelmachine/plc_monitor_v1_capture.md`](notes/ontstapelmachine/plc_monitor_v1_capture.md).
 
 ## Design
 
@@ -93,14 +95,18 @@ long-running compose service) is speculation.
 - [x] Run locally against `scripts/opc_test_server.py` as a sanity check —
       5 variables discovered, JSONL on initial subscribe + on `uawrite`
       datachanges.
-- [ ] Build and push the docker image (`make docker_push`).
-- [ ] On serraserver: `docker compose pull opcua_test`, then
+- [x] Build and push the docker image (`make docker_push`) — done by user as
+      part of the new release.
+- [x] On serraserver: `docker compose pull opcua_test`, then
       `docker compose run --rm opcua_test python -m production_control.opcua.monitor`
-      pointed at the production PLC. Capture 5–10 minutes of output to
-      `work/notes/ontstapelmachine/plc_monitor_v1_capture.md`.
+      pointed at the production PLC. User confirmed: running and works.
+- [x] Capture written to
+      [`work/notes/ontstapelmachine/plc_monitor_v1_capture.md`](notes/ontstapelmachine/plc_monitor_v1_capture.md).
 - [ ] Test reconnect: kill the network on serraserver briefly, confirm the
-      monitor recovers.
-- [ ] Review the capture: did we get useful data? Any surprises (massive
-      tree, chatty nodes, missing variables)? Update
-      [`work/notes/plc_monitoring_app.md`](notes/plc_monitoring_app.md) with
-      findings and the next slice's scope.
+      monitor recovers. **Deferred to on-site session with PLC engineer.**
+- [x] Review the capture: 9 unique variables (clean, no flood); discovery
+      had a dedup bug across top-level subtrees — **fixed** in this slice;
+      `AantalBollenPerKrat` ≈ deferred `bolmaat`; `Ziftmaat1/2` and `vDummy`
+      are not exposed; `DeviceStatus.{Mode,ErrorStatus}` are free
+      observability wins. Findings folded into
+      [`work/notes/plc_monitoring_app.md`](notes/plc_monitoring_app.md).

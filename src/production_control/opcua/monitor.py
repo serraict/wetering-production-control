@@ -162,10 +162,11 @@ async def _connect_and_run(url: str) -> None:
     async with client:
         objects = client.nodes.objects
         variables: list[tuple[Node, str]] = []
+        seen: set[str] = set()
         for child in await objects.get_children():
             if child.nodeid.NamespaceIndex == 0:
                 continue
-            variables.extend(await discover_variables(child))
+            variables.extend(await discover_variables(child, seen=seen))
 
         if not variables:
             logger.warning("no user-namespace variables found; nothing to subscribe to")
