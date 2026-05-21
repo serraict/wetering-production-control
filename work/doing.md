@@ -1,19 +1,98 @@
-# Doing
+# Doing: PLC Monitor v1 — discover + log
+
+Smallest slice of [[plc_monitoring_app]] worth shipping. Goal is to **verify
+the discover-and-subscribe loop works against the production Omron PLC** by
+seeing real datachange events stream into a log. Everything else (TUI, Leuze,
+rotation, compose service) is deferred to follow-up slices.
+
+Full note: [`work/notes/plc_monitoring_app.md`](notes/plc_monitoring_app.md).
 
 ## Context
 
+We have working connect / browse / write scripts against the production PLC
+(`scripts/monitor_plc.py`, `scripts/write_plc.py`) using a fixed three-node
+list (`ScanResultaat`, `ActievePartijnummer{1,2}`). We don't yet know whether
+"subscribe to every variable the PLC exposes" is a safe and useful strategy on
+this device — Leuze has known limits, the Omron should be fine, but we haven't
+tried.
+
+Until we've seen it work, the rest of the monitor design (TUI, rotation,
+long-running compose service) is speculation.
+
 ## Goals
+
+1. Discover all variables in the PLC's user namespaces at startup.
+2. Subscribe to every discovered variable.
+3. Emit one JSONL record per datachange to stdout.
+4. Run against the **production PLC** via the `opcua_test` compose service on
+   `serraserver` and observe meaningful events.
 
 ## Acceptance criteria
 
-- [ ] ..
-- [ ] ..
-- [ ] ..
+- [ ] `uv run python -m production_control.opcua.monitor` connects to the PLC
+      using `VINEAPP_OPCUA_*` env vars and the existing client cert.
+- [ ] On startup, lists every variable it discovered (one INFO line per node)
+      so we can see what was found.
+- [ ] Subscribes to all of them; prints one JSONL line per datachange to
+      stdout: `{"ts":..., "source":"plc", "node":..., "value":..., "server_ts":..., "status":...}`.
+- [ ] Survives one disconnect → reconnect cycle without crashing (kill the
+      network briefly, see it recover).
+- [ ] Runs end-to-end on serraserver via
+      `docker compose run --rm opcua_test python -m production_control.opcua.monitor`
+      and produces JSONL we can grep — captured to `work/notes/ontstapelmachine/`.
 
 ## Design
 
+- New module `src/production_control/opcua/monitor.py` (single file; promote
+  to a package only when it grows).
+- Reuses the connection-setup pattern from `scripts/monitor_plc.py`
+  (asyncua client + SignAndEncrypt + Basic256Sha256 + client cert from env).
+- **Discovery:** walk children of the root `Objects` folder; for each user
+  namespace (skip `ns=0` and any `http://opcfoundation.org/...`), recurse and
+  collect every node whose `NodeClass == Variable`. Cap recursion depth (e.g.
+  6) as a safety net.
+- **Subscribe:** one subscription, one handler. Handler emits a JSONL line per
+  notification using `json.dumps(..., default=str)` so timestamps and Variant
+  values serialize without extra plumbing.
+- **Reconnect:** on connection drop, log a WARNING, sleep 5s, re-run discovery
+  + re-subscribe. No exponential backoff yet.
+- No CLI flags. URL, cert paths, credentials all from env. If we need flags
+  later, add them later.
+
+### Explicitly out of scope for v1
+
+- Textual TUI.
+- Leuze monitoring (separate slice — different device, different constraints).
+- File output / rotation / `VINEAPP_OPCUA_MONITOR_LOG_DIR`. Pipe stdout to a
+  file if you want one (`... > /tmp/plc.log`).
+- Long-running compose service. We run via `docker compose run --rm` until
+  we've seen the logger behave for an hour or two.
+- Per-node update-rate cap. If we see a chatty node, we'll add it then.
+- Smoke test against `opc_test_server.py`. Verification is on the real PLC;
+  the test server still has the stale `Lijn{n}/PC/OS` shape and isn't worth
+  fixing inside this slice.
+- Architecture doc update; operator doc.
+
 ## Implementation steps
 
-- [ ] ..
-- [ ] ..
-- [ ] ..
+- [ ] Create `src/production_control/opcua/__init__.py` and
+      `src/production_control/opcua/monitor.py`.
+- [ ] Extract the connection-setup boilerplate from `scripts/monitor_plc.py`
+      into a small helper inside `monitor.py` (or import it directly — decide
+      when looking at the code).
+- [ ] Implement `discover_variables(client) -> list[Node]`.
+- [ ] Implement the subscription handler that emits JSONL.
+- [ ] Implement the reconnect loop.
+- [ ] Run locally against `scripts/opc_test_server.py` as a sanity check —
+      even on the stale shape it should produce *some* JSONL.
+- [ ] Build and push the docker image (`make docker_push`).
+- [ ] On serraserver: `docker compose pull opcua_test`, then
+      `docker compose run --rm opcua_test python -m production_control.opcua.monitor`
+      pointed at the production PLC. Capture 5–10 minutes of output to
+      `work/notes/ontstapelmachine/plc_monitor_v1_capture.md`.
+- [ ] Test reconnect: kill the network on serraserver briefly, confirm the
+      monitor recovers.
+- [ ] Review the capture: did we get useful data? Any surprises (massive
+      tree, chatty nodes, missing variables)? Update
+      [`work/notes/plc_monitoring_app.md`](notes/plc_monitoring_app.md) with
+      findings and the next slice's scope.
