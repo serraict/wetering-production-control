@@ -113,9 +113,11 @@ def _env(name: str) -> str:
     return value
 
 
-async def run_leuze() -> None:
-    """One Leuze connection lifetime: connect, subscribe, stream until the
-    connection drops. Reconnects are handled by the outer supervisor."""
+async def run_leuze(handler) -> None:
+    """One Leuze connection lifetime: connect, subscribe, feed the given
+    handler. Reconnects are handled by the outer supervisor.
+
+    `handler` is reused across reconnect attempts."""
 
     url = _env("VINEAPP_OPCUA_LEUZE_URL")
     client = Client(url=url)
@@ -131,7 +133,6 @@ async def run_leuze() -> None:
 
     logger.info("connecting to %s", url)
     async with client:
-        handler = JsonlHandler(source="leuze")
         nodes = []
         for name, nid in LEUZE_NODES.items():
             node = client.get_node(nid)

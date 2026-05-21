@@ -90,18 +90,19 @@ v4 adds file logging; v5 picks a persistent runtime.
 
 ## Implementation steps
 
-- [ ] Add `textual` as a runtime dep (`uv add textual`).
-- [ ] Refactor `monitor.run_plc` / `leuze.run_leuze` to take a `handler`
-      (or handler-factory) parameter so callers choose what consumes the
-      datachange notifications. `monitor.main()` keeps producing
-      `JsonlHandler`s; nothing visible changes for v1/v2 callers.
-- [ ] `production_control/opcua/tui.py` with `StateHandler`, a Textual
-      `App` rendering both panes, and a `main()` that wires both supervised
-      tasks to feed the `StateHandler`s.
-- [ ] Local sanity check against `opc_test_server.py` with
-      `VINEAPP_OPCUA_SECURITY=none` — confirm the PLC pane shows the test
-      vars and updates on `uawrite`. Leuze pane shows "not configured" or
-      hides.
+- [x] Add `textual` as a runtime dep (`uv add textual` → textual 8.2.7).
+- [x] Refactor `monitor.run_plc` / `leuze.run_leuze` to take a `handler`
+      parameter. `monitor.main()` constructs `JsonlHandler`s and passes
+      them via `functools.partial`; headless monitor behavior unchanged
+      (verified via regression test).
+- [x] `production_control/opcua/tui.py` with `StateHandler`, a Textual
+      `App` rendering both panes, and a `cli()` entry point that wires
+      both supervised tasks to feed the `StateHandler`s. Leuze pane is
+      conditionally rendered when `VINEAPP_OPCUA_LEUZE_URL` is set.
+- [x] Local sanity check via Textual's `App.run_test()` against
+      `opc_test_server.py`: state populates with 5 vars within 2s, PLC
+      table renders 5 rows, `uawrite` to a PLC var reflects in state
+      within 1s, Leuze pane absent when env unset.
 - [ ] Build + push image (`make docker_push`).
 - [ ] On serraserver:
       `docker compose run --rm -it opcua_test python -m production_control.opcua.tui`

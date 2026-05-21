@@ -154,9 +154,13 @@ def _build_client(url: str, *, secure: bool) -> Client:
     return client
 
 
-async def run_plc() -> None:
-    """One PLC connection lifetime: connect, discover, subscribe, stream
-    until the connection drops. Reconnects are handled by `supervise`."""
+async def run_plc(handler) -> None:
+    """One PLC connection lifetime: connect, discover, subscribe, feed the
+    given handler. Reconnects are handled by `supervise`.
+
+    `handler` is reused across reconnect attempts — must be safe to call
+    `.register(node, name)` repeatedly (JsonlHandler is; StateHandler should
+    be too)."""
     url = _env("VINEAPP_OPCUA_PLC_URL")
     secure = os.environ.get("VINEAPP_OPCUA_SECURITY", "").lower() != "none"
     client = _build_client(url, secure=secure)
@@ -191,7 +195,6 @@ async def run_plc() -> None:
             logger.warning("no user-namespace variables found; nothing to subscribe to")
             return
 
-        handler = JsonlHandler(source="plc")
         for node, name in variables:
             handler.register(node, name)
             logger.info("discovered %s (%s)", name, node.nodeid.to_string())
@@ -255,8 +258,11 @@ async def supervise(name: str, run) -> None:
 
 
 async def main() -> None:
+    from functools import partial
+
+    plc_handler = JsonlHandler(source="plc")
     tasks: list[asyncio.Task] = [
-        asyncio.create_task(supervise("plc", run_plc), name="plc"),
+        asyncio.create_task(supervise("plc", partial(run_plc, plc_handler)), name="plc"),
     ]
 
     if os.environ.get("VINEAPP_OPCUA_LEUZE_URL"):
@@ -264,7 +270,10 @@ async def main() -> None:
         # when we actually plan to talk to a Leuze.
         from .leuze import run_leuze
 
-        tasks.append(asyncio.create_task(supervise("leuze", run_leuze), name="leuze"))
+        leuze_handler = JsonlHandler(source="leuze")
+        tasks.append(
+            asyncio.create_task(supervise("leuze", partial(run_leuze, leuze_handler)), name="leuze")
+        )
     else:
         logger.info("VINEAPP_OPCUA_LEUZE_URL not set; Leuze source skipped")
 
