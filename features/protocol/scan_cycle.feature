@@ -24,3 +24,10 @@ Feature: Scan cycle (PC acknowledges scans from OS)
     When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27247"
     Then PC does not write to ScanResultaat
     And PC logs "scan dropped: guard not zero" at WARNING
+
+  Scenario: A duplicate scan after OS ack writes again
+    When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
+    Then PC writes 27246 to ScanResultaat
+    When OS resets ScanResultaat to 0
+    And a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
+    Then PC writes 27246 to ScanResultaat

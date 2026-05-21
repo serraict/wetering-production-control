@@ -166,6 +166,34 @@ async def _plc_loop(
                 pass
 
 
+def _make_timestamp_trigger_request(node, client_handle: int) -> ua.MonitoredItemCreateRequest:
+    """Build a MonitoredItemCreateRequest with DataChangeTrigger =
+    StatusValueTimestamp so identical values with fresh timestamps
+    still publish (real Leuze scans repeat the same URL for a duplicate
+    krat scan, but with a new SourceTimestamp)."""
+    filt = ua.DataChangeFilter()
+    filt.Trigger = ua.DataChangeTrigger.StatusValueTimestamp
+    filt.DeadbandType = ua.DeadbandType.None_
+    filt.DeadbandValue = 0.0
+
+    mparams = ua.MonitoringParameters()
+    mparams.ClientHandle = client_handle
+    mparams.SamplingInterval = SUBSCRIPTION_INTERVAL_MS
+    mparams.QueueSize = 1
+    mparams.DiscardOldest = True
+    mparams.Filter = filt
+
+    rv = ua.ReadValueId()
+    rv.NodeId = node.nodeid
+    rv.AttributeId = ua.AttributeIds.Value
+
+    mir = ua.MonitoredItemCreateRequest()
+    mir.ItemToMonitor = rv
+    mir.MonitoringMode = ua.MonitoringMode.Reporting
+    mir.RequestedParameters = mparams
+    return mir
+
+
 async def _leuze_loop(
     handler: ScanCycleHandler,
     ready: asyncio.Event | None,
@@ -178,8 +206,15 @@ async def _leuze_loop(
         node = client.get_node(LEUZE_LAST_SCAN_NODEID)
         handler.register(node, "LastScanData")
         sub = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
-        await sub.subscribe_data_change([node])
-        logger.info("subscribed to LastScanData")
+        # Use the timestamp-trigger filter rather than the default
+        # subscribe_data_change (StatusValue trigger) so duplicate scans
+        # still notify (real Leuze publishes the same URL with a fresh
+        # SourceTimestamp on each scan).
+        sub._client_handle += 1
+        await sub.create_monitored_items(
+            [_make_timestamp_trigger_request(node, sub._client_handle)]
+        )
+        logger.info("subscribed to LastScanData (timestamp-trigger)")
         if ready is not None:
             ready.set()
         try:
