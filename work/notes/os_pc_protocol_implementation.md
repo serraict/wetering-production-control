@@ -1,68 +1,121 @@
 # OS ↔ PC Protocol Implementation
 
 Implements the protocol from the [protocol draft] so the Ontstapelaar (OS) and
-Production Control (PC) can coordinate a potting run end-to-end. Independent
-of, but sharing the OPC/UA plumbing with, [[plc_monitoring_app]].
+Production Control (PC) coordinate the potting run: PC tells OS which partij is
+active and which scan it just observed; OS uses that to decide whether to empty
+a krat. Shares OPC/UA plumbing with [[plc_monitoring_app]] but is otherwise
+independent.
 
-Builds on the test plan already worked out in
+Builds on the test plan in
 [`ontstapelmachine/archive/os_pc_protocol_test_plan.md`](ontstapelmachine/archive/os_pc_protocol_test_plan.md)
 and the field-test state in
 [`ontstapelmachine/doing_ontstapelaar.md`](ontstapelmachine/doing_ontstapelaar.md).
 
-## Purpose
+## Responsibility model
 
-Replace the "manual scan → PC writes value → OS reads value" choreography
-currently done by scripts (`scripts/write_plc.py`, `scripts/monitor_leuze.py`,
-`scripts/monitor_plc.py`) with a single long-running service that owns the
-protocol contract.
+Per the draft:
 
-## Protocol summary
+- **OS** scans the krat on pickup and tracks its partij; OS makes the
+  vrijgave decision locally by comparing the scanned partij against the
+  PC-published `actieve_partij_nummer_{1,2}`.
+- **PC** registers which oppot partij is active (operator action in the web
+  UI) and acknowledges scans by writing the parsed partij back to
+  `last_scan_data`.
 
-(From the archived test plan — restated here so this note stands alone.)
+There is no explicit "release" message. Release is implicit: when
+`actieve_partij_nummer_{1,2}` contains the scanned partij, OS may empty the
+krat.
 
-### PLC nodes (Omron, ns=4)
+## Protocol surface
 
-| Protocol name           | NodeId                       | Type  | Writer |
-| ----------------------- | ---------------------------- | ----- | ------ |
-| `last_scan_data`        | `ns=4;s=ScanResultaat`       | int32 | PC writes, OS resets to 0 |
-| `actieve_partij_nummer_1` | `ns=4;s=ActievePartijnummer1` | int32 | PC writes |
-| `actieve_partij_nummer_2` | `ns=4;s=ActievePartijnummer2` | int32 | PC writes |
+### PLC nodes (Omron, `ns=4`)
+
+| Protocol name             | NodeId                            | Type  | Writer                        |
+| ------------------------- | --------------------------------- | ----- | ----------------------------- |
+| `last_scan_data`          | `ns=4;s=ScanResultaat`            | int32 | PC writes, OS resets to 0     |
+| `actieve_partij_nummer_1` | `ns=4;s=ActievePartijnummer1`     | int32 | PC writes (on operator action)|
+| `actieve_partij_nummer_2` | `ns=4;s=ActievePartijnummer2`     | int32 | PC writes (on operator action)|
+
+`0` is the sentinel: in `last_scan_data` it means "OS ready for new data"; in
+`actieve_partij_nummer_*` it means "no active partij".
 
 ### Leuze node
 
-- `LastScanData` (`ns=5;i=6122`) — scan URL, batch number = last path segment.
+- `LastScanData` (`ns=5;i=6122`, string) — scan URL, batch number = last path
+  segment (e.g. `https://pc.potlilium.serraict.me/potting-lots/scan/27246`).
 
-### Happy path
+### Deferred (not in initial scope, per user 2026-05-21)
 
-1. OS sets `last_scan_data = 0` → ready for a new scan.
-2. Operator scans a pallet on the OS; Leuze publishes the URL on `LastScanData`.
-3. PC parses the batch number from the URL.
-4. PC writes the batch number to PLC `last_scan_data`.
-5. OS reads it, acts, resets `last_scan_data` back to 0.
-6. PC may also update `actieve_partij_nummer_{1,2}` to reflect the active batch
-   per side; writing `0` signals "no active batch".
+- `bolmaat` (int32, PC → OS, `0 = onbekend`) — listed in the protocol draft;
+  not exchanged in this iteration.
+- `Ziftmaat1/2` — present on the production PLC today, not part of the protocol
+  surface; do not write or read.
 
-### Edge cases worth specifying
+## Sequences
 
-- OS never resets to 0 (timeout / stuck) — PC behavior?
-- Scan arrives while `last_scan_data != 0` (OS not ready) — buffer? drop? wait?
-- Same scan twice in a row — idempotent?
-- Unparseable scan (not a `.../potting-lots/scan/<int>` URL) — log & skip?
-- Connection drop mid-cycle (PLC or Leuze) — resume rules?
-- PC restart with `last_scan_data != 0` — adopt the in-flight value or wait
-  for next reset?
+### Scan cycle (one krat)
 
-These are the cases the behave specs should pin down. Most are still open
-questions on the protocol draft — capture decisions in the architecture doc
-as they're resolved.
+```
+OS                 PLC (PC)                 Leuze                 PC
+ |  (portaal pakt krat)
+ | ────────────────▶  last_scan_data := 0
+ |  triggers scan ───────────────────────▶
+ |                                          publishes LastScanData ─▶
+ |                   reads last_scan_data 0 ◀────────────────────────  (guard)
+ |                   last_scan_data := parsed_partij ◀─────────────── (PC writes)
+ |  reads non-zero ◀
+ |  decides vrijgave locally
+ |    (parsed_partij ∈ {actieve_partij_1, actieve_partij_2}?)
+```
+
+Key: **PC only writes `last_scan_data` after observing it equals 0.** That
+guards against overwriting an unread scan.
+
+### Active partij update (operator-driven)
+
+PC writes `actieve_partij_nummer_{1,2}` whenever the operator changes the
+active partij(en) in the web UI. Writing `0` signals "no active partij" and
+will cause OS to refuse vrijgave for any subsequent scan.
+
+This is independent of the scan cycle.
+
+## Edge cases to specify
+
+(Most still open on the protocol draft — capture decisions as they're resolved.)
+
+- **OS never resets `last_scan_data` to 0** (stuck) — PC behavior: probably
+  surface in UI, don't auto-recover. To confirm.
+- **Scan arrives while `last_scan_data != 0`** — PC must NOT write; the guard
+  exists for this. Question: buffer the late scan, drop it, or wait until OS
+  acks? Default: drop and log.
+- **Same scan twice in a row** (Leuze re-publishes identical value) — PC
+  must still gate on `last_scan_data == 0` so a repeat after OS ack is fine,
+  and a repeat before OS ack is dropped.
+- **Unparseable scan** (not a `.../potting-lots/scan/<int>` URL) — log & skip;
+  don't touch the PLC.
+- **Connection drop mid-cycle** (PLC or Leuze) — on reconnect, re-read
+  `last_scan_data`; resume cleanly if it's 0, else wait.
+- **PC restart with `last_scan_data != 0`** — adopt the value as in-flight;
+  don't overwrite. Next write follows the normal guard.
 
 ## Where it lives
 
-- Module: `src/production_control/opcua/protocol/` (state machine + parsers).
-- Runtime: same container image as the web app, separate compose service
-  (`opcua_protocol`), single instance.
-- Reads config from the same `VINEAPP_OPCUA_*` env vars as the existing
-  scripts.
+- **No separate service.** The web app (NiceGUI process) owns the OPC client,
+  matching the architecture-doc model (`PottingLineController`, `OPCConfig`).
+  Adds a long-running asyncua subscription loop alongside the request handlers.
+- Module: `src/production_control/opcua/protocol/` (Leuze subscription, scan
+  parsing, gated write logic, state observers for the UI).
+- Reads config from the same `VINEAPP_OPCUA_*` env vars as the scripts.
+- Operator UI: extend the existing potting-lots page to set
+  `actieve_partij_nummer_{1,2}` and to show the live scan/partij state.
+
+### Manual fallback (commissioning / troubleshooting)
+
+Per the draft's "Eerste oplossing": OS runs without the scanner and the
+operator approves vrijgave manually on the machine UI. This mode does not
+involve PC at all; the protocol implementation only needs to be aware that the
+OS may be in manual mode (no scans arrive). No code change required, just a
+note in operator docs.
 
 ## Executable spec (behave)
 
@@ -73,9 +126,8 @@ valuable when it exercises the actual stack.
 
 Required updates to `scripts/opc_test_server.py`:
 
-- Replace the current `Lijn{n}/PC/OS` shape with the current protocol nodes
-  (`ScanResultaat`, `ActievePartijnummer1`, `ActievePartijnummer2`,
-  `Ziftmaat1`, `Ziftmaat2`, `vDummy`) under `ns=4`.
+- Replace the current `Lijn{n}/PC/OS` shape with the three protocol nodes
+  under `ns=4`: `ScanResultaat`, `ActievePartijnummer1`, `ActievePartijnummer2`.
 - Add an OS-simulator hook so the spec can script "OS reads value and resets
   to 0 after N ms" without a real PLC.
 - Expose a Leuze-shaped namespace (`ns=5;i=6122` `LastScanData`) on the same
@@ -89,15 +141,16 @@ Behave layout:
 features/
   protocol/
     happy_path.feature
-    os_not_ready.feature
+    os_not_ready.feature        # scan while last_scan_data != 0
     unparseable_scan.feature
+    repeated_scan.feature
     connection_recovery.feature
-  environment.py          # starts the test server, the OS simulator, and
-                          # a fresh PC protocol instance per scenario
+  environment.py                # starts the test server, the OS simulator,
+                                # and a fresh PC instance per scenario
   steps/
-    plc_steps.py          # "Given the PLC reports last_scan_data = 0"
-    scanner_steps.py      # "When a scan arrives with batch 27246"
-    pc_steps.py           # "Then PC writes 27246 to ScanResultaat"
+    plc_steps.py                # "Given the PLC reports last_scan_data = 0"
+    scanner_steps.py            # "When a scan arrives with batch 27246"
+    pc_steps.py                 # "Then PC writes 27246 to ScanResultaat"
 ```
 
 Acceptance: `uv run behave features/protocol` runs in CI and locally with no
@@ -105,36 +158,33 @@ hardware.
 
 ## Documentation
 
-Architecture doc gets a new `## OPC/UA Machine Communication` section
-(`docs/architecture.md#opcua-machine-communication`) covering:
+`docs/architecture.md#opcua-machine-communication` already exists; extend it
+with:
 
 - Topology diagram (PC ↔ PLC ↔ Leuze, who writes what).
 - Node table (copy of the table above, plus URIs and security policy).
-- Protocol state machine (happy path + the resolved edge cases).
+- Protocol sequence diagrams (scan cycle + active-partij update).
+- Manual fallback mode note.
 - Pointer to the behave specs as the source of truth for behavior.
 
 ## Open questions
 
-- Does PC also need to *read* `actieve_partij_nummer_{1,2}` (round-trip
-  reconciliation) or is write-only sufficient?
-- How does the protocol service interact with the web app — does it write
-  scan events somewhere the UI can read (DB, event log)?
-- Polling vs. subscription on `ScanResultaat` — test plan note 2026-03-10
-  flagged `--watch` polling missing updates. Confirm subscription works
-  reliably before committing.
+- Does PC also need to **read** `actieve_partij_nummer_{1,2}` (round-trip
+  reconciliation), or is write-only sufficient given PC is the only writer?
+- Polling vs. subscription on `ScanResultaat`: the 2026-03-10 test note
+  flagged `--watch` polling missing updates. Confirm subscription is reliable
+  before committing to it as the OS-ready signal.
 
 ## Acceptance criteria (proposed)
 
-- [ ] `production_control.opcua.protocol` package with a state machine that
-      implements the happy path and the edge cases listed above.
-- [ ] `scripts/opc_test_server.py` updated to the current protocol shape;
-      OS simulator hook present.
-- [ ] `features/protocol/` behave suite runs green against the test server,
+- [ ] `production_control.opcua.protocol` module: Leuze subscription, scan
+      parser, gated PLC writer, plus UI hooks to set the active partij.
+- [ ] `scripts/opc_test_server.py` updated to the three protocol nodes plus a
+      Leuze-shaped fixture; OS-simulator hook present.
+- [ ] `features/protocol/` behave suite runs green against the test server;
       covers happy path + each named edge case.
-- [ ] `docs/architecture.md#opcua-machine-communication` written and links to
-      the behave features.
-- [ ] Compose service `opcua_protocol` added; deploys alongside
-      `production_control` on serraserver.
+- [ ] `docs/architecture.md#opcua-machine-communication` extended with the
+      topology, node table, sequence diagrams, and manual-fallback note.
 
 [protocol draft]:
   https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratie-Onstapelmachine-met-oppotproces-257?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5
