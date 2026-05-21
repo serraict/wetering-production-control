@@ -15,26 +15,31 @@ state.
 
 ## Scope
 
-### Monitored nodes (initial fixed set)
+### Monitored nodes
 
-Protocol nodes plus a small curated extras list.
+**PLC (`opc.tcp://10.0.0.190:4840`): discover everything in the user
+namespaces, monitor all variables.** On startup the monitor browses the user
+namespaces (skipping the OPC-UA standard `Server` / type tree) and subscribes
+to every primitive variable it finds. New PLC variables that appear after a
+restart get picked up automatically. The protocol surface (`ScanResultaat`,
+`ActievePartijnummer{1,2}`, eventually `bolmaat` — see
+[[os_pc_protocol_implementation]]) is therefore included by construction,
+along with anything else the PLC exposes (`Ziftmaat{1,2}`, `vDummy`, future
+fields).
 
-PLC (`opc.tcp://10.0.0.190:4840`, `ns=4;s=OPCScanner/fbOPC/...`):
+**Leuze (`opc.tcp://10.0.0.191:4840`): fixed curated list.** Subscribing to
+the full browse tree fails with `BadEncodingLimitsExceeded` on this device
+(confirmed on firmware V2.4.0). Monitor a small fixed set:
 
-- `ScanResultaat` — last scan written by PC (int32)
-- `ActievePartijnummer1`, `ActievePartijnummer2` — active batch per side (int32)
-- `Ziftmaat1`, `Ziftmaat2` — sieve size per side
-- `vDummy` — heartbeat / smoke field
-
-Leuze (`opc.tcp://10.0.0.191:4840`):
-
-- `LastScanData` (`ns=5;i=6122`)
+- `LastScanData` (`ns=5;i=6122`) — scan URL
 - `ScanActive` (`ns=5;i=6199`)
 - `DeviceTemperature` (`ns=5;i=6116`)
 
-Node list lives in code as a small constant; adding/removing a node is a code
-change, not a config change. Names/IDs match what's already wired in
-`scripts/monitor_plc.py` and `scripts/monitor_leuze.py`.
+Adding/removing a Leuze node is a code change; the PLC list is whatever the
+PLC currently exposes.
+
+Reference: existing wiring in `scripts/monitor_plc.py` and
+`scripts/monitor_leuze.py`.
 
 ### Out of scope
 
@@ -94,13 +99,13 @@ JSON lines, one record per datachange notification:
 
 ## Testability
 
-- Adapt `scripts/opc_test_server.py` so it exposes the protocol node set above
-  (it currently models an older `Lijn{n}/PC/OS` shape — drift from the current
-  protocol). Same names/types as the real PLC so the monitor needs no special
-  test mode.
+- Adapt `scripts/opc_test_server.py` so it exposes a handful of variables in
+  a user namespace (it currently models an older `Lijn{n}/PC/OS` shape).
+  Exact node names don't matter — the monitor discovers whatever's there.
 - Smoke test: start the test server in a pytest fixture, run the monitor in
-  `--headless` mode against it for a few seconds, assert the JSONL log contains
-  the expected node names and a value change.
+  `--headless` mode against it for a few seconds, assert the JSONL log
+  contains every variable the test server exposed (proving discovery worked)
+  and at least one value change.
 - Manual test via the existing `opcua_test` compose service pattern:
   `docker compose run --rm opcua_test python -m production_control.opcua.monitor --plc-url ...`.
 
@@ -111,14 +116,25 @@ JSON lines, one record per datachange notification:
   Headless logger probably wants long-running; the TUI is on-demand.
 - Log retention policy on serraserver — rotate locally only, or ship to an
   external sink?
+- **Discovery filter:** OPC-UA servers expose a large `Server` / type tree
+  by default. Plan is to walk only user namespaces (`namespace_index > 0`,
+  skipping `http://opcfoundation.org/...`) — confirm that's the right cut
+  on the production Omron.
+- **Chatty-node guard:** if a single PLC variable updates many times per
+  second, the TUI and the JSONL log could be overwhelmed. Worth a
+  per-node update-rate cap (sampling interval) or a "noisy nodes" exclude
+  list? Defer until we see it happen.
 
 ## Acceptance criteria (proposed)
 
 - [ ] `production_control.opcua.monitor` package with TUI and headless modes.
-- [ ] Subscribes to the fixed node set above on both endpoints; survives a
-      disconnect/reconnect cycle without crashing.
+- [ ] **PLC discovery:** on connect, browses the user namespaces, subscribes
+      to every primitive variable found; new variables appear automatically
+      on the next reconnect.
+- [ ] **Leuze:** subscribes to the fixed three-node list.
+- [ ] Survives a disconnect/reconnect cycle without crashing.
 - [ ] JSONL log written under `VINEAPP_OPCUA_MONITOR_LOG_DIR`, rotated.
-- [ ] Smoke test against the test server passes in CI.
+- [ ] Smoke test against the test server passes in CI (proves discovery).
 - [ ] Compose service added; documented in `docs/architecture.md` and in
       `work/notes/ontstapelmachine/doing_ontstapelaar.md` "Commands to run on
       serraserver".

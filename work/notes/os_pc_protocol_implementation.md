@@ -32,9 +32,9 @@ krat.
 
 | Protocol name             | NodeId                            | Type  | Writer                        |
 | ------------------------- | --------------------------------- | ----- | ----------------------------- |
-| `last_scan_data`          | `ns=4;s=ScanResultaat`            | int32 | PC writes, OS resets to 0     |
-| `actieve_partij_nummer_1` | `ns=4;s=ActievePartijnummer1`     | int32 | PC writes (on operator action)|
-| `actieve_partij_nummer_2` | `ns=4;s=ActievePartijnummer2`     | int32 | PC writes (on operator action)|
+| `last_scan_data`          | `ns=4;s=OPCScanner/fbOPC/ScanResultaat`        | int32 | PC writes, OS resets to 0     |
+| `actieve_partij_nummer_1` | `ns=4;s=OPCScanner/fbOPC/ActievePartijnummer1` | int32 | PC writes (on operator action)|
+| `actieve_partij_nummer_2` | `ns=4;s=OPCScanner/fbOPC/ActievePartijnummer2` | int32 | PC writes (on operator action)|
 
 `0` is the sentinel: in `last_scan_data` it means "OS ready for new data"; in
 `actieve_partij_nummer_*` it means "no active partij".
