@@ -29,11 +29,14 @@ long-running compose service) is speculation.
 
 ## Acceptance criteria
 
-- [ ] `uv run python -m production_control.opcua.monitor` connects to the PLC
+- [x] `uv run python -m production_control.opcua.monitor` connects to the PLC
       using `VINEAPP_OPCUA_*` env vars and the existing client cert.
-- [ ] On startup, lists every variable it discovered (one INFO line per node)
+      *(Verified locally against `opc_test_server.py` with
+      `VINEAPP_OPCUA_SECURITY=none`; production cert/credential path is the
+      same code path, unverified until the serraserver run.)*
+- [x] On startup, lists every variable it discovered (one INFO line per node)
       so we can see what was found.
-- [ ] Subscribes to all of them; prints one JSONL line per datachange to
+- [x] Subscribes to all of them; prints one JSONL line per datachange to
       stdout: `{"ts":..., "source":"plc", "node":..., "value":..., "server_ts":..., "status":...}`.
 - [ ] Survives one disconnect → reconnect cycle without crashing (kill the
       network briefly, see it recover).
@@ -58,6 +61,9 @@ long-running compose service) is speculation.
   + re-subscribe. No exponential backoff yet.
 - No CLI flags. URL, cert paths, credentials all from env. If we need flags
   later, add them later.
+- **Debug-only:** `VINEAPP_OPCUA_SECURITY=none` skips security + user auth so
+  the same module can be pointed at the test server (or any anonymous
+  endpoint). Production runs leave it unset.
 
 ### Explicitly out of scope for v1
 
@@ -75,16 +81,18 @@ long-running compose service) is speculation.
 
 ## Implementation steps
 
-- [ ] Create `src/production_control/opcua/__init__.py` and
+- [x] Create `src/production_control/opcua/__init__.py` and
       `src/production_control/opcua/monitor.py`.
-- [ ] Extract the connection-setup boilerplate from `scripts/monitor_plc.py`
-      into a small helper inside `monitor.py` (or import it directly — decide
-      when looking at the code).
-- [ ] Implement `discover_variables(client) -> list[Node]`.
-- [ ] Implement the subscription handler that emits JSONL.
-- [ ] Implement the reconnect loop.
-- [ ] Run locally against `scripts/opc_test_server.py` as a sanity check —
-      even on the stale shape it should produce *some* JSONL.
+- [x] Extract the connection-setup boilerplate from `scripts/monitor_plc.py`
+      into a small helper inside `monitor.py` (inlined `_build_client` /
+      `_connect_and_run`; no import from `scripts/`).
+- [x] Implement `discover_variables(root) -> list[(Node, name)]` (walks
+      children of `Objects`, skips `ns=0`, caps recursion at depth 6).
+- [x] Implement the subscription handler that emits JSONL (`JsonlHandler`).
+- [x] Implement the reconnect loop (5s sleep, no backoff).
+- [x] Run locally against `scripts/opc_test_server.py` as a sanity check —
+      5 variables discovered, JSONL on initial subscribe + on `uawrite`
+      datachanges.
 - [ ] Build and push the docker image (`make docker_push`).
 - [ ] On serraserver: `docker compose pull opcua_test`, then
       `docker compose run --rm opcua_test python -m production_control.opcua.monitor`
