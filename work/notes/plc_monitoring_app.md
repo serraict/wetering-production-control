@@ -49,8 +49,9 @@ the full browse tree fails with `BadEncodingLimitsExceeded` on this device
 Adding/removing a Leuze node is a code change; the PLC list is whatever the
 PLC currently exposes.
 
-Reference: existing wiring in `scripts/monitor_plc.py` and
-`scripts/monitor_leuze.py`.
+Implementation: `src/production_control/opcua/monitor.py` (PLC + reconnect
+supervisor) and `src/production_control/opcua/leuze.py` (Leuze source +
+LenientCertificate workaround).
 
 ### Out of scope
 
@@ -128,19 +129,22 @@ JSON lines, one record per datachange notification:
 
 ## Open questions
 
-- Where does the monitor run in production — its own container instance on
-  `serraserver` (long-running), or only on demand via `docker compose run`?
-  Headless logger probably wants long-running; the TUI is on-demand.
-- Log retention policy on serraserver — rotate locally only, or ship to an
-  external sink?
-- **Discovery filter:** OPC-UA servers expose a large `Server` / type tree
-  by default. Plan is to walk only user namespaces (`namespace_index > 0`,
-  skipping `http://opcfoundation.org/...`) — confirm that's the right cut
-  on the production Omron.
+- Where does the headless monitor run long-term — its own compose service,
+  a cron, or a backgrounded `docker compose run`? Decision deferred to v5.
+  The TUI is on-demand by definition.
+- Log retention on serraserver — rotate locally only, or ship to an external
+  sink? Decide alongside v4.
 - **Chatty-node guard:** if a single PLC variable updates many times per
   second, the TUI and the JSONL log could be overwhelmed. Worth a
   per-node update-rate cap (sampling interval) or a "noisy nodes" exclude
   list? Defer until we see it happen.
+
+### Resolved
+
+- **Discovery filter:** walking children of `client.nodes.objects` and
+  skipping `NamespaceIndex == 0` is the right cut on the production Omron.
+  9 user-namespace variables surface; no flood from the type tree. v1/v2
+  captures.
 
 ## Slice plan
 

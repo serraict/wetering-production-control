@@ -4,6 +4,12 @@ This document describes the high-level architecture of the Production Control ap
 
 Significant cross-cutting decisions are recorded as ADRs in [`adr/`](adr/README.md).
 
+Companion documents:
+
+- [`protocol.md`](protocol.md) — OS ↔ PC OPC/UA protocol contract.
+- [`deployment.md`](deployment.md) — how to deploy and configure
+  (env vars, certificate generation, serraserver commands).
+
 ## Overview
 
 The Production Control application helps track the production of potted lilies at Wetering Potlilium. It provides interfaces for managing potting lots, bulb picklists, products, and spacing operations.
@@ -45,10 +51,34 @@ The system consists of the following main components:
 
 ### OPC/UA Machine Communication
 
-- **PottingLineController**: Async service for communicating with potting line PLCs via OPC/UA
-- **asyncua Library**: Python OPC/UA client for reading/writing PLC node values
-- **Configuration**: `OPCConfig` with endpoint, retry, and security settings (overridable via environment variables)
-- **Node Addressing**: Uses string-based NodeIds with runtime namespace resolution to avoid index mismatch bugs
+Two cooperating roles share the same connection layer:
+
+- **Monitor / TUI** (`src/production_control/opcua/`): discover-and-subscribe
+  loop against the Omron PLC, plus a fixed-node subscription against the
+  Leuze scanner. Used for diagnostics. Entry points:
+  `python -m production_control.opcua.monitor` (JSONL on stdout) and
+  `python -m production_control.opcua.tui` (Textual UI over ssh).
+- **Protocol layer** (planned at `src/production_control/opcua/protocol/`):
+  long-running subscription inside the web app process that owns the
+  OS ↔ PC contract — parses Leuze scans, writes `ScanResultaat` and
+  `ActievePartijnummer{1,2}` on the PLC, exposes UI hooks. See
+  [`protocol.md`](protocol.md).
+
+Shared building blocks:
+
+- **asyncua library**: Python OPC/UA client for reading, writing and
+  subscribing to PLC node values. Security is `Basic256Sha256` with
+  `SignAndEncrypt`; the same client cert is presented to both servers.
+- **Configuration**: all `VINEAPP_OPCUA_*` env vars; see
+  [`deployment.md`](deployment.md).
+- **Reconnect supervisor**: exponential backoff with a give-up threshold;
+  one source's failure does not affect the other.
+- **Leuze cert workaround**: `LenientCertificate` monkey-patch in
+  `src/production_control/opcua/leuze.py` to handle the scanner's
+  malformed server cert.
+- **Node addressing**: string-based NodeIds (e.g.
+  `ns=4;s=OPCScanner/fbOPC/ScanResultaat`) so namespace index changes
+  don't break behavior.
 
 ### Integration
 
@@ -95,15 +125,17 @@ graph TD
     end
     
     subgraph "OPC/UA"
-        LineController[PottingLineController]
-        OPCConfig[OPCConfig]
+        Monitor[Monitor / TUI]
+        Protocol[OS↔PC Protocol]
+        Supervisor[Reconnect Supervisor]
     end
 
     subgraph "External Systems"
         Dremio[Dremio Instance]
         OpTech[OpTech API]
         Technison[Technison Application]
-        PLC[Potting Line PLC]
+        PLC[Omron PLC]
+        Leuze[Leuze Scanner]
     end
 
     NiceGUI --> Pages
@@ -132,9 +164,11 @@ graph TD
     Spacing --> OpTech
     OpTech --> Technison
 
-    PottingLots --> LineController
-    LineController --> OPCConfig
-    LineController --> PLC
+    Pages --> Protocol
+    Protocol --> Supervisor
+    Monitor --> Supervisor
+    Supervisor --> PLC
+    Supervisor --> Leuze
 
     style NiceGUI fill:#f9f,stroke:#333
     style SQLModel fill:#bbf,stroke:#333

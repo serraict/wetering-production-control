@@ -1,20 +1,22 @@
-# Integratie ontstapelmachine
+# Integratie ontstapelmachine — references & guidelines
 
-See the [Working docs] for full description of the work.
+Working docs: [Fibery action].
 
-## Context
+Production endpoints, certs, and operational commands live in
+[`doing_ontstapelaar.md`](doing_ontstapelaar.md) (was previously duplicated
+here). Auto-memory in `MEMORY.md` covers the test-setup IPs and credentials
+that we still occasionally use for reproductions.
 
-OS PLC ip address and port: to be determined.
-OS Leuze scanner ip address and port: TBD
-PC runs on Serra Vine, on a docker container. The Docker containers are hosted on the server `serraserver`, with ip address 10.0.0.3.
+## Guidelines for OPC/UA scripts
 
-Server and client certificates have yet to be generated.
+Follow the [opcua-examples] closely — they're known to work and document the
+details of the OMRON OPC implementation (cert EKUs, app URI length limit,
+security policy combinations).
 
-## Guidelines for scripts
+Keep scripts minimal and clean. Reuse `VINEAPP_OPCUA_*` env vars rather than
+hardcoding endpoints; route shared logic through
+`src/production_control/opcua/` rather than duplicating it in `scripts/`.
 
-Follow the [opcua-examples] closely, as they are know to work and document the details of the OMRON PLC OPC implementation.
-
-Keep the scripts minimal and clean.
-
-[Working docs]: https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratatie-Onstapelmachine-met-oppotproces-256?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5
+[Fibery action]:
+  https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratatie-Onstapelmachine-met-oppotproces-256?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5
 [opcua-examples]: ../../../docs/notes/opcua-examples/

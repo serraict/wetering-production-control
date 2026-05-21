@@ -1,9 +1,8 @@
 """Leuze scanner source for the OPC/UA monitor.
 
 Subscribes to a fixed three-node set on the Leuze DCR 202iC scanner. Applies
-the LenientCertificate monkey-patch from scripts/browse_leuze.py at import
-time so asyncua can complete the TLS handshake against the scanner's
-malformed server certificate.
+the LenientCertificate monkey-patch at import time so asyncua can complete
+the TLS handshake against the scanner's malformed server certificate.
 
 Subscribing to the full browse tree trips BadEncodingLimitsExceeded on this
 firmware (V2.4.0); the fixed list is intentional.
@@ -39,9 +38,9 @@ LEUZE_NODES: dict[str, str] = {
 
 
 # --- LenientCertificate monkey-patch -----------------------------------------
-# Lifted from scripts/browse_leuze.py + scripts/monitor_leuze.py. The patch is
-# global on asyncua.crypto.uacrypto but only kicks in when strict parsing
-# fails, so the PLC connection (which has a well-formed cert) is unaffected.
+# The patch is global on asyncua.crypto.uacrypto but only kicks in when strict
+# parsing fails, so the PLC connection (which has a well-formed cert) is
+# unaffected.
 
 
 class LenientCertificate:
