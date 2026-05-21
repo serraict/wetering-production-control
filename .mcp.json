@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "fibery": {
+      "type": "http",
+      "url": "https://mcp.fibery.io/mcp"
+    }
+  }
+}
