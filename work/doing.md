@@ -103,9 +103,16 @@ v4 adds file logging; v5 picks a persistent runtime.
       `opc_test_server.py`: state populates with 5 vars within 2s, PLC
       table renders 5 rows, `uawrite` to a PLC var reflects in state
       within 1s, Leuze pane absent when env unset.
-- [ ] Build + push image (`make docker_push`).
-- [ ] On serraserver:
-      `docker compose run --rm -it opcua_test python -m production_control.opcua.tui`
+- [x] Push to main so the GHA base-image workflow rebuilds the base image
+      with `textual` baked in. *(Triggered by changes to `pyproject.toml` /
+      `uv.lock`, both committed in `2da38aa`. Base image is green.)*
+- [ ] `make release` to tag a new version (`v0.1.95` per `setuptools_scm`),
+      pushing the tag triggers the GHA app-image workflow. **Required because
+      `package.yml` only fires on `v*` tags — `:latest` app image isn't
+      rebuilt on plain pushes**, so the new base layers (with textual) don't
+      reach prod without a tag.
+- [ ] On serraserver: `sudo docker compose pull opcua_test`, then
+      `sudo docker compose run --rm -it opcua_test python -m production_control.opcua.tui`
       against the production PLC. Confirm it renders and updates.
 - [ ] Capture findings (anything ugly in the layout, lag, weird Textual
       quirks over ssh) in
