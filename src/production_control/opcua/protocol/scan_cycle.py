@@ -1,0 +1,222 @@
+"""Scan-cycle handler: subscribes to Leuze LastScanData, parses, and
+writes the parsed partij to ScanResultaat on the PLC — but only when
+ScanResultaat == 0 (the guard against overwriting an unread scan).
+
+See docs/protocol.md for the contract.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
+
+from asyncua import Client, Node, ua
+from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+
+from .scan_parser import parse_scan
+
+logger = logging.getLogger("opcua_protocol")
+
+DEFAULT_APP_URI = "urn:serra:production-control-client"
+SUBSCRIPTION_INTERVAL_MS = 500
+
+PLC_SCAN_RESULTAAT_NODEID = "ns=4;s=OPCScanner/fbOPC/ScanResultaat"
+LEUZE_LAST_SCAN_NODEID = "ns=5;i=6122"
+
+
+def _env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"missing env var: {name}")
+    return value
+
+
+def _secure() -> bool:
+    return os.environ.get("VINEAPP_OPCUA_SECURITY", "").lower() != "none"
+
+
+class ScanCycleHandler:
+    """asyncua subscription handler that:
+    - tracks ScanResultaat (from the PLC subscription)
+    - on every Leuze LastScanData change, parses + writes back when the
+      guard allows.
+    """
+
+    def __init__(self) -> None:
+        self._last_scan_resultaat: int = 0
+        self._plc_write_node: Node | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+
+    def register(self, node: Node, name: str) -> None:
+        if node.nodeid.to_string() == PLC_SCAN_RESULTAAT_NODEID:
+            self._plc_write_node = node
+
+    def attach_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        # asyncua's notification thread isn't the loop's thread, so we
+        # need an explicit handle to schedule the write back.
+        self._loop = loop
+
+    # asyncua subscription handler interface -----------------------------------
+
+    def datachange_notification(self, node: Node, val, data) -> None:
+        node_id = node.nodeid.to_string()
+        if node_id == PLC_SCAN_RESULTAAT_NODEID:
+            self._last_scan_resultaat = int(val) if val is not None else 0
+            return
+        if node_id == LEUZE_LAST_SCAN_NODEID:
+            self._handle_scan(val)
+
+    def status_change_notification(self, status) -> None:  # noqa: D401
+        logger.info("status: %s", status)
+
+    def event_notification(self, event) -> None:  # noqa: D401
+        pass
+
+    # -------------------------------------------------------------------------
+
+    def _handle_scan(self, payload) -> None:
+        partij = parse_scan(payload)
+        if partij is None:
+            logger.warning("scan dropped: unparseable payload %r", payload)
+            return
+        if self._last_scan_resultaat != 0:
+            logger.warning(
+                "scan dropped: guard not zero (ScanResultaat=%d)",
+                self._last_scan_resultaat,
+            )
+            return
+        if self._plc_write_node is None or self._loop is None:
+            logger.error("scan dropped: handler not fully wired")
+            return
+        asyncio.run_coroutine_threadsafe(self._write(partij), self._loop)
+
+    async def _write(self, partij: int) -> None:
+        try:
+            assert self._plc_write_node is not None
+            await self._plc_write_node.write_value(partij, ua.VariantType.Int32)
+            logger.info("wrote partij %d to ScanResultaat", partij)
+        except Exception:  # pragma: no cover — surfaced in logs
+            logger.exception("write to ScanResultaat failed")
+
+
+async def _build_client(url: str) -> Client:
+    client = Client(url=url)
+    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
+    if _secure():
+        client.set_user(_env("VINEAPP_OPCUA_PLC_USER"))
+        client.set_password(_env("VINEAPP_OPCUA_PLC_PASSWORD"))
+        await client.set_security(
+            SecurityPolicyBasic256Sha256,
+            certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
+            private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
+            mode=ua.MessageSecurityMode.SignAndEncrypt,
+        )
+    return client
+
+
+async def _leuze_client(url: str) -> Client:
+    client = Client(url=url)
+    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
+    if _secure():
+        # Import here so the LenientCertificate monkey-patch only loads
+        # when we actually need it (the test server uses NoSecurity).
+        from .. import leuze  # noqa: F401 — import-time side effect
+
+        client.set_user(_env("VINEAPP_OPCUA_LEUZE_USER"))
+        client.set_password(_env("VINEAPP_OPCUA_LEUZE_PASSWORD"))
+        await client.set_security(
+            SecurityPolicyBasic256Sha256,
+            certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
+            private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
+            mode=ua.MessageSecurityMode.SignAndEncrypt,
+        )
+    return client
+
+
+async def _plc_loop(
+    handler: ScanCycleHandler,
+    ready: asyncio.Event | None,
+    stop_event: asyncio.Event,
+) -> None:
+    url = _env("VINEAPP_OPCUA_PLC_URL")
+    client = await _build_client(url)
+    logger.info("connecting to PLC at %s", url)
+    async with client:
+        node = client.get_node(PLC_SCAN_RESULTAAT_NODEID)
+        handler.register(node, "ScanResultaat")
+        handler.attach_loop(asyncio.get_running_loop())
+        # Seed the guard with the current value before subscribing.
+        try:
+            initial = await node.read_value()
+            handler._last_scan_resultaat = int(initial) if initial is not None else 0
+        except Exception:
+            logger.warning("could not read initial ScanResultaat; assuming 0")
+        sub = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
+        await sub.subscribe_data_change([node])
+        logger.info("subscribed to ScanResultaat")
+        if ready is not None:
+            ready.set()
+        try:
+            await stop_event.wait()
+        finally:
+            try:
+                await sub.delete()
+            except Exception:  # pragma: no cover
+                pass
+
+
+async def _leuze_loop(
+    handler: ScanCycleHandler,
+    ready: asyncio.Event | None,
+    stop_event: asyncio.Event,
+) -> None:
+    url = _env("VINEAPP_OPCUA_LEUZE_URL")
+    client = await _leuze_client(url)
+    logger.info("connecting to Leuze at %s", url)
+    async with client:
+        node = client.get_node(LEUZE_LAST_SCAN_NODEID)
+        handler.register(node, "LastScanData")
+        sub = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
+        await sub.subscribe_data_change([node])
+        logger.info("subscribed to LastScanData")
+        if ready is not None:
+            ready.set()
+        try:
+            await stop_event.wait()
+        finally:
+            try:
+                await sub.delete()
+            except Exception:  # pragma: no cover
+                pass
+
+
+async def run_protocol(
+    handler: ScanCycleHandler | None = None,
+    *,
+    plc_ready: asyncio.Event | None = None,
+    leuze_ready: asyncio.Event | None = None,
+    stop_event: asyncio.Event | None = None,
+) -> None:
+    """Run both subscriptions until `stop_event` fires (or cancellation).
+
+    `plc_ready` / `leuze_ready` are set once each subscription is live —
+    useful for the behave harness which needs to wait before driving
+    the scenario.
+    """
+    if handler is None:
+        handler = ScanCycleHandler()
+    if stop_event is None:
+        stop_event = asyncio.Event()
+    plc_task = asyncio.create_task(
+        _plc_loop(handler, plc_ready, stop_event), name="protocol-plc"
+    )
+    leuze_task = asyncio.create_task(
+        _leuze_loop(handler, leuze_ready, stop_event), name="protocol-leuze"
+    )
+    try:
+        await asyncio.gather(plc_task, leuze_task)
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        stop_event.set()
+        await asyncio.gather(plc_task, leuze_task, return_exceptions=True)
+        raise
