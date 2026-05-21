@@ -11,3 +11,16 @@ Feature: Scan cycle (PC acknowledges scans from OS)
   Scenario: PC publishes a parsed partij when the guard allows
     When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
     Then PC writes 27246 to ScanResultaat
+
+  Scenario: Successive scans cycle through OS acknowledgement
+    When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
+    Then PC writes 27246 to ScanResultaat
+    When OS resets ScanResultaat to 0
+    And a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27247"
+    Then PC writes 27247 to ScanResultaat
+
+  Scenario: PC drops a scan while the previous one is still unread
+    Given the PLC reports ScanResultaat = 27246
+    When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27247"
+    Then PC does not write to ScanResultaat
+    And PC logs "scan dropped: guard not zero" at WARNING

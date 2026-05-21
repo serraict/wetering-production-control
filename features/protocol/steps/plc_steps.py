@@ -53,8 +53,10 @@ def step_plc_reports_scan_resultaat(context, value):
     # the guard reflects this value when the next scan arrives.
     time.sleep(0.6)
     assert _read_scan_resultaat() == value
+    context.expected_scan_resultaat = value
 
 
 @then("PC writes {value:d} to ScanResultaat")
 def step_pc_writes_scan_resultaat(context, value):
     _wait_for_scan_resultaat(value)
+    context.expected_scan_resultaat = value

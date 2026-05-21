@@ -117,6 +117,21 @@ def _stop_protocol_handler(context) -> None:
         thread.join(timeout=5)
 
 
+class _WarningCapture(logging.Handler):
+    """Stash WARNING+ records from the protocol logger so steps can
+    assert on them."""
+
+    def __init__(self, sink: list[str]) -> None:
+        super().__init__(level=logging.WARNING)
+        self._sink = sink
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            self._sink.append(self.format(record))
+        except Exception:
+            pass
+
+
 def before_all(context):
     # Quiet asyncua a bit; keep our own loggers chatty.
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -130,6 +145,11 @@ def before_all(context):
 
 
 def before_scenario(context, scenario):
+    context.warnings = []
+    context.log_handler = _WarningCapture(context.warnings)
+    context.log_handler.setFormatter(logging.Formatter("%(message)s"))
+    logging.getLogger("opcua_protocol").addHandler(context.log_handler)
+
     _start_test_server(context)
     _start_protocol_handler(context)
 
@@ -137,3 +157,6 @@ def before_scenario(context, scenario):
 def after_scenario(context, scenario):
     _stop_protocol_handler(context)
     _stop_test_server(context)
+    handler = getattr(context, "log_handler", None)
+    if handler:
+        logging.getLogger("opcua_protocol").removeHandler(handler)
