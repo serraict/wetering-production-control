@@ -149,8 +149,10 @@ gets shipped, gets a capture/review, then we pick the next.
 
 - [x] **v1 — Discover + JSONL on PLC.** See
       [`ontstapelmachine/plc_monitor_v1_capture.md`](ontstapelmachine/plc_monitor_v1_capture.md).
-- [ ] **v2 — Leuze as a second source** on the same JSONL stream. Independent
-      reconnect supervision.
+- [x] **v2 — Leuze as a second source** on the same JSONL stream. Independent
+      supervision; exponential backoff with give-up after 10 failures. See
+      [`ontstapelmachine/plc_monitor_v2_capture.md`](ontstapelmachine/plc_monitor_v2_capture.md).
+      *(Full multi-source capture deferred until the Leuze scanner is on.)*
 - [ ] **v3 — Textual TUI** (operator-facing view; the JSONL stream stays).
 - [ ] **v4 — File logging** under `VINEAPP_OPCUA_MONITOR_LOG_DIR`, rotated.
 - [ ] **v5 — Persistent run on serraserver** (compose service, or a cron /
