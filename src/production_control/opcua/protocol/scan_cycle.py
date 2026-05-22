@@ -9,31 +9,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 
-from asyncua import Client, Node, ua
-from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+from asyncua import Node, ua
 
+from .. import config
+from ..config import build_client, require_env
 from .scan_parser import parse_scan
 
 logger = logging.getLogger("opcua_protocol")
 
-DEFAULT_APP_URI = "urn:serra:production-control-client"
 SUBSCRIPTION_INTERVAL_MS = 500
 
 PLC_SCAN_RESULTAAT_NODEID = "ns=4;s=OPCScanner/fbOPC/ScanResultaat"
 LEUZE_LAST_SCAN_NODEID = "ns=5;i=6122"
-
-
-def _env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        raise RuntimeError(f"missing env var: {name}")
-    return value
-
-
-def _secure() -> bool:
-    return os.environ.get("VINEAPP_OPCUA_SECURITY", "").lower() != "none"
 
 
 class ScanCycleHandler:
@@ -100,47 +88,13 @@ class ScanCycleHandler:
             logger.exception("write to ScanResultaat failed")
 
 
-async def _build_client(url: str) -> Client:
-    client = Client(url=url)
-    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
-    if _secure():
-        client.set_user(_env("VINEAPP_OPCUA_PLC_USER"))
-        client.set_password(_env("VINEAPP_OPCUA_PLC_PASSWORD"))
-        await client.set_security(
-            SecurityPolicyBasic256Sha256,
-            certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
-            private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
-            mode=ua.MessageSecurityMode.SignAndEncrypt,
-        )
-    return client
-
-
-async def _leuze_client(url: str) -> Client:
-    client = Client(url=url)
-    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
-    if _secure():
-        # Import here so the LenientCertificate monkey-patch only loads
-        # when we actually need it (the test server uses NoSecurity).
-        from .. import leuze  # noqa: F401 — import-time side effect
-
-        client.set_user(_env("VINEAPP_OPCUA_LEUZE_USER"))
-        client.set_password(_env("VINEAPP_OPCUA_LEUZE_PASSWORD"))
-        await client.set_security(
-            SecurityPolicyBasic256Sha256,
-            certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
-            private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
-            mode=ua.MessageSecurityMode.SignAndEncrypt,
-        )
-    return client
-
-
 async def _plc_loop(
     handler: ScanCycleHandler,
     ready: asyncio.Event | None,
     stop_event: asyncio.Event,
 ) -> None:
-    url = _env("VINEAPP_OPCUA_PLC_URL")
-    client = await _build_client(url)
+    client = await build_client("plc")
+    url = require_env("VINEAPP_OPCUA_PLC_URL")
     logger.info("connecting to PLC at %s", url)
     async with client:
         node = client.get_node(PLC_SCAN_RESULTAAT_NODEID)
@@ -199,8 +153,13 @@ async def _leuze_loop(
     ready: asyncio.Event | None,
     stop_event: asyncio.Event,
 ) -> None:
-    url = _env("VINEAPP_OPCUA_LEUZE_URL")
-    client = await _leuze_client(url)
+    if config.current_mode() == "secure":
+        # Side-effect import: installs the LenientCertificate workaround for
+        # the real Leuze's malformed server cert. Skipped in none-mode (the
+        # test server has a well-formed cert and we don't want the patch).
+        from .. import leuze  # noqa: F401
+    client = await build_client("leuze")
+    url = require_env("VINEAPP_OPCUA_LEUZE_URL")
     logger.info("connecting to Leuze at %s", url)
     async with client:
         node = client.get_node(LEUZE_LAST_SCAN_NODEID)
