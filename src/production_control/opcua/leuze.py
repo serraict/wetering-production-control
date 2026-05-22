@@ -111,24 +111,28 @@ async def run_leuze(handler) -> None:
     client = await build_client("leuze")
     logger.info("connecting to %s", require_env("VINEAPP_OPCUA_LEUZE_URL"))
     async with client:
-        nodes = []
-        for name, nid in LEUZE_NODES.items():
-            node = client.get_node(nid)
-            handler.register(node, name)
-            nodes.append(node)
-            logger.info("monitoring %s (%s)", name, nid)
-
-        subscription = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
-        await subscription.subscribe_data_change(nodes)
-        logger.info("subscribed to %d Leuze variables", len(nodes))
-
-        import asyncio  # local import to avoid cycle in __all__-style imports
-
+        handler.set_client(client)
         try:
-            while True:
-                await asyncio.sleep(1)
-        finally:
+            nodes = []
+            for name, nid in LEUZE_NODES.items():
+                node = client.get_node(nid)
+                handler.register(node, name)
+                nodes.append(node)
+                logger.info("monitoring %s (%s)", name, nid)
+
+            subscription = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
+            await subscription.subscribe_data_change(nodes)
+            logger.info("subscribed to %d Leuze variables", len(nodes))
+
+            import asyncio  # local import to avoid cycle in __all__-style imports
+
             try:
-                await subscription.delete()
-            except Exception:  # pragma: no cover — best-effort cleanup
-                pass
+                while True:
+                    await asyncio.sleep(1)
+            finally:
+                try:
+                    await subscription.delete()
+                except Exception:  # pragma: no cover — best-effort cleanup
+                    pass
+        finally:
+            handler.set_client(None)

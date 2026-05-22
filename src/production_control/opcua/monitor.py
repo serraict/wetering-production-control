@@ -7,6 +7,7 @@ Run:
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import logging
@@ -14,7 +15,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-from asyncua import Node, ua
+from asyncua import Client, Node, ua
 
 from .config import build_client, require_env
 
@@ -41,6 +42,10 @@ class JsonlHandler:
 
     def register(self, node: Node, name: str) -> None:
         self._names[node.nodeid.to_string()] = name
+
+    def set_client(self, client: Client | None) -> None:
+        """Subscription handlers can override this to keep a live client
+        reference for ad-hoc reads/writes. JSONL output doesn't need one."""
 
     def datachange_notification(self, node, val, data) -> None:
         node_id = node.nodeid.to_string()
@@ -134,6 +139,27 @@ async def discover_variables(
     return found
 
 
+async def discover_plc_variables(client: Client) -> list[tuple[Node, str]]:
+    """Walk every top-level subtree under `client.nodes.objects` and return
+    all user-namespace variables, deduped by NodeId.
+
+    Each subtree is walked with its own `seen` set (for cycle safety).
+    Dedupe happens after — the Omron tree exposes the same Wetering_Portaal
+    subtree from two paths (DeviceSet/.../ vs top-level) and the same
+    variables appear in both. Walking with a shared `seen` would prune one
+    of the paths and miss vars only reachable within MAX_BROWSE_DEPTH of
+    the short path."""
+    by_id: dict[str, tuple[Node, str]] = {}
+    for child in await client.nodes.objects.get_children():
+        if child.nodeid.NamespaceIndex == 0:
+            continue
+        for node, name in await discover_variables(child):
+            key = node.nodeid.to_string()
+            if key not in by_id:
+                by_id[key] = (node, name)
+    return list(by_id.values())
+
+
 async def run_plc(handler) -> None:
     """One PLC connection lifetime: connect, discover, subscribe, feed the
     given handler. Reconnects are handled by `supervise`.
@@ -144,43 +170,32 @@ async def run_plc(handler) -> None:
     client = await build_client("plc")
     logger.info("connecting to %s", require_env("VINEAPP_OPCUA_PLC_URL"))
     async with client:
-        objects = client.nodes.objects
-        # Walk each top-level subtree with its own `seen` set (for cycle
-        # safety). Dedupe variables by NodeId after — the Omron tree exposes
-        # the same Wetering_Portaal subtree from two paths (DeviceSet/.../
-        # vs top-level), and the same variables appear in both. Walking with
-        # a shared seen would prune one of the paths and miss vars only
-        # reachable within MAX_BROWSE_DEPTH of the short path.
-        by_id: dict[str, tuple[Node, str]] = {}
-        for child in await objects.get_children():
-            if child.nodeid.NamespaceIndex == 0:
-                continue
-            for node, name in await discover_variables(child):
-                key = node.nodeid.to_string()
-                if key not in by_id:
-                    by_id[key] = (node, name)
-        variables = list(by_id.values())
-
-        if not variables:
-            logger.warning("no user-namespace variables found; nothing to subscribe to")
-            return
-
-        for node, name in variables:
-            handler.register(node, name)
-            logger.info("discovered %s (%s)", name, node.nodeid.to_string())
-
-        subscription = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
-        await subscription.subscribe_data_change([node for node, _ in variables])
-        logger.info("subscribed to %d variables", len(variables))
-
+        handler.set_client(client)
         try:
-            while True:
-                await asyncio.sleep(1)
-        finally:
+            variables = await discover_plc_variables(client)
+
+            if not variables:
+                logger.warning("no user-namespace variables found; nothing to subscribe to")
+                return
+
+            for node, name in variables:
+                handler.register(node, name)
+                logger.info("discovered %s (%s)", name, node.nodeid.to_string())
+
+            subscription = await client.create_subscription(SUBSCRIPTION_INTERVAL_MS, handler)
+            await subscription.subscribe_data_change([node for node, _ in variables])
+            logger.info("subscribed to %d variables", len(variables))
+
             try:
-                await subscription.delete()
-            except Exception:  # pragma: no cover - best-effort cleanup
-                pass
+                while True:
+                    await asyncio.sleep(1)
+            finally:
+                try:
+                    await subscription.delete()
+                except Exception:  # pragma: no cover - best-effort cleanup
+                    pass
+        finally:
+            handler.set_client(None)
 
 
 async def supervise(name: str, run) -> None:
@@ -237,6 +252,96 @@ async def supervise(name: str, run) -> None:
             delay = min(delay * 2, RECONNECT_MAX_DELAY_S)
 
 
+_INT_VARIANTS = {
+    ua.VariantType.SByte,
+    ua.VariantType.Byte,
+    ua.VariantType.Int16,
+    ua.VariantType.UInt16,
+    ua.VariantType.Int32,
+    ua.VariantType.UInt32,
+    ua.VariantType.Int64,
+    ua.VariantType.UInt64,
+}
+
+
+def _parse_value(raw: str, vtype: ua.VariantType):
+    """Parse a CLI-supplied string into the Python type matching `vtype`."""
+    if vtype == ua.VariantType.Boolean:
+        return raw.strip().lower() in ("1", "true", "yes", "on")
+    if vtype in _INT_VARIANTS:
+        return int(raw)
+    if vtype in (ua.VariantType.Float, ua.VariantType.Double):
+        return float(raw)
+    return raw
+
+
+async def _iter_target_variables(target: str) -> list[tuple[str, str, "ua.DataValue | Exception"]]:
+    """Connect to `target`, return [(node_id, display_name, current_data_value_or_exc)].
+
+    PLC walks the full tree; Leuze uses the fixed LEUZE_NODES set (a full
+    browse trips BadEncodingLimitsExceeded on that firmware)."""
+    if target == "leuze":
+        from . import leuze  # noqa: F401 — apply LenientCertificate patch
+
+        client = await build_client("leuze")
+        async with client:
+            out = []
+            for name, nid in leuze.LEUZE_NODES.items():
+                node = client.get_node(nid)
+                try:
+                    dv = await node.read_data_value()
+                except Exception as exc:  # noqa: BLE001 — surface any read failure
+                    dv = exc
+                out.append((nid, name, dv))
+            return out
+
+    client = await build_client("plc")
+    async with client:
+        out = []
+        for node, name in await discover_plc_variables(client):
+            try:
+                dv = await node.read_data_value()
+            except Exception as exc:  # noqa: BLE001
+                dv = exc
+            out.append((node.nodeid.to_string(), name, dv))
+        return out
+
+
+async def run_list(target: str) -> None:
+    """Print one TSV line per variable: node_id, display name, current value, type."""
+    rows = await _iter_target_variables(target)
+    for nid, name, dv in rows:
+        if isinstance(dv, Exception):
+            print(f"{nid}\t{name}\t<read failed: {dv}>")
+            continue
+        vtype = dv.Value.VariantType.name if dv.Value else "?"
+        value = dv.Value.Value if dv.Value else None
+        print(f"{nid}\t{name}\t{value!r}\t{vtype}")
+
+
+async def run_write(target: str, node_id: str, raw_value: str) -> None:
+    """Write `raw_value` to `node_id` on `target`. The value is parsed using
+    the node's current VariantType.
+
+    DataValue is built without timestamps — the Omron NX server rejects
+    WriteValue with any timestamp populated (`BadWriteNotSupported`)."""
+    if target == "leuze":
+        from . import leuze  # noqa: F401 — apply LenientCertificate patch
+
+    client = await build_client(target)
+    url = require_env(f"VINEAPP_OPCUA_{target.upper()}_URL")
+    print(f"Connecting to {url} ...", flush=True)
+    async with client:
+        node = client.get_node(node_id)
+        current = await node.read_data_value()
+        vtype = current.Value.VariantType
+        print(f"  {node_id} before = {current.Value.Value!r} ({vtype.name})", flush=True)
+        parsed = _parse_value(raw_value, vtype)
+        await node.write_value(ua.DataValue(ua.Variant(parsed, vtype)))
+        readback = await node.read_value()
+        print(f"  {node_id} after  = {readback!r}", flush=True)
+
+
 async def main() -> None:
     from functools import partial
 
@@ -265,6 +370,31 @@ async def main() -> None:
         raise
 
 
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="python -m production_control.opcua.monitor",
+        description="Subscribe, list, or write OPC UA nodes on the PLC/Leuze.",
+    )
+    sub = parser.add_subparsers(dest="cmd")
+
+    sub.add_parser("monitor", help="Subscribe and emit JSONL to stdout (default)")
+
+    p_list = sub.add_parser("list", help="Discover variables and print their current values")
+    p_list.add_argument("--target", choices=("plc", "leuze"), default="plc")
+
+    p_write = sub.add_parser("write", help="Write a value to a node")
+    p_write.add_argument("--target", choices=("plc", "leuze"), default="plc")
+    p_write.add_argument(
+        "--node", required=True, help="NodeId, e.g. 'ns=4;s=OPCScanner/.../ScanResultaat'"
+    )
+    p_write.add_argument(
+        "--value",
+        required=True,
+        help="Value to write; parsed using the node's current VariantType",
+    )
+    return parser
+
+
 def cli() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -272,8 +402,17 @@ def cli() -> None:
         stream=sys.stderr,
     )
     logging.getLogger("asyncua").setLevel(logging.WARNING)
+
+    args = _build_parser().parse_args()
+    cmd = args.cmd or "monitor"
+
     try:
-        asyncio.run(main())
+        if cmd == "monitor":
+            asyncio.run(main())
+        elif cmd == "list":
+            asyncio.run(run_list(args.target))
+        elif cmd == "write":
+            asyncio.run(run_write(args.target, args.node, args.value))
     except (KeyboardInterrupt, asyncio.CancelledError):
         pass
 
