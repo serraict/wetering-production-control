@@ -8,6 +8,15 @@ services:
     networks:
       - serra-vine
 
+  ontstapelaar_protocol:
+    image: ghcr.io/serraict/wetering-production-control:latest
+    command: ["python", "-m", "production_control.opcua.protocol"]
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - serra-vine
+
   firebird:
     image: wmakley/firebird-2.5-cs
     environment:

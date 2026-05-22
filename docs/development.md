@@ -111,6 +111,25 @@ terminal — if a var is missing it prints to stderr and exits with code
 2 (no flashed-then-wiped error message). With `SECURITY=none` only the
 two `*_URL` vars are required.
 
+### Run the OS↔PC protocol handler in test mode
+
+The handler is the always-on daemon that ships as the
+`ontstapelaar_protocol` compose service in prod
+(see [`deployment.md`](deployment.md)). For local iteration:
+
+```sh
+# terminal 1 — fake PLC + Leuze
+make opc-server
+
+# terminal 2 — protocol handler
+make opc-protocol
+
+# terminal 3 — drive scans into the handler
+uv run python scripts/write_plc.py --scanresultaat 0     # reset guard
+# then push a scan into LastScanData via uawrite, or run the behave
+# suite (which exercises the same handler end-to-end).
+```
+
 ### Drive the protocol from the outside
 
 `scripts/write_plc.py` writes to any of the protocol nodes; useful for

@@ -176,6 +176,40 @@ docker compose pull production_control
 docker compose up -d production_control
 ```
 
+### OS↔PC protocol handler
+
+Always-on daemon that owns the Leuze subscription and the gated
+`ScanResultaat` writes. Lives in its own compose service so a web-app
+deploy doesn't bounce the PLC handshake and a NiceGUI hang doesn't
+stall protocol traffic. Same image as the web app, different command
+and different lifecycle.
+
+```yaml
+# add to docker-compose.yml on serraserver
+ontstapelaar_protocol:
+  image: ghcr.io/serraict/wetering-production-control:latest
+  command: ["python", "-m", "production_control.opcua.protocol"]
+  env_file: .env
+  volumes:
+    - certs:/app/certs:ro
+  restart: unless-stopped
+  networks:
+    - serra-vine
+```
+
+```sh
+docker compose pull ontstapelaar_protocol
+docker compose up -d ontstapelaar_protocol
+docker compose logs -f ontstapelaar_protocol
+```
+
+The handler's per-source `supervise()` loop handles brief OPC outages
+with exponential backoff; `restart: unless-stopped` handles hard
+crashes. Both writers (this service for `ScanResultaat`, the web app
+for `ActievePartijnummer{1,2}`) open their own asyncua sessions — they
+target disjoint nodes and don't share state. Worth keeping an eye on
+the PLC's concurrent-session limit when both run.
+
 ### Monitor & TUI (operator / diagnostics)
 
 The headless monitor streams JSONL on stdout; the TUI is for an
