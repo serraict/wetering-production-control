@@ -138,6 +138,10 @@ opc-monitor:
 	@echo "Starting OPC/UA TUI monitor..."
 	uv run python -m production_control.opcua.tui
 
+opc-protocol:
+	@echo "Starting OS↔PC protocol handler..."
+	uv run python -m production_control.opcua.protocol
+
 test-qr-codes:
 	@echo "Generating test QR codes PDF..."
 	uv run python scripts/generate_test_qr_codes.py ./test_qr_codes.pdf
