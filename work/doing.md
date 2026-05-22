@@ -340,7 +340,7 @@ failing step has at most 3 things to debug.
     1. `active_partij`: *Operator deactivates a line*
     2. `active_partij`: *Lines are independent*
 
-- [ ] **Placeholders, CI, capture.** No scenarios.
+- [x] **Placeholders, CI, capture.** No scenarios.
   - `features/protocol/edge_cases.feature` and
     `features/protocol/connection_recovery.feature` as v3 placeholders
     (feature description only, zero scenarios — runner stays green).

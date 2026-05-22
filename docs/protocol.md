@@ -118,9 +118,16 @@ UI for setting `actieve_partij_nummer_{1,2}`.
   [`work/notes/os_pc_protocol_implementation.md`](../work/notes/os_pc_protocol_implementation.md)
   for the implementation slice plan.
 
-The behave executable spec lives at `features/protocol/` and runs against
-`scripts/opc_test_server.py` (which still needs to be updated to expose
-the protocol nodes).
+The behave executable spec lives at [`features/protocol/`](../features/protocol/)
+and runs against `scripts/opc_test_server.py`. As of v1 it covers the
+scan cycle (happy path, OS-ack cycle, drop-while-not-zero,
+duplicate-after-ack) and active-partij writes (activate per line,
+deactivate, line independence) — 8 scenarios across `scan_cycle.feature`
+and `active_partij.feature`. Edge cases and connection recovery are v3
+placeholders (`edge_cases.feature`, `connection_recovery.feature`). Run
+locally with `make behave`; CI runs it as part of `make quality`. The
+intent is that this spec eventually supplants the prose above as the
+authoritative protocol contract.
 
 ## Related
 
