@@ -19,7 +19,7 @@ def _controller(context):
             retry_attempts=2,
             retry_delay=0.1,
         )
-        context.line_controller = PottingLineController(config=config, secure=False)
+        context.line_controller = PottingLineController(config=config)
     return context.line_controller
 
 

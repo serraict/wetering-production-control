@@ -9,7 +9,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def controller():
+def controller(monkeypatch):
     """Create controller instance for testing.
 
     Test server runs on opc.tcp://127.0.0.1:4840 with NoSecurity. See
@@ -18,13 +18,14 @@ def controller():
     """
     from production_control.config.opc_config import OPCConfig
 
+    monkeypatch.setenv("VINEAPP_OPCUA_PLC_URL", "opc.tcp://127.0.0.1:4840")
+    monkeypatch.setenv("VINEAPP_OPCUA_SECURITY", "none")
     test_config = OPCConfig(
-        endpoint="opc.tcp://127.0.0.1:4840",
         connection_timeout=5,
         retry_attempts=2,
         retry_delay=0.1,
     )
-    return PottingLineController(config=test_config, secure=False)
+    return PottingLineController(config=test_config)
 
 
 @pytest.mark.asyncio
@@ -72,18 +73,18 @@ async def test_initialize_lines(controller):
 
 
 @pytest.mark.asyncio
-async def test_connection_failure():
+async def test_connection_failure(monkeypatch):
     """Test behavior when OPC/UA server is not available with production error handling."""
     from production_control.config.opc_config import OPCConfig
 
-    # Use invalid endpoint with test configuration
+    monkeypatch.setenv("VINEAPP_OPCUA_PLC_URL", "opc.tcp://127.0.0.1:9999/invalid/")
+    monkeypatch.setenv("VINEAPP_OPCUA_SECURITY", "none")
     test_config = OPCConfig(
-        endpoint="opc.tcp://127.0.0.1:9999/invalid/",
         connection_timeout=1,  # Fast timeout for tests
         retry_attempts=2,
         retry_delay=0.1,
     )
-    controller = PottingLineController(config=test_config, secure=False)
+    controller = PottingLineController(config=test_config)
 
     # Should fail to connect after retries
     success = await controller.get_active_lot(1)

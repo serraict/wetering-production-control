@@ -15,65 +15,43 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Dict, Optional
 
-from asyncua import Client, ua
-from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+from asyncua import ua
 
 from ..config import get_opc_config, OPCConfig
+from ..opcua.config import build_client, current_mode
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_APP_URI = "urn:serra:production-control-client"
 ACTIVE_PARTIJ_NODEIDS: Dict[int, str] = {
     1: "ns=4;s=OPCScanner/fbOPC/ActievePartijnummer1",
     2: "ns=4;s=OPCScanner/fbOPC/ActievePartijnummer2",
 }
 
 
-def _env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        raise RuntimeError(f"missing env var: {name}")
-    return value
-
-
-def _secure_default() -> bool:
-    return os.environ.get("VINEAPP_OPCUA_SECURITY", "").lower() != "none"
-
-
 class PottingLineController:
     """Writes the active partij to the PLC's `ActievePartijnummer{1,2}`."""
 
-    def __init__(self, config: Optional[OPCConfig] = None, *, secure: Optional[bool] = None):
+    def __init__(self, config: Optional[OPCConfig] = None):
         self.config = config or get_opc_config()
-        self.endpoint = os.environ.get("VINEAPP_OPCUA_PLC_URL", self.config.endpoint)
         self.connection_timeout = self.config.connection_timeout
         self.watchdog_interval = self.config.watchdog_interval
         self.retry_attempts = self.config.retry_attempts
         self.retry_delay = self.config.retry_delay
 
-        self.secure = _secure_default() if secure is None else secure
         self.last_error: Optional[str] = None
         self.last_connection_attempt: Optional[datetime] = None
 
         logger.info(
-            "Initialized OPC controller (endpoint=%s, secure=%s)", self.endpoint, self.secure
+            "Initialized OPC controller (endpoint=%s, security=%s)",
+            os.environ.get("VINEAPP_OPCUA_PLC_URL", "<unset>"),
+            current_mode(),
         )
 
     @asynccontextmanager
     async def _get_connected_client(self):
-        client = Client(url=self.endpoint)
+        client = await build_client("plc")
         client.request_timeout = self.connection_timeout * 1000
         client.secure_channel_timeout = self.watchdog_interval * 1000
-        client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
-        if self.secure:
-            client.set_user(_env("VINEAPP_OPCUA_PLC_USER"))
-            client.set_password(_env("VINEAPP_OPCUA_PLC_PASSWORD"))
-            await client.set_security(
-                SecurityPolicyBasic256Sha256,
-                certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
-                private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
-                mode=ua.MessageSecurityMode.SignAndEncrypt,
-            )
         try:
             await client.connect()
             yield client
