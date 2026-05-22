@@ -1,8 +1,5 @@
-"""PLC monitor v1: discover all user-namespace variables on the Omron PLC,
+"""PLC monitor: discover all user-namespace variables on the Omron PLC,
 subscribe to every one, emit one JSONL record per datachange to stdout.
-
-Verifies the discover-and-subscribe approach against the production PLC.
-See work/doing.md and work/notes/plc_monitoring_app.md.
 
 Run:
     uv run python -m production_control.opcua.monitor

@@ -5,9 +5,9 @@ web app's PottingLineController (writes ActievePartijnummer{1,2}). Useful
 for forcing a guard state or simulating an operator activation outside
 the normal flow.
 
-Pre-builds the DataValue with no timestamps so the Omron NX server
-accepts the write (see
-work/notes/ontstapelmachine/protocol_v1_capture.md).
+Pre-builds the DataValue with no timestamps — the Omron NX server
+rejects WriteValue requests with any timestamp populated
+(`BadWriteNotSupported`).
 
 Connection config is read from the same VINEAPP_OPCUA_* env vars as the
 web app — see docs/deployment.md. Set VINEAPP_OPCUA_SECURITY=none to

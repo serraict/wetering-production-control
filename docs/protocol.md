@@ -117,8 +117,7 @@ UI for setting `actieve_partij_nummer_{1,2}`.
   active-partij writes): `src/production_control/opcua/protocol/`
   (scan-cycle handler) and
   `src/production_control/potting_lots/line_controller.py`
-  (active-partij writer). v1 shipped surprises captured in
-  [`work/notes/ontstapelmachine/protocol_v1_capture.md`](../work/notes/ontstapelmachine/protocol_v1_capture.md).
+  (active-partij writer).
 
 The behave executable spec lives at [`features/protocol/`](../features/protocol/)
 and runs against `scripts/opc/test_server.py`. As of v1 it covers the
