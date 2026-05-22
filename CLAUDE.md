@@ -5,6 +5,25 @@ Short, hard rules. For background on what's in this repo see
 [`docs/protocol.md`](docs/protocol.md), and
 [`docs/deployment.md`](docs/deployment.md).
 
+## Where work lives
+
+- `work/backlog.md` — product increments still to do. Tight one-liners
+  per item; details live in a sibling note.
+- `work/doing.md` — the single active slice. Re-read this at the start
+  of a session; it's the source of truth for what we're shipping right
+  now.
+- `work/notes/<area>/<thing>.md` — durable design notes per work item.
+- `work/notes/<area>/<thing>_v<N>_capture.md` — findings from each
+  shipped slice (what surprised us, bugs found, what's deferred). Fold
+  notable bits back into the long-form note.
+
+## Stop conditions
+
+After completing a slice (commit landed, `make dev-test` and `make
+behave` both green), stop and report. Wait for the user's go-ahead
+before starting the next slice — they evaluate each step in their own
+terminal before the next one starts.
+
 ## Git commit style
 
 When committing, use simple commands that match my pre-approved permissions:
