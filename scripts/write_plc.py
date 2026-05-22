@@ -6,13 +6,9 @@ WARNING: the OPC UA user currently has read/write on all exposed nodes.
 Until the PLC role is restricted to the protocol nodes only, this script
 is a sharp tool — only pass node names from PROTOCOL_NODES below.
 
-Env vars (all required except where noted):
-    VINEAPP_OPCUA_PLC_URL       opc.tcp://<plc-host>:4840
-    VINEAPP_OPCUA_PLC_USER
-    VINEAPP_OPCUA_PLC_PASSWORD
-    VINEAPP_OPCUA_CLIENT_CERT   path to client_cert.der
-    VINEAPP_OPCUA_CLIENT_KEY    path to client_cert_key.pem
-    VINEAPP_OPCUA_CLIENT_APP_URI  (optional, default urn:serra:production-control-client)
+Connection config is read from the same VINEAPP_OPCUA_* env vars as the
+web app — see docs/deployment.md. Set VINEAPP_OPCUA_SECURITY=none to
+talk to the local test server anonymously without certs.
 
 Usage:
     python scripts/write_plc.py --scanresultaat 27246
@@ -24,13 +20,10 @@ Usage:
 import argparse
 import asyncio
 import logging
-import os
-import sys
 
-from asyncua import Client, ua
-from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+from asyncua import ua
 
-DEFAULT_APP_URI = "urn:serra:production-control-client"
+from production_control.opcua.config import build_client, require_env
 
 PROTOCOL_NODES: dict[str, str] = {
     "scanresultaat": "ns=4;s=OPCScanner/fbOPC/ScanResultaat",
@@ -41,28 +34,9 @@ PROTOCOL_NODES: dict[str, str] = {
 }
 
 
-def env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        print(f"missing env var: {name}", file=sys.stderr)
-        sys.exit(2)
-    return value
-
-
 async def write_values(values: dict[str, int]) -> None:
-    url = env("VINEAPP_OPCUA_PLC_URL")
-    client = Client(url=url)
-    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
-    client.set_user(env("VINEAPP_OPCUA_PLC_USER"))
-    client.set_password(env("VINEAPP_OPCUA_PLC_PASSWORD"))
-
-    await client.set_security(
-        SecurityPolicyBasic256Sha256,
-        certificate=env("VINEAPP_OPCUA_CLIENT_CERT"),
-        private_key=env("VINEAPP_OPCUA_CLIENT_KEY"),
-        mode=ua.MessageSecurityMode.SignAndEncrypt,
-    )
-
+    client = await build_client("plc")
+    url = require_env("VINEAPP_OPCUA_PLC_URL")
     print(f"Connecting to {url} ...", flush=True)
     async with client:
         for key, val in values.items():
