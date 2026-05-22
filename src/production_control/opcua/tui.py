@@ -185,7 +185,30 @@ class MonitorApp(App):
             tbl.add_row(row.name, _value_str(row.value), _ago(row.received_at, now))
 
 
+REQUIRED_ENV_VARS = (
+    "VINEAPP_OPCUA_PLC_URL",
+    "VINEAPP_OPCUA_PLC_USER",
+    "VINEAPP_OPCUA_PLC_PASSWORD",
+    "VINEAPP_OPCUA_LEUZE_URL",
+    "VINEAPP_OPCUA_LEUZE_USER",
+    "VINEAPP_OPCUA_LEUZE_PASSWORD",
+    "VINEAPP_OPCUA_CLIENT_CERT",
+    "VINEAPP_OPCUA_CLIENT_KEY",
+)
+
+
 def cli() -> None:
+    # Preflight before Textual grabs the alternate screen; otherwise a
+    # missing env var fails inside an asyncio task and the message is
+    # wiped when the screen is restored.
+    missing = [name for name in REQUIRED_ENV_VARS if not os.environ.get(name)]
+    if missing:
+        print("opc-monitor: missing required env vars:", file=sys.stderr)
+        for name in missing:
+            print(f"  {name}", file=sys.stderr)
+        print("See docs/deployment.md for what each var should hold.", file=sys.stderr)
+        sys.exit(2)
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
