@@ -4,7 +4,7 @@ Useful as a reachability + discovery check before configuring trust/credentials.
 Prints the security policies, modes, and the server's application URI.
 
 Usage:
-    python scripts/probe_opcua_endpoint.py opc.tcp://host:4840
+    python scripts/opc/probe_endpoint.py opc.tcp://host:4840
 """
 
 import asyncio

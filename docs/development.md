@@ -47,7 +47,7 @@ a live test server. Boot the server in another terminal first:
 
 ```sh
 # terminal 1
-make opc-server                 # uv run python scripts/opc_test_server.py
+make opc-server                 # uv run python scripts/opc/test_server.py
 
 # terminal 2
 make dev-test-integration
@@ -59,7 +59,7 @@ The integration tests set `VINEAPP_OPCUA_SECURITY=none` and
 
 ## Test mode for the OPC clients
 
-"Test mode" means talking to the local `scripts/opc_test_server.py`
+"Test mode" means talking to the local `scripts/opc/test_server.py`
 (anonymous, NoSecurity) instead of the real Omron PLC and Leuze scanner.
 The toggle is one env var:
 
@@ -76,7 +76,7 @@ contract is enforced in
 [`src/production_control/opcua/config.py`](../src/production_control/opcua/config.py);
 every OPC caller in this repo goes through `build_client(role)` there,
 so the toggle covers the web app, the headless monitor, the TUI, the
-behave suite, and `scripts/write_plc.py` uniformly.
+behave suite, and `scripts/opc/write_plc.py` uniformly.
 
 `.env.example` ships with the line commented out — prod is
 secure-by-default; uncomment for local dev.
@@ -125,20 +125,20 @@ make opc-server
 make opc-protocol
 
 # terminal 3 — drive scans into the handler
-uv run python scripts/write_plc.py --scanresultaat 0     # reset guard
+uv run python scripts/opc/write_plc.py --scanresultaat 0     # reset guard
 # then push a scan into LastScanData via uawrite, or run the behave
 # suite (which exercises the same handler end-to-end).
 ```
 
 ### Drive the protocol from the outside
 
-`scripts/write_plc.py` writes to any of the protocol nodes; useful for
+`scripts/opc/write_plc.py` writes to any of the protocol nodes; useful for
 faking PLC state during commissioning or while iterating on the UI.
 
 ```sh
-uv run python scripts/write_plc.py --scanresultaat 27246
-uv run python scripts/write_plc.py --partij1 12345 --partij2 67890
-uv run python scripts/write_plc.py --clear
+uv run python scripts/opc/write_plc.py --scanresultaat 27246
+uv run python scripts/opc/write_plc.py --partij1 12345 --partij2 67890
+uv run python scripts/opc/write_plc.py --clear
 ```
 
 In test mode (`SECURITY=none`) no creds or cert are needed.

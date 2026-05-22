@@ -33,7 +33,7 @@ def _captured_datavalue(write_call) -> ua.DataValue:
 
 
 def _assert_omron_safe(dv: ua.DataValue) -> None:
-    # StatusCode defaults to Good and is fine — scripts/write_plc.py uses
+    # StatusCode defaults to Good and is fine — scripts/opc/write_plc.py uses
     # the same pattern in prod. Only the timestamps trigger Omron's
     # BadWriteNotSupported.
     assert (

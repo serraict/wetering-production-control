@@ -132,7 +132,7 @@ behave:
 
 opc-server:
 	@echo "Starting programmatic OPC/UA server for potting lines..."
-	uv run python scripts/opc_test_server.py
+	uv run python scripts/opc/test_server.py
 
 opc-monitor:
 	@echo "Starting OPC/UA TUI monitor..."

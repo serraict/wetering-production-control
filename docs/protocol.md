@@ -121,7 +121,7 @@ UI for setting `actieve_partij_nummer_{1,2}`.
   [`work/notes/ontstapelmachine/protocol_v1_capture.md`](../work/notes/ontstapelmachine/protocol_v1_capture.md).
 
 The behave executable spec lives at [`features/protocol/`](../features/protocol/)
-and runs against `scripts/opc_test_server.py`. As of v1 it covers the
+and runs against `scripts/opc/test_server.py`. As of v1 it covers the
 scan cycle (happy path, OS-ack cycle, drop-while-not-zero,
 duplicate-after-ack) and active-partij writes (activate per line,
 deactivate, line independence) — 8 scenarios across `scan_cycle.feature`
@@ -135,7 +135,5 @@ authoritative protocol contract.
 
 - Operational deployment + cert rotation: [`deployment.md`](deployment.md).
 - System-level diagram: [`architecture.md`](architecture.md).
-- Field-test status and on-site commands:
-  [`work/notes/ontstapelmachine/doing_ontstapelaar.md`](../work/notes/ontstapelmachine/doing_ontstapelaar.md).
 - Protocol draft (Fibery, authoritative source of intent):
   [Integratie-Onstapelmachine-met-oppotproces-257](https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratie-Onstapelmachine-met-oppotproces-257?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5).

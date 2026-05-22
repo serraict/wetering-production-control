@@ -6,8 +6,8 @@ the SAN URI matching the application URI, SAN DNS matching the hostname,
 and both clientAuth + serverAuth EKUs (Omron requires both).
 
 Usage:
-    python scripts/generate_client_cert.py
-    python scripts/generate_client_cert.py --hostname serraserver --app-uri urn:serra:pc-client
+    python scripts/opc/generate_client_cert.py
+    python scripts/opc/generate_client_cert.py --hostname serraserver --app-uri urn:serra:pc-client
 """
 
 import argparse

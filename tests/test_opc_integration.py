@@ -13,7 +13,7 @@ def controller(monkeypatch):
     """Create controller instance for testing.
 
     Test server runs on opc.tcp://127.0.0.1:4840 with NoSecurity. See
-    scripts/opc_test_server.py — boot it before running integration
+    scripts/opc/test_server.py — boot it before running integration
     tests, e.g. `make opc-server` in another terminal.
     """
     from production_control.config.opc_config import OPCConfig

@@ -48,7 +48,7 @@ def _start_test_server(context) -> None:
     env = os.environ.copy()
     env.setdefault("OPC_TEST_OS_ACK_DELAY_MS", "0")
     context.server_proc = subprocess.Popen(
-        [sys.executable, "scripts/opc_test_server.py"],
+        [sys.executable, "scripts/opc/test_server.py"],
         cwd=str(REPO_ROOT),
         env=env,
         stdout=subprocess.PIPE,

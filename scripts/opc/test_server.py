@@ -19,7 +19,7 @@ default the OS simulator is disabled — behave steps drive resets
 explicitly so they own the timing.
 
 Run:
-    uv run python scripts/opc_test_server.py
+    uv run python scripts/opc/test_server.py
 """
 
 import asyncio

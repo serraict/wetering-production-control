@@ -1,20 +1,22 @@
 """Write values to the Omron PLC's OPCScanner protocol variables.
 
-Goal 3 from work/doing.md. Same connection pattern as monitor_plc.py.
+Manual counterpart to the protocol daemon (writes ScanResultaat) and the
+web app's PottingLineController (writes ActievePartijnummer{1,2}). Useful
+for forcing a guard state or simulating an operator activation outside
+the normal flow.
 
-WARNING: the OPC UA user currently has read/write on all exposed nodes.
-Until the PLC role is restricted to the protocol nodes only, this script
-is a sharp tool — only pass node names from PROTOCOL_NODES below.
+Pre-builds the DataValue with no timestamps so the Omron NX server
+accepts the write (see
+work/notes/ontstapelmachine/protocol_v1_capture.md).
 
 Connection config is read from the same VINEAPP_OPCUA_* env vars as the
 web app — see docs/deployment.md. Set VINEAPP_OPCUA_SECURITY=none to
 talk to the local test server anonymously without certs.
 
 Usage:
-    python scripts/write_plc.py --scanresultaat 27246
-    python scripts/write_plc.py --partij1 12345 --partij2 67890
-    python scripts/write_plc.py --ziftmaat1 10 --ziftmaat2 12
-    python scripts/write_plc.py --clear
+    python scripts/opc/write_plc.py --scanresultaat 27246
+    python scripts/opc/write_plc.py --partij1 12345 --partij2 67890
+    python scripts/opc/write_plc.py --clear
 """
 
 import argparse
@@ -29,8 +31,6 @@ PROTOCOL_NODES: dict[str, str] = {
     "scanresultaat": "ns=4;s=OPCScanner/fbOPC/ScanResultaat",
     "partij1": "ns=4;s=OPCScanner/fbOPC/ActievePartijnummer1",
     "partij2": "ns=4;s=OPCScanner/fbOPC/ActievePartijnummer2",
-    "ziftmaat1": "ns=4;s=OPCScanner/fbOPC/Ziftmaat1",
-    "ziftmaat2": "ns=4;s=OPCScanner/fbOPC/Ziftmaat2",
 }
 
 

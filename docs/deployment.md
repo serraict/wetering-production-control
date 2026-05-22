@@ -113,7 +113,7 @@ Required cert properties (Omron in particular is strict):
 
 Generation uses
 `asyncua.crypto.cert_gen.setup_self_signed_certificate`; the convenience
-wrapper is at `scripts/generate_client_cert.py`.
+wrapper is at `scripts/opc/generate_client_cert.py`.
 
 ### Initial setup
 
@@ -124,11 +124,11 @@ From the deployment directory on serraserver:
 docker compose pull opcua_test
 
 # 2. Sanity-check the configured env vars
-docker compose run --rm opcua_test python scripts/show_opcua_config.py
+docker compose run --rm opcua_test python scripts/opc/show_config.py
 
 # 3. Generate the client cert into the shared certs volume
 docker compose run --rm opcua_test \
-  python scripts/generate_client_cert.py --out-dir /app/certs --hostname "$(hostname)"
+  python scripts/opc/generate_client_cert.py --out-dir /app/certs --hostname "$(hostname)"
 
 # 4. Trust the new client cert on the Omron PLC:
 #    Sysmac Studio → Communications → Security → Client Authentication
@@ -138,9 +138,9 @@ docker compose run --rm opcua_test \
 
 # 5. Probe both endpoints to confirm
 docker compose run --rm opcua_test sh -c \
-  'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_PLC_URL"'
+  'python scripts/opc/probe_endpoint.py "$VINEAPP_OPCUA_PLC_URL"'
 docker compose run --rm opcua_test sh -c \
-  'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_LEUZE_URL"'
+  'python scripts/opc/probe_endpoint.py "$VINEAPP_OPCUA_LEUZE_URL"'
 ```
 
 ### Renewal
@@ -158,8 +158,8 @@ in the convenience helper). Steps to renew:
 
 A multi-year cert is on the follow-up list (call
 `generate_self_signed_app_certificate(..., days=3650)` directly instead
-of the asyncua helper); see
-[`work/notes/ontstapelmachine/doing_ontstapelaar.md`](../work/notes/ontstapelmachine/doing_ontstapelaar.md).
+of the asyncua helper); tracked in
+[`work/backlog.md`](../work/backlog.md).
 
 ### Test setup credentials
 
@@ -232,20 +232,18 @@ The TUI quits with `q`. It skips the Leuze pane if
 ### Manual PLC writes (commissioning)
 
 ```sh
-docker compose run --rm opcua_test python scripts/write_plc.py --scanresultaat 27246
-docker compose run --rm opcua_test python scripts/write_plc.py --clear
+docker compose run --rm opcua_test python scripts/opc/write_plc.py --scanresultaat 27246
+docker compose run --rm opcua_test python scripts/opc/write_plc.py --clear
 ```
 
 ## Local development
 
 See [`development.md`](development.md) for the dev setup, test commands,
 and running the app/monitor in test mode against
-`scripts/opc_test_server.py`.
+`scripts/opc/test_server.py`.
 
 ## Related
 
 - Local dev + test mode: [`development.md`](development.md).
 - Protocol contract: [`protocol.md`](protocol.md).
 - System architecture: [`architecture.md`](architecture.md).
-- Field-test status and on-site notes:
-  [`work/notes/ontstapelmachine/doing_ontstapelaar.md`](../work/notes/ontstapelmachine/doing_ontstapelaar.md).
