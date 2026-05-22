@@ -198,21 +198,43 @@ async def run_plc(handler) -> None:
             handler.set_client(None)
 
 
-async def supervise(name: str, run) -> None:
-    """Run `run` with exponential backoff on failure. Give up after
-    RECONNECT_MAX_ATTEMPTS consecutive failures. A run that lasted at least
-    RECONNECT_RESET_AFTER_S seconds resets the backoff and attempt counter."""
+async def supervise(
+    name: str,
+    run,
+    *,
+    max_attempts: int | None = RECONNECT_MAX_ATTEMPTS,
+    stop_event: asyncio.Event | None = None,
+) -> None:
+    """Run `run` with exponential backoff on failure.
+
+    `max_attempts`:
+      * int — give up after that many consecutive failures (the headless
+        monitor's policy; keeps a noisy startup from looping forever).
+      * None — never give up. The protocol daemon uses this so a long
+        outage doesn't kill the container; Docker `restart: unless-stopped`
+        is the right policy for "process truly broken".
+
+    `stop_event`: when provided and set, a clean return from `run()` is
+    treated as graceful shutdown — supervise exits without the
+    "reconnecting in Ns" log and without sleeping the backoff.
+
+    A run that lasted at least `RECONNECT_RESET_AFTER_S` seconds resets
+    the backoff and attempt counter."""
 
     loop = asyncio.get_event_loop()
     delay = RECONNECT_BASE_DELAY_S
     attempt = 0
 
     while True:
+        if stop_event is not None and stop_event.is_set():
+            return
         attempt += 1
         started = loop.time()
         try:
             await run()
             elapsed = loop.time() - started
+            if stop_event is not None and stop_event.is_set():
+                return
             logger.warning(
                 "%s: connection closed cleanly after %.0fs (attempt %d); reconnecting in %ds",
                 name,
@@ -224,13 +246,17 @@ async def supervise(name: str, run) -> None:
             raise
         except Exception as exc:
             elapsed = loop.time() - started
+            if stop_event is not None and stop_event.is_set():
+                return
+            attempt_label = (
+                f"{attempt}/{max_attempts}" if max_attempts is not None else f"{attempt}"
+            )
             logger.warning(
-                "%s: %s after %.0fs (attempt %d/%d): %r; reconnecting in %ds",
+                "%s: %s after %.0fs (attempt %s): %r; reconnecting in %ds",
                 name,
                 type(exc).__name__,
                 elapsed,
-                attempt,
-                RECONNECT_MAX_ATTEMPTS,
+                attempt_label,
                 exc,
                 delay,
             )
@@ -238,7 +264,7 @@ async def supervise(name: str, run) -> None:
         if elapsed >= RECONNECT_RESET_AFTER_S:
             delay = RECONNECT_BASE_DELAY_S
             attempt = 0
-        elif attempt >= RECONNECT_MAX_ATTEMPTS:
+        elif max_attempts is not None and attempt >= max_attempts:
             logger.error(
                 "%s: giving up after %d consecutive failures within %.0fs",
                 name,
@@ -247,7 +273,16 @@ async def supervise(name: str, run) -> None:
             )
             return
 
-        await asyncio.sleep(delay)
+        # Break the backoff sleep as soon as stop_event fires — otherwise
+        # shutdown waits the full `delay` (up to RECONNECT_MAX_DELAY_S).
+        if stop_event is not None:
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=delay)
+                return
+            except asyncio.TimeoutError:
+                pass
+        else:
+            await asyncio.sleep(delay)
         if elapsed < RECONNECT_RESET_AFTER_S:
             delay = min(delay * 2, RECONNECT_MAX_DELAY_S)
 

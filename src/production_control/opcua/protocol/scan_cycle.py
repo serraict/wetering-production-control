@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from functools import partial
 
 from asyncua import Node, ua
 
 from .. import config
 from ..config import build_client, require_env
+from ..monitor import supervise
 from .scan_parser import parse_scan
 
 logger = logging.getLogger("opcua_protocol")
@@ -201,17 +203,37 @@ async def run_protocol(
 ) -> None:
     """Run both subscriptions until `stop_event` fires (or cancellation).
 
+    Each role's loop is wrapped in `supervise(..., max_attempts=None)` so
+    a failure in one (e.g. Leuze unreachable) doesn't kill the other —
+    previously `asyncio.gather` propagated any exception and the daemon
+    crash-looped via Docker. No giveup: Docker `restart: unless-stopped`
+    is the right policy when something is actually broken.
+
     `plc_ready` / `leuze_ready` are set once each subscription is live —
     useful for the behave harness which needs to wait before driving
-    the scenario.
+    the scenario. They stay set across supervise-driven reconnects.
     """
     if handler is None:
         handler = ScanCycleHandler()
     if stop_event is None:
         stop_event = asyncio.Event()
-    plc_task = asyncio.create_task(_plc_loop(handler, plc_ready, stop_event), name="protocol-plc")
+    plc_task = asyncio.create_task(
+        supervise(
+            "protocol-plc",
+            partial(_plc_loop, handler, plc_ready, stop_event),
+            max_attempts=None,
+            stop_event=stop_event,
+        ),
+        name="protocol-plc",
+    )
     leuze_task = asyncio.create_task(
-        _leuze_loop(handler, leuze_ready, stop_event), name="protocol-leuze"
+        supervise(
+            "protocol-leuze",
+            partial(_leuze_loop, handler, leuze_ready, stop_event),
+            max_attempts=None,
+            stop_event=stop_event,
+        ),
+        name="protocol-leuze",
     )
     try:
         await asyncio.gather(plc_task, leuze_task)
