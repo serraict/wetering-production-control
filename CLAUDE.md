@@ -19,10 +19,10 @@ Short, hard rules. For background on what's in this repo see
 
 ## Stop conditions
 
-After completing a slice (commit landed, `make dev-test` and `make
-behave` both green), stop and report. Wait for the user's go-ahead
-before starting the next slice — they evaluate each step in their own
-terminal before the next one starts.
+After completing a slice (commit landed, `make quality` green), stop
+and report. Wait for the user's go-ahead before starting the next
+slice — they evaluate each step in their own terminal before the next
+one starts.
 
 ## Git commit style
 
@@ -53,9 +53,11 @@ it before moving on.
 
 **When finishing a slice** (before committing):
 
-- `make dev-test` — full unit suite.
-- `make behave` — full executable spec.
-- Both must end green. If either is red, fix it (don't commit).
+- `make quality` — the CI gate. Runs flake8, black `--check`, the full
+  unit suite (with coverage), and `uv run behave features/protocol`.
+- Must end green. If any step is red, fix it (don't commit). Don't
+  substitute `make dev-test` + `make behave` for this — they skip lint
+  and formatting, and CI will catch what they miss.
 
 Integration tests (`make dev-test-integration`) need the OPC test server running
 — `make opc-server` in another terminal first.
