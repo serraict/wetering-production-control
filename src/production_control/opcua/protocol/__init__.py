@@ -1,8 +1,7 @@
 """OS ↔ PC scan-cycle protocol implementation.
 
-See `docs/protocol.md` for the contract, `features/protocol/` for the
-executable spec, and `work/notes/os_pc_protocol_implementation.md` for
-the implementation slice plan.
+See `docs/protocol.md` for the contract and `features/protocol/` for
+the executable spec.
 """
 
 from .scan_cycle import (

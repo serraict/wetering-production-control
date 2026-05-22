@@ -113,10 +113,12 @@ UI for setting `actieve_partij_nummer_{1,2}`.
 - Connection layer + reconnect supervisor + handler abstraction:
   `src/production_control/opcua/monitor.py`.
 - Leuze source + cert workaround: `src/production_control/opcua/leuze.py`.
-- Protocol layer (scan parsing, gated PLC write, UI hooks): planned at
-  `src/production_control/opcua/protocol/`; see
-  [`work/notes/os_pc_protocol_implementation.md`](../work/notes/os_pc_protocol_implementation.md)
-  for the implementation slice plan.
+- Protocol layer (scan parsing, gated PLC write, operator-facing
+  active-partij writes): `src/production_control/opcua/protocol/`
+  (scan-cycle handler) and
+  `src/production_control/potting_lots/line_controller.py`
+  (active-partij writer). v1 shipped surprises captured in
+  [`work/notes/ontstapelmachine/protocol_v1_capture.md`](../work/notes/ontstapelmachine/protocol_v1_capture.md).
 
 The behave executable spec lives at [`features/protocol/`](../features/protocol/)
 and runs against `scripts/opc_test_server.py`. As of v1 it covers the

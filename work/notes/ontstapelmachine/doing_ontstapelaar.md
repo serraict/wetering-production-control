@@ -37,9 +37,9 @@ All five field-test goals from the original plan are met:
 - [x] PLC write (`scripts/write_plc.py`); verified via monitor.
 - [x] Leuze source: `src/production_control/opcua/leuze.py` (replaces the
       earlier `scripts/monitor_leuze.py` and `scripts/browse_leuze.py`).
-- [x] Scan-to-PLC bridge — this is now the
-      [[os_pc_protocol_implementation]] work item. Not a script; lives
-      inside the web app process.
+- [x] Scan-to-PLC bridge — shipped as the `ontstapelaar_protocol`
+      compose service (see `docs/protocol.md` for the contract and
+      `docs/deployment.md` for the service definition).
 
 Reconnect-under-load test on the PLC is still **deferred** until the next
 on-site session with the PLC engineer.
@@ -62,38 +62,24 @@ on-site session with the PLC engineer.
       re-trust on the Omron PLC (Sysmac Studio → Client Authentication),
       restart `production_control`, verify with the monitor.
 
-## Commands to run on serraserver
+## Open questions for the PLC engineer
 
-```sh
-# update
-docker compose pull opcua_test
-```
+Promoted from the v1/v2 monitor captures (now deleted) so they survive
+until the next on-site session.
 
-Then, from the deployment dir:
+- Is `DeviceStatus.ErrorStatus == "ContinuousError"` the steady-state
+  value, or a real fault?
+- Confirm: `AantalBollenPerKrat` is the PLC's existing slot for what
+  the draft calls `bolmaat` — i.e. when we wire bolmaat, we write to
+  that variable rather than create a new one?
+- What does `UnpublishedVariablesStatus` actually count? Useful as a
+  monitor signal or noise?
 
-```sh
-docker compose run --rm opcua_test python scripts/show_opcua_config.py
+## Commands
 
-# generate the client cert into the shared certs volume (renewal)
-docker compose run --rm opcua_test \
-  python scripts/generate_client_cert.py --out-dir /app/certs --hostname "$(hostname)"
-
-# probe both endpoints
-docker compose run --rm opcua_test sh -c \
-  'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_PLC_URL"'
-docker compose run --rm opcua_test sh -c \
-  'python scripts/probe_opcua_endpoint.py "$VINEAPP_OPCUA_LEUZE_URL"'
-
-# discover + JSONL monitor (PLC + Leuze)
-docker compose run --rm opcua_test python -m production_control.opcua.monitor
-
-# interactive TUI over ssh (v3)
-docker compose run --rm -it opcua_test python -m production_control.opcua.tui
-
-# write PLC protocol variables
-docker compose run --rm opcua_test python scripts/write_plc.py --scanresultaat 27246
-docker compose run --rm opcua_test python scripts/write_plc.py --clear
-```
+Operator commands live in
+[`docs/deployment.md`](../../../docs/deployment.md) under "Running on
+serraserver".
 
 [Fibery action]:
   https://potlilium.fibery.io/ICT_Wetering_Potlilium/Actie/Integratatie-Onstapelmachine-met-oppotproces-256?sharing-key=0b2ea7ab-9c2d-4ae1-8b2a-c016b2816fa5

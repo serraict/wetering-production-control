@@ -2,9 +2,8 @@
 
 A read-only window on the OPC/UA values exposed by the Leuze scanner and the
 Potting PLC. Operator-facing dashboard plus a structured logger for later
-analysis. Separate from the OS↔PC protocol implementation
-([[os_pc_protocol_implementation]]); they share the connection layer but no
-state.
+analysis. Separate from the OS↔PC protocol handler (see `docs/protocol.md`);
+they share the connection layer but no state.
 
 ## Purpose
 
@@ -23,9 +22,8 @@ namespaces (skipping the OPC-UA standard `Server` / type tree) and subscribes
 to every primitive variable it finds. New PLC variables that appear after a
 restart get picked up automatically.
 
-Confirmed against the production PLC on 2026-05-21 (see
-[`ontstapelmachine/plc_monitor_v1_capture.md`](ontstapelmachine/plc_monitor_v1_capture.md)) —
-9 unique variables across two subtrees:
+Confirmed against the production PLC on 2026-05-21 — 9 unique
+variables across two subtrees:
 
 - *Protocol surface (under `OPCScanner/fbOPC/`):* `ScanResultaat`,
   `ActievePartijnummer1`, `ActievePartijnummer2`, plus `AantalBollenPerKrat`
@@ -56,7 +54,7 @@ LenientCertificate workaround).
 ### Out of scope
 
 - Writing to the PLC (separate tool — `scripts/write_plc.py`).
-- Protocol state machine, partij lookups, web UI ([[os_pc_protocol_implementation]]).
+- Protocol state machine, partij lookups, web UI (see `docs/protocol.md`).
 - Alerting / paging. Logger output is the data source; alerting is downstream.
 
 ## TUI
@@ -151,13 +149,13 @@ JSON lines, one record per datachange notification:
 Small shippable slices, one at a time. Each slice gets a `work/doing.md`,
 gets shipped, gets a capture/review, then we pick the next.
 
-- [x] **v1 — Discover + JSONL on PLC.** See
-      [`ontstapelmachine/plc_monitor_v1_capture.md`](ontstapelmachine/plc_monitor_v1_capture.md).
+- [x] **v1 — Discover + JSONL on PLC.**
 - [x] **v2 — Leuze as a second source** on the same JSONL stream. Independent
-      supervision; exponential backoff with give-up after 10 failures. See
-      [`ontstapelmachine/plc_monitor_v2_capture.md`](ontstapelmachine/plc_monitor_v2_capture.md).
+      supervision; exponential backoff with give-up after 10 failures.
       *(Full multi-source capture deferred until the Leuze scanner is on.)*
-- [ ] **v3 — Textual TUI** (operator-facing view; the JSONL stream stays).
+- [x] **v3 — Textual TUI** (operator-facing view; the JSONL stream stays).
+      Runs via `make opc-monitor` or `docker compose run --rm -it opcua_test
+      python -m production_control.opcua.tui`.
 - [ ] **v4 — File logging** under `VINEAPP_OPCUA_MONITOR_LOG_DIR`, rotated.
 - [ ] **v5 — Persistent run on serraserver** (compose service, or a cron /
       background command — decide when we get there based on what's least

@@ -1,8 +1,8 @@
 # OS ↔ PC protocol v1 — capture
 
-Findings from shipping v1 (Steps 1–7 in `work/doing.md`). Notable bits
-should be folded back into `work/notes/os_pc_protocol_implementation.md`
-or `docs/protocol.md` so they survive once `doing.md` rolls over.
+Findings from shipping v1 (Steps 1–7, since rolled out of
+`work/doing.md`). Durable surprises that future work on the protocol
+should be aware of.
 
 ## What surprised us
 
