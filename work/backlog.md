@@ -2,14 +2,7 @@
 
 Product increments to realize the product vision.
 
-- **OS ↔ PC protocol implementation.** Contract is settled in
-  [`docs/protocol.md`](../docs/protocol.md). What remains: implement
-  `src/production_control/opcua/protocol/` (Leuze subscription, gated PLC
-  writer, operator UI hooks), update `scripts/opc_test_server.py` to the
-  protocol nodes, and ship the behave suite at `features/protocol/`. Plan:
-  [`work/notes/os_pc_protocol_implementation.md`](notes/os_pc_protocol_implementation.md).
-- **PLC monitor — remaining slices.** v3 (Textual TUI) awaiting prod
-  verification on the next release. **v4**: rotated JSONL under
+- **PLC monitor — remaining slices.** **v4**: rotated JSONL under
   `VINEAPP_OPCUA_MONITOR_LOG_DIR`. **v5**: persistent run on serraserver.
   Status: [`work/notes/plc_monitoring_app.md`](notes/plc_monitoring_app.md).
 - **Protocol daemon: per-source supervisor.** Today `protocol/scan_cycle.py`
