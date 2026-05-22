@@ -98,6 +98,8 @@ quality:
 	uv run black --check src tests
 	@echo "Running tests with coverage..."
 	uv run pytest --cov=src/production_control --cov-report=term --cov-report=xml  -m "not integration"
+	@echo "Running OS↔PC protocol behave suite..."
+	uv run behave features/protocol
 	@echo "Code quality checks completed."
 
 server:
@@ -132,22 +134,9 @@ opc-server:
 	@echo "Starting programmatic OPC/UA server for potting lines..."
 	uv run python scripts/opc_test_server.py
 
-# OPC UA development tools using asyncua built-ins
-opc-discover:
-	@echo "Discovering OPC/UA servers and endpoints..."
-	uv run uadiscover
-
-opc-browse:
-	@echo "Browsing OPC/UA server nodes..."
-	uv run uabrowse -u opc.tcp://127.0.0.1:4840
-
-opc-browse-potting:
-	@echo "Browsing potting lines structure..."
-	uv run uabrowse -u opc.tcp://127.0.0.1:4840 -n "ns=2;s=PottingLines"
-
-opc-client:
-	@echo "Starting interactive OPC/UA client shell..."
-	uv run uaclient -u opc.tcp://127.0.0.1:4840
+opc-monitor:
+	@echo "Starting OPC/UA TUI monitor..."
+	uv run python -m production_control.opcua.tui
 
 test-qr-codes:
 	@echo "Generating test QR codes PDF..."
