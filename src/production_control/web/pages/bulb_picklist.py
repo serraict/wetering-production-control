@@ -9,7 +9,11 @@ from ...bulb_picklist.repositories import BulbPickListRepository
 from ...bulb_picklist.models import BulbPickList
 from ...bulb_picklist.label_generation import LabelGenerator
 from ..components import frame
-from ..components.model_detail_page import display_model_detail_page, create_model_view_action
+from ..components.model_detail_page import (
+    create_model_view_action,
+    create_scan_action,
+    display_model_detail_page,
+)
 from ..components.model_list_page import display_model_list_page
 from ..components.table_state import ClientStorageTableState
 
@@ -82,9 +86,18 @@ async def bulb_picklist_page() -> None:
     """Display the bulb picklist page."""
     repository = BulbPickListRepository()
 
+    # Bulb-picklist rows ARE potting lots (same id), so the scan action
+    # routes to the lot's content page. Direct link to `view_batch`
+    # instead of `/potting-lots/scan/{id}` keeps the redirect URL out
+    # of browser history.
+    from .scan import router as scan_router
+
     row_actions = {
         "view": create_model_view_action(
             repository=repository,
+        ),
+        "scan": create_scan_action(
+            scan_url_for=lambda id: scan_router.url_path_for("view_batch", id=id),
         ),
         "label": create_label_action(),
     }

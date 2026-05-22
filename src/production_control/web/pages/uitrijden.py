@@ -9,7 +9,11 @@ from nicegui import APIRouter, ui
 from ...vloerplan.repositories import Vloerplan19cmRepository
 from ...vloerplan.models import Vloerplan19cm
 from ..components import frame
-from ..components.model_detail_page import display_model_detail_page, create_model_view_action
+from ..components.model_detail_page import (
+    create_model_view_action,
+    create_scan_action,
+    display_model_detail_page,
+)
 from ..components.model_list_page import display_model_list_page
 
 
@@ -81,10 +85,18 @@ async def handle_sync_click(button, pending_state: _PendingState) -> None:
 
 @router.page("/")
 def uitrijden_page() -> None:
+    # Uitrijden rows ARE potting lots (same id), so the scan action
+    # routes to the lot's content page directly, skipping the
+    # `/potting-lots/scan/{id}` redirect entry point.
+    from .scan import router as scan_router
+
     row_actions = {
         "view": create_model_view_action(
             repository=get_repository(),
             dialog=True,
+        ),
+        "scan": create_scan_action(
+            scan_url_for=lambda id: scan_router.url_path_for("view_batch", id=id),
         ),
     }
 

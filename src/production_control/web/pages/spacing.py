@@ -13,7 +13,11 @@ from ..components import frame
 from ..components.model_card import display_model_card
 from ..components.message import show_error
 from ..components.command_form import create_command_form
-from ..components.model_detail_page import display_model_detail_page, create_model_view_action
+from ..components.model_detail_page import (
+    create_model_view_action,
+    create_scan_action,
+    display_model_detail_page,
+)
 from ..components.model_list_page import display_model_list_page
 
 
@@ -83,12 +87,20 @@ def spacing_page() -> None:
 
     repository = SpacingRepository()
 
+    # Spacing rows ARE potting lots (the partij_code is the lot id), so
+    # the scan action routes to the lot's content page directly,
+    # skipping the `/potting-lots/scan/{id}` redirect entry point.
+    from .scan import router as scan_router
+
     # Create actions
     row_actions = {
         "view": create_model_view_action(
             repository=repository,
             dialog=True,
             custom_display_function=display_spacing_record,
+        ),
+        "scan": create_scan_action(
+            scan_url_for=lambda id: scan_router.url_path_for("view_batch", id=id),
         ),
         "edit": create_edit_action(repository),
     }

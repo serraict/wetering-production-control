@@ -48,6 +48,29 @@ def display_model_detail_page(
         show_error("Record niet gevonden")
 
 
+def create_scan_action(scan_url_for: Callable[[Any], str]) -> Dict[str, Any]:
+    """Row action that opens the scan page for the row's primary key.
+
+    Mirrors the shape of `create_model_view_action` so it can sit next to
+    "view" in a `row_actions` dict. The caller supplies a URL builder so
+    the route can be resolved through `router.url_path_for(...)` rather
+    than a hardcoded path — see the [URL construction in web pages]
+    convention.
+
+    Args:
+        scan_url_for: Maps the row key (PK value, as returned by
+            `e.args.get("key")` on the table action event) to the scan
+            page URL to navigate to.
+
+    Returns:
+        A row-action dict ready to drop into `row_actions={"scan": ...}`.
+    """
+    return {
+        "icon": "qr_code_scanner",
+        "handler": lambda e: ui.navigate.to(scan_url_for(e.args.get("key"))),
+    }
+
+
 def create_model_view_action(
     repository: Any,
     id_field: str = "id",

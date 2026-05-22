@@ -11,7 +11,11 @@ from ...potting_lots.repositories import PottingLotRepository
 from ...potting_lots.models import PottingLot
 from ...potting_lots.active_service import ActivePottingLotService
 from ..components import frame
-from ..components.model_detail_page import display_model_detail_page, create_model_view_action
+from ..components.model_detail_page import (
+    create_model_view_action,
+    create_scan_action,
+    display_model_detail_page,
+)
 from ..components.model_list_page import display_model_list_page
 from ..components import potting_lot_label_printer
 from ..components.barcode_scanner import create_barcode_scanner_ui
@@ -307,6 +311,14 @@ def potting_lots_page() -> None:
         "view": create_model_view_action(
             repository=get_repository(),
             custom_display_function=custom_display,
+        ),
+        "scan": create_scan_action(
+            # Navigate straight to the content page (`view_batch`). The
+            # `/potting-lots/scan/{id}` route exists for barcode scanners /
+            # the OPC scan protocol; using it for in-app navigation pollutes
+            # history with the intermediate redirect URL and forces two
+            # back-button presses to return to the list.
+            scan_url_for=lambda id: scan_router.url_path_for("view_batch", id=id),
         ),
         "label": create_label_action(),
     }

@@ -13,7 +13,7 @@ from ...inspectie.changes import STORAGE_KEY, apply_delta, parse_date as _parse_
 from ..components import frame
 from ..components.model_card import display_model_card
 from ..components.model_list_page import display_model_list_page
-from ..components.model_detail_page import create_model_view_action
+from ..components.model_detail_page import create_model_view_action, create_scan_action
 from ..components.styles import add_print_styles
 from ..components.table_utils import format_date
 
@@ -459,6 +459,17 @@ def inspectie_page() -> None:
 
     # Create actions for +1/-1 buttons and view details
     row_actions = create_afwijking_actions(repository, changes_state)
+
+    # Route directly to the scan content page (`view_batch`). The
+    # canonical `/potting-lots/scan/{id}` is for external barcode
+    # scanners; the in-app row action skips it to avoid the redirect
+    # ending up in browser history. Lazy import dodges the cycle
+    # `inspectie → scan → inspectie`.
+    from .scan import router as scan_router
+
+    row_actions["scan"] = create_scan_action(
+        scan_url_for=lambda id: scan_router.url_path_for("view_batch", id=id),
+    )
 
     # Add print-friendly styles with border removal
     add_print_styles(
