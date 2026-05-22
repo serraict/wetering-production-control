@@ -75,11 +75,11 @@ def test_get_messages_absolutizes_user_upload_urls(config: ZulipConfig) -> None:
             "sender_full_name": "production-bot",
             "timestamp": 1_700_000_000,
             "content": (
-                '<p><strong>Marijn</strong>: kijk</p>'
+                "<p><strong>Marijn</strong>: kijk</p>"
                 '<div class="message_inline_image">'
                 '<a href="/user_uploads/2/ab/cd/foo.png" title="foo.png">'
                 '<img src="/user_uploads/thumbnail/2/ab/cd/foo.png/840x560.webp"/>'
-                '</a></div>'
+                "</a></div>"
             ),
         }
     ]
@@ -115,9 +115,7 @@ def test_post_prefixes_user_name(config: ZulipConfig) -> None:
     )
 
     assert msg_id == 99
-    client.send_message.assert_called_once_with(
-        "teelt", "42", "**Marijn**: hallo wereld"
-    )
+    client.send_message.assert_called_once_with("teelt", "42", "**Marijn**: hallo wereld")
 
 
 def test_post_uses_guest_by_default(config: ZulipConfig) -> None:

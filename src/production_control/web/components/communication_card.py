@@ -49,9 +49,7 @@ def _messages_block(lot: Any, current_user_name: str) -> None:
         _render_pinned_remark(lot)
 
         if not messages:
-            ui.label("Nog geen berichten in deze topic.").classes(
-                "text-sm text-gray-500"
-            )
+            ui.label("Nog geen berichten in deze topic.").classes("text-sm text-gray-500")
             return
 
         for message in messages:
@@ -79,9 +77,11 @@ def render_communication_card(lot: Any) -> None:
         _messages_block(lot, user_name)
 
         with ui.row().classes("w-full items-end gap-2 mt-3 flex-nowrap"):
-            textarea = ui.textarea(placeholder="Schrijf een bericht…").props(
-                "outlined autogrow dense"
-            ).classes("flex-1")
+            textarea = (
+                ui.textarea(placeholder="Schrijf een bericht…")
+                .props("outlined autogrow dense")
+                .classes("flex-1")
+            )
 
             def on_send() -> None:
                 content = (textarea.value or "").strip()
@@ -96,9 +96,9 @@ def render_communication_card(lot: Any) -> None:
                 textarea.value = ""
                 _messages_block.refresh()
 
-            ui.button(icon="send", on_click=on_send).props(
+            ui.button(icon="send", on_click=on_send).props("dense flat color=primary").tooltip(
+                "Verstuur"
+            )
+            ui.button(icon="refresh", on_click=lambda: _messages_block.refresh()).props(
                 "dense flat color=primary"
-            ).tooltip("Verstuur")
-            ui.button(
-                icon="refresh", on_click=lambda: _messages_block.refresh()
-            ).props("dense flat color=primary").tooltip("Vernieuwen")
+            ).tooltip("Vernieuwen")

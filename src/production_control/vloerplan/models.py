@@ -84,9 +84,7 @@ class Vloerplan19cm(SQLModel, table=True):
         default=None,
         title="Uit Cel",
         description="Geplande datum uit cel",
-        sa_column=Column(
-            "datum_uit_cel_plan_opm", DateFromTimestamp(), info={"ui_sortable": True}
-        ),
+        sa_column=Column("datum_uit_cel_plan_opm", DateFromTimestamp(), info={"ui_sortable": True}),
     )
 
     opmerking: Optional[str] = Field(

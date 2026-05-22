@@ -62,9 +62,7 @@ class Vloerplan19cmRepository(DremioRepository[Vloerplan19cm]):
     def get_by_id(self, id: int) -> Optional[Vloerplan19cm]:
         with Session(self.engine) as session:
             # text() because Dremio Flight doesn't support parameterized queries
-            return session.exec(
-                select(Vloerplan19cm).where(text(f"id = {id}"))
-            ).first()
+            return session.exec(select(Vloerplan19cm).where(text(f"id = {id}"))).first()
 
     _PENDING_SYNC_WHERE = (
         "tuin_nr_plan IS NOT NULL AND "

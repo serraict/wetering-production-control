@@ -45,9 +45,7 @@ class ZulipClient:
                 )
             return self._client
 
-    def get_messages_in_topic(
-        self, stream: str, topic: str, limit: int
-    ) -> List[Dict[str, Any]]:
+    def get_messages_in_topic(self, stream: str, topic: str, limit: int) -> List[Dict[str, Any]]:
         """Return the most recent `limit` messages in `stream`/`topic`, oldest first."""
         sdk = self._get_sdk()
         request = {
@@ -62,9 +60,7 @@ class ZulipClient:
         }
         result = sdk.get_messages(request)
         if result.get("result") != "success":
-            raise ZulipClientError(
-                f"Zulip get_messages failed: {result.get('msg', result)}"
-            )
+            raise ZulipClientError(f"Zulip get_messages failed: {result.get('msg', result)}")
         return result.get("messages", [])
 
     def send_message(self, stream: str, topic: str, content: str) -> int:
@@ -79,9 +75,7 @@ class ZulipClient:
             }
         )
         if result.get("result") != "success":
-            raise ZulipClientError(
-                f"Zulip send_message failed: {result.get('msg', result)}"
-            )
+            raise ZulipClientError(f"Zulip send_message failed: {result.get('msg', result)}")
         return int(result["id"])
 
 

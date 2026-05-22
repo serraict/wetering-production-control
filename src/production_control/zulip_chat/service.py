@@ -104,9 +104,7 @@ def get_messages(
     cli, cfg = _client_and_config(client, config)
     topic = topic_name_for(lot)
     try:
-        raw_messages = cli.get_messages_in_topic(
-            cfg.stream, topic, cfg.message_history_limit
-        )
+        raw_messages = cli.get_messages_in_topic(cfg.stream, topic, cfg.message_history_limit)
     except ZulipClientError as e:
         raise ZulipServiceError(str(e)) from e
     return [_to_message(m, site=cfg.site) for m in raw_messages]
@@ -137,9 +135,7 @@ def post(
         raise ZulipServiceError(str(e)) from e
 
 
-def narrow_url(
-    lot: Any, *, config: Optional[ZulipConfig] = None
-) -> str:
+def narrow_url(lot: Any, *, config: Optional[ZulipConfig] = None) -> str:
     """Return a URL into the Zulip web client narrowed to this lot's topic."""
     cfg = config or get_zulip_config()
     if not cfg.site:

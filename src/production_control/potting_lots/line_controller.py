@@ -102,8 +102,9 @@ class PottingLineController:
                 if attempt < self.retry_attempts - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
 
-        logger.error("failed to set line %d active partij after %d attempts",
-                     line, self.retry_attempts)
+        logger.error(
+            "failed to set line %d active partij after %d attempts", line, self.retry_attempts
+        )
         return False
 
     async def get_active_lot(self, line: int) -> Optional[int]:
@@ -124,8 +125,9 @@ class PottingLineController:
                 if attempt < self.retry_attempts - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
 
-        logger.error("failed to read line %d active partij after %d attempts",
-                     line, self.retry_attempts)
+        logger.error(
+            "failed to read line %d active partij after %d attempts", line, self.retry_attempts
+        )
         return None
 
     async def initialize_lines(self) -> bool:

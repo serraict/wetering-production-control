@@ -230,7 +230,10 @@ async def supervise(name: str, run) -> None:
             elapsed = loop.time() - started
             logger.warning(
                 "%s: connection closed cleanly after %.0fs (attempt %d); reconnecting in %ds",
-                name, elapsed, attempt, delay,
+                name,
+                elapsed,
+                attempt,
+                delay,
             )
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
@@ -238,8 +241,13 @@ async def supervise(name: str, run) -> None:
             elapsed = loop.time() - started
             logger.warning(
                 "%s: %s after %.0fs (attempt %d/%d): %r; reconnecting in %ds",
-                name, type(exc).__name__, elapsed, attempt, RECONNECT_MAX_ATTEMPTS,
-                exc, delay,
+                name,
+                type(exc).__name__,
+                elapsed,
+                attempt,
+                RECONNECT_MAX_ATTEMPTS,
+                exc,
+                delay,
             )
 
         if elapsed >= RECONNECT_RESET_AFTER_S:
@@ -248,7 +256,9 @@ async def supervise(name: str, run) -> None:
         elif attempt >= RECONNECT_MAX_ATTEMPTS:
             logger.error(
                 "%s: giving up after %d consecutive failures within %.0fs",
-                name, attempt, loop.time() - started,
+                name,
+                attempt,
+                loop.time() - started,
             )
             return
 

@@ -129,9 +129,7 @@ class MonitorApp(App):
 
         plc_handler = StateHandler("plc", self.state)
         self._tasks.append(
-            asyncio.create_task(
-                supervise("plc", partial(run_plc, plc_handler)), name="plc"
-            )
+            asyncio.create_task(supervise("plc", partial(run_plc, plc_handler)), name="plc")
         )
 
         if self._leuze_enabled:
@@ -161,7 +159,9 @@ class MonitorApp(App):
         if self._leuze_enabled:
             self._refresh_pane("leuze", "Leuze (10.0.0.191)", header_keys=(), now=now)
 
-    def _refresh_pane(self, source: str, label: str, header_keys: tuple[str, ...], now: datetime) -> None:
+    def _refresh_pane(
+        self, source: str, label: str, header_keys: tuple[str, ...], now: datetime
+    ) -> None:
         rows = sorted(
             (r for (src, _), r in self.state.items() if src == source),
             key=lambda r: r.name,

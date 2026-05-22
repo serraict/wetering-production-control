@@ -10,7 +10,6 @@ a random topic so they don't interfere with real conversations.
 
 from __future__ import annotations
 
-import os
 import uuid
 from dataclasses import dataclass
 
@@ -57,9 +56,7 @@ def test_post_and_read_back(configured_client: ZulipClient, throwaway_lot: FakeL
     )
     assert msg_id > 0
 
-    messages = zulip_service.get_messages(
-        throwaway_lot, client=configured_client, config=cfg
-    )
+    messages = zulip_service.get_messages(throwaway_lot, client=configured_client, config=cfg)
     assert messages, "expected at least one message in the freshly created topic"
     assert any(body in m.content_html for m in messages)
     assert any("pytest" in m.content_html for m in messages)

@@ -49,9 +49,4 @@ def test_env_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_is_configured_requires_credentials() -> None:
     mgr = ZulipConfigManager()
     assert mgr.is_configured(ZulipConfig()) is False
-    assert (
-        mgr.is_configured(
-            ZulipConfig(site="x", bot_email="b", bot_api_key="k")
-        )
-        is True
-    )
+    assert mgr.is_configured(ZulipConfig(site="x", bot_email="b", bot_api_key="k")) is True

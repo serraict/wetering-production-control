@@ -243,9 +243,7 @@ async def run_protocol(
         handler = ScanCycleHandler()
     if stop_event is None:
         stop_event = asyncio.Event()
-    plc_task = asyncio.create_task(
-        _plc_loop(handler, plc_ready, stop_event), name="protocol-plc"
-    )
+    plc_task = asyncio.create_task(_plc_loop(handler, plc_ready, stop_event), name="protocol-plc")
     leuze_task = asyncio.create_task(
         _leuze_loop(handler, leuze_ready, stop_event), name="protocol-leuze"
     )

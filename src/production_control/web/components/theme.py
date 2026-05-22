@@ -28,8 +28,7 @@ def frame(navigation_title: str):
     )
 
     with ui.header().classes(
-        "w-full px-2 sm:px-6 py-2 bg-primary flex flex-nowrap "
-        "justify-between items-center gap-2"
+        "w-full px-2 sm:px-6 py-2 bg-primary flex flex-nowrap " "justify-between items-center gap-2"
     ):
         # Left section: Navigation menu
         with ui.row().classes("items-center gap-8 flex-nowrap shrink-0"):

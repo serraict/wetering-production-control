@@ -1,7 +1,6 @@
 """Inspectie page implementation."""
 
 import os
-from datetime import date
 from typing import Dict, Any, List
 import httpx
 
@@ -380,9 +379,9 @@ def create_afwijking_actions(repository: InspectieRepository, changes_state=None
 
             row_data = e.args.get("row", {})
             current_afwijking = row_data.get("afwijking_afleveren", 0) or 0
-            current_datum = _parse_date(
-                row_data.get("datum_afleveren_plan_raw")
-            ) or _parse_date(row_data.get("datum_afleveren_plan"))
+            current_datum = _parse_date(row_data.get("datum_afleveren_plan_raw")) or _parse_date(
+                row_data.get("datum_afleveren_plan")
+            )
             if current_datum is None:
                 ui.notify("Geen datum beschikbaar voor wijziging", type="negative")
                 return

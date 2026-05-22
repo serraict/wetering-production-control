@@ -31,9 +31,9 @@ logger = logging.getLogger(__name__)
 
 # Fixed node set — subscribing to the full tree trips BadEncodingLimitsExceeded.
 LEUZE_NODES: dict[str, str] = {
-    "LastScanData":      "ns=5;i=6122",   # protocol: scanned value
-    "ScanActive":        "ns=5;i=6199",   # debug:    scanning on/off
-    "DeviceTemperature": "ns=5;i=6116",   # debug:    sanity / health
+    "LastScanData": "ns=5;i=6122",  # protocol: scanned value
+    "ScanActive": "ns=5;i=6199",  # debug: scanning on/off
+    "DeviceTemperature": "ns=5;i=6116",  # debug: sanity / health
 }
 
 

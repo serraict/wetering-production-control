@@ -21,9 +21,7 @@ def test_apply_delta_entries_are_visible_to_inspectie_page():
     assert storage[STORAGE_KEY]["27014"]["new_afwijking"] == 2
     assert storage[STORAGE_KEY]["27014"]["new_datum"] == "2025-10-12"
 
-    with patch(
-        "production_control.web.pages.inspectie.get_storage", return_value=storage
-    ):
+    with patch("production_control.web.pages.inspectie.get_storage", return_value=storage):
         commands = get_pending_commands()
 
     assert len(commands) == 1

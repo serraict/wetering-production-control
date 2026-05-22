@@ -112,6 +112,7 @@ def render_klant_afleverdatum_card(lot: PottingLot, inspectie: InspectieRonde | 
     When there is no matching InspectieRonde the action column is omitted
     and the date shows '-'.
     """
+
     @ui.refreshable
     def card() -> None:
         storage = get_storage()
@@ -128,9 +129,9 @@ def render_klant_afleverdatum_card(lot: PottingLot, inspectie: InspectieRonde | 
                         change = get_pending_change(storage, inspectie.code)
                         if change:
                             new_datum = parse_date(change.get("new_datum")) or original
-                            ui.label(
-                                f"{format_date(original)} → {format_date(new_datum)}"
-                            ).classes(VAL_STYLE_DIRTY)
+                            ui.label(f"{format_date(original)} → {format_date(new_datum)}").classes(
+                                VAL_STYLE_DIRTY
+                            )
                         else:
                             ui.label(format_date(original)).classes(VAL_STYLE)
 
