@@ -11,18 +11,15 @@ firmware (V2.4.0); the fixed list is intentional.
 from __future__ import annotations
 
 import logging
-import os
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, load_der_public_key
 from cryptography.x509 import load_der_x509_certificate
 
-from asyncua import Client, ua
 from asyncua.crypto import uacrypto
-from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 
+from .config import build_client, require_env
 from .monitor import (  # noqa: F401 — re-exporting nothing, importing for shared types
-    DEFAULT_APP_URI,
     SUBSCRIPTION_INTERVAL_MS,
     JsonlHandler,
 )
@@ -105,32 +102,14 @@ uacrypto.load_certificate = _lenient_load_certificate
 # -----------------------------------------------------------------------------
 
 
-def _env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        raise RuntimeError(f"missing env var: {name}")
-    return value
-
-
 async def run_leuze(handler) -> None:
     """One Leuze connection lifetime: connect, subscribe, feed the given
     handler. Reconnects are handled by the outer supervisor.
 
     `handler` is reused across reconnect attempts."""
 
-    url = _env("VINEAPP_OPCUA_LEUZE_URL")
-    client = Client(url=url)
-    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
-    client.set_user(_env("VINEAPP_OPCUA_LEUZE_USER"))
-    client.set_password(_env("VINEAPP_OPCUA_LEUZE_PASSWORD"))
-    await client.set_security(
-        SecurityPolicyBasic256Sha256,
-        certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
-        private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
-        mode=ua.MessageSecurityMode.SignAndEncrypt,
-    )
-
-    logger.info("connecting to %s", url)
+    client = await build_client("leuze")
+    logger.info("connecting to %s", require_env("VINEAPP_OPCUA_LEUZE_URL"))
     async with client:
         nodes = []
         for name, nid in LEUZE_NODES.items():
