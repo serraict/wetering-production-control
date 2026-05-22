@@ -51,6 +51,41 @@ so the production node-id strings didn't resolve. Fix: register two
 padding namespaces (`urn:opc-test:padding-2/3`) before the real ones so
 the indexes line up with prod. See `PADDING_NAMESPACES` in the script.
 
+### Omron NX rejects writes with any timestamp populated
+
+asyncua's convenience form `node.write_value(value, varianttype)`
+wraps the value in a `DataValue` and **auto-sets `SourceTimestamp` to
+`datetime.now()`** (see `asyncua/common/ua_utils.py:value_to_datavalue`).
+The Omron NX OPC UA server rejects any WriteValue request that has
+`SourceTimestamp`, `ServerTimestamp`, or `StatusCode` populated, with
+`BadWriteNotSupported: The server does not support writing the
+combination of value, status and timestamps provided.`
+
+Observed in prod 2026-05-22: the operator activating a partij in the
+web UI failed after three retries. Behave suite didn't catch it because
+asyncua's own test server accepts the timestamped writes.
+
+Fix: pre-build the DataValue at every PLC write call site. The pattern
+that works against this Omron is:
+
+```python
+dv = ua.DataValue(ua.Variant(value, ua.VariantType.Int32))
+await node.write_value(dv)        # pre-built — asyncua leaves it alone
+```
+
+Not this:
+
+```python
+await node.write_value(value, ua.VariantType.Int32)  # auto-stamps
+```
+
+Two call sites: `PottingLineController.set_active_lot` and
+`ScanCycleHandler._write`. Regression guard:
+`tests/opcua/test_omron_write_compatibility.py` captures the actual
+DataValue passed to `write_value` and asserts no timestamps. The
+working reference is `scripts/write_plc.py`, which always used the
+pre-built form.
+
 ### `uawrite` type names are lowercase
 
 `-t String` errors out (`invalid choice 'String'`). Use `-t string`,

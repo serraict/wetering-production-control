@@ -82,7 +82,12 @@ class ScanCycleHandler:
     async def _write(self, partij: int) -> None:
         try:
             assert self._plc_write_node is not None
-            await self._plc_write_node.write_value(partij, ua.VariantType.Int32)
+            # Pre-build the DataValue so asyncua doesn't auto-set
+            # SourceTimestamp; the Omron NX server rejects writes with
+            # BadWriteNotSupported when any timestamp/status field is
+            # populated.
+            dv = ua.DataValue(ua.Variant(partij, ua.VariantType.Int32))
+            await self._plc_write_node.write_value(dv)
             logger.info("wrote partij %d to ScanResultaat", partij)
         except Exception:  # pragma: no cover — surfaced in logs
             logger.exception("write to ScanResultaat failed")

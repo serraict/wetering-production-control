@@ -71,7 +71,12 @@ class PottingLineController:
         for attempt in range(self.retry_attempts):
             try:
                 async with self._get_connected_client() as client:
-                    await client.get_node(node_id).write_value(lot_id, ua.VariantType.Int32)
+                    # Pre-build the DataValue so asyncua doesn't auto-set
+                    # SourceTimestamp; the Omron NX server rejects writes
+                    # with BadWriteNotSupported when any timestamp/status
+                    # field is populated.
+                    dv = ua.DataValue(ua.Variant(lot_id, ua.VariantType.Int32))
+                    await client.get_node(node_id).write_value(dv)
                     logger.info("set line %d active partij to %d", line, lot_id)
                     return True
             except Exception as exc:
