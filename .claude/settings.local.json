@@ -9,13 +9,13 @@
       "WebFetch(domain:nicegui.io)",
       "Bash(gh run list:*)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit *)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "fibery"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
