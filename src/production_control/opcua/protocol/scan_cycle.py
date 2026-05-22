@@ -154,9 +154,11 @@ async def _leuze_loop(
     stop_event: asyncio.Event,
 ) -> None:
     if config.current_mode() == "secure":
-        # Side-effect import: installs the LenientCertificate workaround for
-        # the real Leuze's malformed server cert. Skipped in none-mode (the
-        # test server has a well-formed cert and we don't want the patch).
+        # Load-bearing side-effect import: leuze.py's module body monkey-patches
+        # asyncua.crypto.uacrypto so the TLS handshake survives the real Leuze's
+        # malformed server cert (firmware V2.4.0). Skipped in none-mode — the
+        # test server has a well-formed cert and we don't want the patch active.
+        # Regression-guarded by tests/opcua/test_leuze.py.
         from .. import leuze  # noqa: F401
     client = await build_client("leuze")
     url = require_env("VINEAPP_OPCUA_LEUZE_URL")
