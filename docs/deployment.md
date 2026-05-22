@@ -83,7 +83,7 @@ list — copy it and fill in real values.
 | `VINEAPP_OPCUA_CLIENT_CERT`    | Path (in container) to client cert (DER).                       |
 | `VINEAPP_OPCUA_CLIENT_KEY`     | Path (in container) to client private key (PEM).                |
 | `VINEAPP_OPCUA_CLIENT_APP_URI` | Optional. Default `urn:serra:production-control-client`. Must ≤44 chars and match the SAN URI in the client cert (Omron limit). |
-| `VINEAPP_OPCUA_SECURITY`       | `none` disables SignAndEncrypt (test only). Default: secure.    |
+| `VINEAPP_OPCUA_SECURITY`       | `none` → anonymous + NoSecurity, no creds/cert needed (only `*_URL` vars required). Anything else (default) → user/pwd + Basic256Sha256_SignAndEncrypt with the cert/key above. Contract enforced in [`opcua/config.py`](../src/production_control/opcua/config.py). |
 | `VINEAPP_OPCUA_MONITOR_LOG_DIR`| Reserved for monitor v4 (file logging); unused today.           |
 
 ### Zulip
@@ -202,19 +202,13 @@ docker compose run --rm opcua_test python scripts/write_plc.py --clear
 
 ## Local development
 
-```sh
-uv sync                                       # install deps
-uv run production-control                     # run the web app
-uv run python scripts/opc_test_server.py      # fake PLC/Leuze on :4840
-uv run python -m production_control.opcua.monitor  # against the fake server
-```
-
-For the fake server set `VINEAPP_OPCUA_PLC_URL=opc.tcp://127.0.0.1:4840`
-and `VINEAPP_OPCUA_SECURITY=none`; the test server accepts anonymous
-connections.
+See [`development.md`](development.md) for the dev setup, test commands,
+and running the app/monitor in test mode against
+`scripts/opc_test_server.py`.
 
 ## Related
 
+- Local dev + test mode: [`development.md`](development.md).
 - Protocol contract: [`protocol.md`](protocol.md).
 - System architecture: [`architecture.md`](architecture.md).
 - Field-test status and on-site notes:
