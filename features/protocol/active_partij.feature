@@ -12,3 +12,14 @@ Feature: Active partij publication (PC tells OS which lots are live)
   Scenario: Operator activates a partij on line 2
     When the operator activates partij 67890 on line 2
     Then PC writes 67890 to ActievePartijnummer2
+
+  Scenario: Operator deactivates a line
+    Given partij 12345 is active on line 1
+    When the operator deactivates line 1
+    Then PC writes 0 to ActievePartijnummer1
+
+  Scenario: Lines are independent
+    Given partij 12345 is active on line 1
+    When the operator activates partij 67890 on line 2
+    Then PC writes 12345 to ActievePartijnummer1
+    And PC writes 67890 to ActievePartijnummer2

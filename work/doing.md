@@ -287,7 +287,7 @@ failing step has at most 3 things to debug.
 
 - [x] Add `behave` to dev deps (`uv add --dev behave` → behave 1.3.3).
 
-- [ ] **Preconditions — test server + scan parser.** No scenarios yet.
+- [x] **Preconditions — test server + scan parser.** No scenarios yet.
   - Update `scripts/opc_test_server.py`: new node tree (per Design),
     OS sim, configurable ack delay (`OPC_TEST_OS_ACK_DELAY_MS`).
     Sanity check with `uv run python scripts/opc_test_server.py`.
@@ -295,7 +295,7 @@ failing step has at most 3 things to debug.
     in `tests/opcua/test_scan_parser.py`. Cases: valid URL, trailing
     slash, non-int suffix, wrong path, garbage, empty.
 
-- [ ] **First scenario — minimal scan-cycle handler.**
+- [x] **First scenario — minimal scan-cycle handler.**
   - `src/production_control/opcua/protocol/scan_cycle.py` with the
     handler skeleton (subscribe Leuze + PLC, write on datachange).
     Reuse `monitor.run_plc` / `leuze.run_leuze` for connection lifecycle.
@@ -308,20 +308,20 @@ failing step has at most 3 things to debug.
   - **Scenarios landed (1):**
     1. `scan_cycle`: *PC publishes a parsed partij when the guard allows*
 
-- [ ] **Scan-cycle: OS-ack and guard-fail.**
+- [x] **Scan-cycle: OS-ack and guard-fail.**
   - Extend `pc_steps.py` with the "OS resets ScanResultaat to 0" and
     "PC does not write" / "PC logs at WARNING" steps.
   - **Scenarios landed (2):**
     1. `scan_cycle`: *Successive scans cycle through OS acknowledgement*
     2. `scan_cycle`: *PC drops a scan while the previous one is still unread*
 
-- [ ] **Scan-cycle: duplicates.**
+- [x] **Scan-cycle: duplicates.**
   - No new step vocabulary — should pass on existing steps once the
     handler is correct. If it doesn't, fix the handler, not the test.
   - **Scenarios landed (1):**
     1. `scan_cycle`: *A duplicate scan after OS ack writes again*
 
-- [ ] **`PottingLineController` NodeId update + first active-partij
+- [x] **`PottingLineController` NodeId update + first active-partij
       scenarios.**
   - Replace `_node_ids` map (drop `line{N}_os_active` + `last_updated`
     after grep-confirming nothing reads them).
@@ -335,7 +335,7 @@ failing step has at most 3 things to debug.
     1. `active_partij`: *Operator activates a partij on line 1*
     2. `active_partij`: *Operator activates a partij on line 2*
 
-- [ ] **Active-partij: deactivation and independence.**
+- [x] **Active-partij: deactivation and independence.**
   - **Scenarios landed (2):**
     1. `active_partij`: *Operator deactivates a line*
     2. `active_partij`: *Lines are independent*

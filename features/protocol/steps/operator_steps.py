@@ -5,7 +5,7 @@ directly (same call ActivePottingLotService makes in production).
 Keeps the test focused on the OPC contract.
 """
 
-from behave import when
+from behave import given, when
 
 from production_control.config.opc_config import OPCConfig
 from production_control.potting_lots.line_controller import PottingLineController
@@ -31,5 +31,17 @@ def _run(coro):
 
 @when("the operator activates partij {partij:d} on line {line:d}")
 def step_operator_activates(context, partij, line):
+    success = _run(_controller(context).set_active_lot(line, partij))
+    assert success, f"set_active_lot({line}, {partij}) failed"
+
+
+@when("the operator deactivates line {line:d}")
+def step_operator_deactivates(context, line):
+    success = _run(_controller(context).set_active_lot(line, 0))
+    assert success, f"set_active_lot({line}, 0) failed"
+
+
+@given("partij {partij:d} is active on line {line:d}")
+def step_given_partij_active(context, partij, line):
     success = _run(_controller(context).set_active_lot(line, partij))
     assert success, f"set_active_lot({line}, {partij}) failed"
