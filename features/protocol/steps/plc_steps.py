@@ -11,6 +11,7 @@ from asyncua import Client, ua
 from behave import given, then
 
 from production_control.opcua.protocol import PLC_SCAN_RESULTAAT_NODEID
+from production_control.potting_lots.line_controller import ACTIVE_PARTIJ_NODEIDS
 
 ENDPOINT = "opc.tcp://127.0.0.1:4840"
 
@@ -60,3 +61,12 @@ def step_plc_reports_scan_resultaat(context, value):
 def step_pc_writes_scan_resultaat(context, value):
     _wait_for_scan_resultaat(value)
     context.expected_scan_resultaat = value
+
+
+@then("PC writes {value:d} to ActievePartijnummer{line:d}")
+def step_pc_writes_active_partij(context, value, line):
+    node_id = ACTIVE_PARTIJ_NODEIDS[line]
+    actual = int(asyncio.run(_read(node_id)))
+    assert actual == value, (
+        f"expected ActievePartijnummer{line}={value}, got {actual}"
+    )

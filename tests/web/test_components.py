@@ -92,7 +92,8 @@ async def test_menu_shows_navigation_links(user: User) -> None:
     assert menu_button.elements  # Menu button should exist
 
     # Verify menu items exist (they're in the DOM, just not visible until clicked)
-    # 6 main items (Home, Bollen Picklist, Oppotlijst, Wijderzetten, Inspectie Ronde, Info)
+    # 7 main items (Home, Bollen Picklist, Oppotlijst, Wijderzetten,
+    #   Inspectieronde, Uitrijden, Info)
     # + 2 submenu items under Info (Producten, About)
     menu_items = user.find(ui.menu_item).elements
-    assert len(menu_items) == 8
+    assert len(menu_items) == 9

@@ -10,18 +10,21 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture
 def controller():
-    """Create controller instance for testing."""
+    """Create controller instance for testing.
+
+    Test server runs on opc.tcp://127.0.0.1:4840 with NoSecurity. See
+    scripts/opc_test_server.py — boot it before running integration
+    tests, e.g. `make opc-server` in another terminal.
+    """
     from production_control.config.opc_config import OPCConfig
 
-    # Use test configuration
     test_config = OPCConfig(
-        endpoint="opc.tcp://127.0.0.1:4840",  # uaserver default endpoint
+        endpoint="opc.tcp://127.0.0.1:4840",
         connection_timeout=5,
         retry_attempts=2,
-        retry_delay=0.1,  # Faster retries for tests
+        retry_delay=0.1,
     )
-
-    return PottingLineController(config=test_config)
+    return PottingLineController(config=test_config, secure=False)
 
 
 @pytest.mark.asyncio
@@ -80,7 +83,7 @@ async def test_connection_failure():
         retry_attempts=2,
         retry_delay=0.1,
     )
-    controller = PottingLineController(config=test_config)
+    controller = PottingLineController(config=test_config, secure=False)
 
     # Should fail to connect after retries
     success = await controller.get_active_lot(1)
