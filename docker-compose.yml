@@ -10,7 +10,12 @@ services:
 
   ontstapelaar_protocol:
     image: ghcr.io/serraict/wetering-production-control:latest
-    command: ["python", "-m", "production_control.opcua.protocol"]
+    # Override the image's ENTRYPOINT (docker-entrypoint.sh) — that
+    # script hardcodes "start the web app + tail webapp.log" and ignores
+    # any CMD args. We want this container to run the protocol handler
+    # in the foreground so compose log capture and restart policy work
+    # against the right process.
+    entrypoint: ["python", "-m", "production_control.opcua.protocol"]
     env_file:
       - .env
     restart: unless-stopped

@@ -188,7 +188,9 @@ and different lifecycle.
 # add to docker-compose.yml on serraserver
 ontstapelaar_protocol:
   image: ghcr.io/serraict/wetering-production-control:latest
-  command: ["python", "-m", "production_control.opcua.protocol"]
+  # Override the image ENTRYPOINT — docker-entrypoint.sh hardcodes
+  # the web app and ignores CMD args.
+  entrypoint: ["python", "-m", "production_control.opcua.protocol"]
   env_file: .env
   volumes:
     - certs:/app/certs:ro
