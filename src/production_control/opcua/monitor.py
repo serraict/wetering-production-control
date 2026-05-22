@@ -17,10 +17,10 @@ import os
 import sys
 from datetime import datetime, timezone
 
-from asyncua import Client, Node, ua
-from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+from asyncua import Node, ua
 
-DEFAULT_APP_URI = "urn:serra:production-control-client"
+from .config import build_client, require_env
+
 MAX_BROWSE_DEPTH = 20
 SUBSCRIPTION_INTERVAL_MS = 500
 
@@ -87,14 +87,6 @@ def _jsonable(value):
     return str(value)
 
 
-def _env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        print(f"missing env var: {name}", file=sys.stderr)
-        sys.exit(2)
-    return value
-
-
 async def discover_variables(
     root: Node,
     *,
@@ -145,15 +137,6 @@ async def discover_variables(
     return found
 
 
-def _build_client(url: str, *, secure: bool) -> Client:
-    client = Client(url=url)
-    client.application_uri = os.environ.get("VINEAPP_OPCUA_CLIENT_APP_URI", DEFAULT_APP_URI)
-    if secure:
-        client.set_user(_env("VINEAPP_OPCUA_PLC_USER"))
-        client.set_password(_env("VINEAPP_OPCUA_PLC_PASSWORD"))
-    return client
-
-
 async def run_plc(handler) -> None:
     """One PLC connection lifetime: connect, discover, subscribe, feed the
     given handler. Reconnects are handled by `supervise`.
@@ -161,18 +144,8 @@ async def run_plc(handler) -> None:
     `handler` is reused across reconnect attempts — must be safe to call
     `.register(node, name)` repeatedly (JsonlHandler is; StateHandler should
     be too)."""
-    url = _env("VINEAPP_OPCUA_PLC_URL")
-    secure = os.environ.get("VINEAPP_OPCUA_SECURITY", "").lower() != "none"
-    client = _build_client(url, secure=secure)
-    if secure:
-        await client.set_security(
-            SecurityPolicyBasic256Sha256,
-            certificate=_env("VINEAPP_OPCUA_CLIENT_CERT"),
-            private_key=_env("VINEAPP_OPCUA_CLIENT_KEY"),
-            mode=ua.MessageSecurityMode.SignAndEncrypt,
-        )
-
-    logger.info("connecting to %s", url)
+    client = await build_client("plc")
+    logger.info("connecting to %s", require_env("VINEAPP_OPCUA_PLC_URL"))
     async with client:
         objects = client.nodes.objects
         # Walk each top-level subtree with its own `seen` set (for cycle

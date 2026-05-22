@@ -26,6 +26,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Vertical
 from textual.widgets import DataTable, Footer, Header, Static
 
+from . import config
 from .monitor import run_plc, supervise
 
 logger = logging.getLogger("opcua_tui")
@@ -185,25 +186,22 @@ class MonitorApp(App):
             tbl.add_row(row.name, _value_str(row.value), _ago(row.received_at, now))
 
 
-REQUIRED_ENV_VARS = (
-    "VINEAPP_OPCUA_PLC_URL",
-    "VINEAPP_OPCUA_PLC_USER",
-    "VINEAPP_OPCUA_PLC_PASSWORD",
-    "VINEAPP_OPCUA_LEUZE_URL",
-    "VINEAPP_OPCUA_LEUZE_USER",
-    "VINEAPP_OPCUA_LEUZE_PASSWORD",
-    "VINEAPP_OPCUA_CLIENT_CERT",
-    "VINEAPP_OPCUA_CLIENT_KEY",
-)
-
-
 def cli() -> None:
     # Preflight before Textual grabs the alternate screen; otherwise a
     # missing env var fails inside an asyncio task and the message is
-    # wiped when the screen is restored.
-    missing = [name for name in REQUIRED_ENV_VARS if not os.environ.get(name)]
+    # wiped when the screen is restored. Ask config for the exact list
+    # so VINEAPP_OPCUA_SECURITY=none only requires the URLs.
+    mode = config.current_mode()
+    required = [
+        *config.required_env_for(mode, "plc"),
+        *config.required_env_for(mode, "leuze"),
+    ]
+    missing = [name for name in required if not os.environ.get(name)]
     if missing:
-        print("opc-monitor: missing required env vars:", file=sys.stderr)
+        print(
+            f"opc-monitor: missing required env vars (VINEAPP_OPCUA_SECURITY={mode}):",
+            file=sys.stderr,
+        )
         for name in missing:
             print(f"  {name}", file=sys.stderr)
         print("See docs/deployment.md for what each var should hold.", file=sys.stderr)
