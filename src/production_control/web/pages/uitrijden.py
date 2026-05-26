@@ -1,7 +1,8 @@
 """Uitrijden page implementation."""
 
 import os
-from typing import Dict, Any
+from datetime import date, timedelta
+from typing import Any, Dict, Iterable, List, Set
 
 import httpx
 from nicegui import APIRouter, ui
@@ -15,20 +16,31 @@ from ..components.model_detail_page import (
     display_model_detail_page,
 )
 from ..components.model_list_page import display_model_list_page
+from ..components.table_utils import format_date
 
 
 router = APIRouter(prefix="/uitrijden")
+
+SYNC_RECENT_DAYS = 7
 
 
 def get_repository() -> Vloerplan19cmRepository:
     return Vloerplan19cmRepository()
 
 
-async def sync_to_olsthoorn() -> Dict[str, Any]:
-    """Write tuin_nr_plan to TEELTPL.TUINNUMMER for every mismatching row."""
-    pending = get_repository().get_pending_olsthoorn_sync()
+def default_sync_selection(rows: Iterable[Vloerplan19cm], today: date) -> Set[int]:
+    """Ids checked by default: rows with a known oppotdatum older than SYNC_RECENT_DAYS."""
+    cutoff = today - timedelta(days=SYNC_RECENT_DAYS)
+    return {
+        row.id
+        for row in rows
+        if row.datum_oppot_plan is not None and row.datum_oppot_plan <= cutoff
+    }
 
-    if not pending:
+
+async def sync_to_olsthoorn(rows: List[Vloerplan19cm]) -> Dict[str, Any]:
+    """Write tuin_nr_plan to TEELTPL.TUINNUMMER for each row in `rows`."""
+    if not rows:
         return {"success": True, "message": "Geen wijzigingen nodig"}
 
     port = int(os.getenv("NICEGUI_PORT", "8080"))
@@ -38,7 +50,7 @@ async def sync_to_olsthoorn() -> Dict[str, Any]:
     errors = []
     success_count = 0
     async with httpx.AsyncClient(base_url=api_base_url) as client:
-        for row in pending:
+        for row in rows:
             try:
                 response = await client.post(
                     api_url,
@@ -71,11 +83,69 @@ class _PendingState:
         return str(self.count) if self.count > 0 else ""
 
 
+async def _confirm_sync_selection(pending: List[Vloerplan19cm]) -> List[Vloerplan19cm]:
+    """Show the confirmation dialog. Returns rows the user wants to sync (empty if cancelled)."""
+    selected: Set[int] = default_sync_selection(pending, date.today())
+
+    def _toggle(row_id: int, checked: bool) -> None:
+        if checked:
+            selected.add(row_id)
+        else:
+            selected.discard(row_id)
+
+    with ui.dialog() as dialog, ui.card().classes("w-full max-w-3xl"):
+        ui.label("Sync naar Olsthoorn").classes("text-xl font-bold")
+        ui.label(
+            f"{len(pending)} regels met afwijkende tuin. "
+            f"Lots opgepot in de laatste {SYNC_RECENT_DAYS} dagen staan standaard uit."
+        ).classes("text-sm text-gray-600")
+
+        with ui.scroll_area().classes("w-full").style("max-height: 60vh; min-height: 240px"):
+            with ui.grid(columns=5).classes("w-full items-center gap-x-4 gap-y-1"):
+                ui.label("").classes("font-bold")
+                ui.label("Lot id").classes("font-bold")
+                ui.label("Oppotdatum").classes("font-bold")
+                ui.label("Tuin plan").classes("font-bold")
+                ui.label("Tuin Olsthoorn").classes("font-bold")
+                for row in pending:
+                    cb = ui.checkbox(value=row.id in selected)
+                    cb.on_value_change(lambda e, rid=row.id: _toggle(rid, bool(e.value)))
+                    ui.label(str(row.id))
+                    ui.label(format_date(row.datum_oppot_plan))
+                    ui.label(str(row.tuin_nr_plan) if row.tuin_nr_plan is not None else "-")
+                    ui.label(
+                        str(row.tuin_nr_olsthoorn) if row.tuin_nr_olsthoorn is not None else "-"
+                    )
+
+        with ui.row().classes("w-full justify-end gap-2"):
+            ui.button("Annuleer", on_click=lambda: dialog.submit(False)).props("flat")
+            ui.button(
+                "Sync",
+                icon="sync",
+                color="primary",
+                on_click=lambda: dialog.submit(True),
+            )
+
+    accepted = await dialog
+    if not accepted:
+        return []
+    return [row for row in pending if row.id in selected]
+
+
 async def handle_sync_click(button, pending_state: _PendingState) -> None:
+    pending = get_repository().get_pending_olsthoorn_sync()
+    if not pending:
+        ui.notify("Geen wijzigingen nodig", type="positive")
+        return
+
+    rows_to_sync = await _confirm_sync_selection(pending)
+    if not rows_to_sync:
+        return
+
     button.disable()
     button.props("loading")
     try:
-        result = await sync_to_olsthoorn()
+        result = await sync_to_olsthoorn(rows_to_sync)
         ui.notify(result["message"], type="positive" if result["success"] else "negative")
         pending_state.count = get_repository().count_pending_olsthoorn_sync()
     finally:

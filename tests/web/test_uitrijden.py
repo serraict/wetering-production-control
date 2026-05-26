@@ -1,12 +1,42 @@
 """Tests for the uitrijden web page."""
 
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 from nicegui import ui
 from nicegui.testing import User
 
 from production_control.vloerplan.models import Vloerplan19cm
+from production_control.web.pages.uitrijden import (
+    SYNC_RECENT_DAYS,
+    default_sync_selection,
+)
+
+
+def _row(id: int, datum_oppot_plan):
+    return Vloerplan19cm(
+        id=id,
+        tuin_nr_plan=1,
+        tuin_nr_olsthoorn=2,
+        datum_oppot_plan=datum_oppot_plan,
+    )
+
+
+def test_default_sync_selection_deselects_recent_pottings():
+    """Rows potted in the last SYNC_RECENT_DAYS days are off by default."""
+    today = date(2026, 5, 26)
+    cutoff = today - timedelta(days=SYNC_RECENT_DAYS)
+
+    rows = [
+        _row(1, today),
+        _row(2, today - timedelta(days=1)),
+        _row(3, cutoff),
+        _row(4, cutoff - timedelta(days=1)),
+        _row(5, None),
+    ]
+
+    selected = default_sync_selection(rows, today)
+    assert selected == {3, 4}
 
 
 async def test_uitrijden_page_shows_table(user: User) -> None:
