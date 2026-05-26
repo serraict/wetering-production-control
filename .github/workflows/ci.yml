@@ -34,4 +34,4 @@ jobs:
 
       - name: Run quality checks and tests with coverage
         run: |
-          make quality
+          make quality-verbose

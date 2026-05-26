@@ -97,7 +97,17 @@ quality:
 	uv run flake8 src tests
 	uv run black --check src tests
 	@echo "Running tests with coverage..."
-	uv run pytest --cov=src/production_control --cov-report=term --cov-report=xml  -m "not integration"
+	uv run pytest -q --cov=src/production_control --cov-report=xml -m "not integration"
+	@echo "Running OS↔PC protocol behave suite..."
+	uv run behave --format progress --logging-level WARNING features/protocol
+	@echo "Code quality checks completed."
+
+quality-verbose:
+	@echo "Running code quality checks (verbose)..."
+	uv run flake8 src tests
+	uv run black --check src tests
+	@echo "Running tests with coverage..."
+	uv run pytest --cov=src/production_control --cov-report=term --cov-report=xml -m "not integration"
 	@echo "Running OS↔PC protocol behave suite..."
 	uv run behave features/protocol
 	@echo "Code quality checks completed."
