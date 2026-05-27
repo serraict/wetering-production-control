@@ -2,97 +2,138 @@
 
 ## Context
 
-Several list pages render a row "view" button via
-`create_model_view_action` in `web/components/model_detail_page.py` and
-pass it through `row_actions={"view": ...}` to
-`display_model_list_page`. `potting_lots.py` already extends the pattern
-with a sibling `create_label_action` ("label"). A few list pages now
-correspond to records that also have a scan-page route
-(`potting_lots.py: @router.page("/scan/{id}")`,
-`bulb_picklist.py: @router.page("/scan/{id}")`), and `inspectie.py`
-already builds the same potting-lots scan URL by hand.
+The `ontstapelaar_protocol` container holds two long-lived OPC/UA
+subscriptions (PLC + Leuze, each wrapped in `supervise(..., max_attempts=None)`
+in `src/production_control/opcua/protocol/scan_cycle.py`). When a device
+goes unreachable today, the supervisor logs reconnect attempts but
+nothing surfaces outside the container — there is no signal Prometheus
+can scrape.
 
-Right now, getting to a row's scan page from the list means navigating
-away manually. We want it one click from the row.
+Prometheus is already running elsewhere in the stack. The cheapest way
+to feed it a per-device up/down signal is a Docker `HEALTHCHECK` on the
+`ontstapelaar_protocol` service, exposed to Prometheus via whatever
+container-state exporter is already wired up.
+
+A naïve healthcheck that opens its own OPC session every 30s would
+double-connect against the Omron (and the Leuze, which is already
+fragile around session limits — see [[opcua_test_compose_service_pattern]]
+and the LenientCertificate notes in MEMORY.md). Instead: the daemon
+writes a heartbeat file per role while its subscription is live; the
+healthcheck reads `mtime`.
 
 ## Goals
 
-Per-row "scan" action shown next to the existing view button on every
-list page whose rows correspond to a record with a scan page.
+A Docker `HEALTHCHECK` on `ontstapelaar_protocol` that reports
+`unhealthy` when either the PLC or Leuze subscription has been down for
+more than a configurable threshold. No second OPC session opened by
+the check itself.
 
 ## Acceptance criteria
 
-- [x] New `create_scan_action(...)` helper in
-      `web/components/model_detail_page.py`, mirroring the shape of
-      `create_model_view_action` (returns `{"icon", "handler"}`).
-- [x] Wired into `row_actions` on potting_lots, inspectie,
-      bulb_picklist, spacing, and uitrijden list pages — all five
-      route through `potting_lot_scan` because every list's row is a
-      potting lot under the hood.
-- [x] Tests in `tests/web/test_scan_action.py` cover the helper
-      contract + the route-name contract for both `potting_lot_scan`
-      and `bulb_picklist_scan`.
+- [x] Each supervised loop in `protocol/scan_cycle.py` touches a
+      per-role heartbeat file (`/tmp/opcua-plc.alive`,
+      `/tmp/opcua-leuze.alive`) every ~10s while its subscription is
+      live, and stops touching it on disconnect / shutdown.
+- [x] New `src/production_control/opcua/healthcheck.py` exits 0 when
+      both heartbeat files exist and `mtime` is within the freshness
+      threshold; exits non-zero otherwise. Prints which device is
+      stale on stderr so `docker inspect` shows the reason.
+- [x] `HEALTHCHECK` block added to the `ontstapelaar_protocol` service
+      in `docker-compose.yml`. Not added to `Dockerfile` — the image's
+      default entrypoint runs the web app, not the protocol daemon,
+      so a Dockerfile-level HEALTHCHECK would be misleading on `docker
+      run` of the same image.
+- [x] Unit tests in `tests/opcua/test_healthcheck.py` cover: both
+      fresh → exit 0; one stale → exit non-zero with the role named;
+      missing file → exit non-zero. Use a tmp_path-based heartbeat
+      directory injected via env var so the test doesn't touch
+      `/tmp`.
 - [x] `make quality` green.
 
 ## Design
 
-- Helper signature draft:
+### Heartbeat write
+
+- New `src/production_control/opcua/heartbeat.py` with a tiny helper:
   ```python
-  def create_scan_action(scan_url_for: Callable[[Any], str]) -> dict:
-      return {
-          "icon": "qr_code_scanner",  # matches theme.py scanner button
-          "handler": lambda e: ui.navigate.to(scan_url_for(e.args.get("key"))),
-      }
+  HEARTBEAT_DIR = os.environ.get("VINEAPP_OPCUA_HEARTBEAT_DIR", "/tmp")
+  HEARTBEAT_INTERVAL_S = 10
+
+  def path_for(role: str) -> Path:
+      return Path(HEARTBEAT_DIR) / f"opcua-{role}.alive"
+
+  async def beat_while_alive(role: str, stop_event: asyncio.Event) -> None:
+      """Touch the role's heartbeat file every HEARTBEAT_INTERVAL_S
+      seconds until stop_event fires."""
   ```
-- Callers build the URL using `router.url_path_for(...)` per
-  [URL construction in web pages] memory — e.g.
-  `create_scan_action(lambda id: router.url_path_for("potting_lot_scan", id=id))`.
-  This intentionally diverges from `create_model_view_action`'s
-  hardcoded `detail_url="{id}"` pattern; refactoring the older helper
-  is out of scope here.
-- Icon: `qr_code_scanner` (same as the global scanner button in
-  `web/components/theme.py`) so the affordance reads consistently.
-- For pages whose scan URL lives on a different router
-  (inspectie → potting-lots scan), pass the right router into
-  `url_path_for`. Confirm each route name during implementation.
+- In `protocol/scan_cycle.py::_plc_loop` and `_leuze_loop`, replace
+  `await stop_event.wait()` with `asyncio.gather(beat_while_alive(role, stop_event), stop_event.wait())`
+  (or run the beat as a task alongside the existing wait). The
+  heartbeat starts only after `ready.set()` so we don't flap a green
+  signal during the initial connect.
+- On supervised disconnect / exception, the beat task is cancelled and
+  the file goes stale on its own. No explicit "delete file on error"
+  step — simpler, and naturally captures "process alive but
+  reconnecting" as `unhealthy`.
+
+### Healthcheck script
+
+- `python -m production_control.opcua.healthcheck`. ~30 lines.
+- Reads `HEARTBEAT_DIR` and a `VINEAPP_OPCUA_HEARTBEAT_MAX_AGE_S`
+  (default 30s — 3× interval, gives one missed beat of slack).
+- For each role in `("plc", "leuze")`: check the file exists and
+  `time.time() - mtime < max_age`. Collect failures, print
+  `unhealthy: plc stale (last beat 47s ago)` on stderr, exit 1.
+- Reuses the same env var for the dir so docker-compose only sets it
+  once.
+
+### docker-compose wiring
+
+```yaml
+ontstapelaar_protocol:
+  ...
+  healthcheck:
+    test: ["CMD", "python", "-m", "production_control.opcua.healthcheck"]
+    interval: 30s
+    timeout: 5s
+    retries: 2
+    start_period: 60s
+```
+
+`start_period` is generous because the secure-mode handshake against
+the real Leuze (with LenientCertificate kicking in) can take a few
+seconds, plus reconnect backoff if the first connect fails.
+
+### Prometheus side (out of this slice)
+
+Whatever already scrapes Docker (cadvisor / docker-state-exporter)
+will pick up `container_health_status` automatically. Confirm with
+the user which exporter exists before we add any dashboard /
+alerting rules — that's the next slice if we want one.
 
 ## Implementation steps
 
-- [x] Add `create_scan_action` to
-      `web/components/model_detail_page.py` and a unit test for the
-      handler (mock `ui.navigate.to`, assert it's called with the URL
-      `scan_url_for` returned).
-- [x] Wire `"scan": create_scan_action(...)` into `row_actions` on
-      `potting_lots.py`, `inspectie.py`, `bulb_picklist.py`. Verify
-      each route name with the actual `@router.page` decorator.
-- [x] Audit `spacing.py` and `uitrijden.py`; add if applicable, note
-      and skip if not.
-- [x] Add focused web tests asserting the route names the scan
-      actions depend on (`potting_lot_scan`, `bulb_picklist_scan`).
+- [x] Add `opcua/heartbeat.py` with `path_for` + `beat_while_alive`
+      and unit tests.
+- [x] Wire `beat_while_alive("plc", stop_event)` into `_plc_loop`
+      after `ready.set()`; same for leuze. Cleanup in `finally`
+      cancels the beat task and awaits it before sub.delete().
+- [x] Add `opcua/healthcheck.py` + `tests/opcua/test_healthcheck.py`.
+- [x] Add `HEALTHCHECK` to `ontstapelaar_protocol` in
+      `docker-compose.yml`. Compose-only (see acceptance criteria
+      note).
 - [x] `make quality`.
+- [ ] Manual verify against the test setup: bring up the daemon,
+      `docker inspect --format '{{.State.Health.Status}}'
+      wetering-production-control_ontstapelaar_protocol_1` reports
+      `healthy`; kill the Leuze container (or block the IP)
+      and watch it flip to `unhealthy` within ~60s. **← user to do.**
 
-## Capture
+## Open questions
 
-- Open question from the design ("does `e.args["key"]` give the
-  right value for every list?") resolved cleanly:
-  `display_model_list_page` always uses `row_key="id"` and
-  `table_utils.format_row` always puts the model's PK value under the
-  `"id"` key — regardless of whether the actual PK field is `id`
-  (potting_lots, bulb_picklist) or `code` (inspectie). So the lambda
-  only needs `e.args["key"]`, no special-case extractor.
-- Inspectie reuses the potting-lots scan URL because its records have
-  no scan route of their own. Importing `potting_lots.router` at
-  module top would form a cycle (potting_lots → scan → inspectie), so
-  the import is lazy inside `inspectie_page()`. Documented in-line.
-- All five list pages (potting_lots, inspectie, bulb_picklist,
-  spacing, uitrijden) route through `view_batch` on the scan router —
-  every list's primary key is a potting-lot id under the hood.
-  Confirmed mid-slice by the user. Saved a memory entry so future-me
-  doesn't ask again.
-- First wired to `potting_lot_scan` (the canonical
-  `/potting-lots/scan/{id}` URL); user reported "back twice to get to
-  the list" — that route is a server-side `ui.navigate.to(...)`
-  redirect, so the intermediate URL ends up in browser history before
-  the actual `view_batch` page does. Switched all five row actions to
-  navigate directly to `view_batch`. The `potting_lot_scan` route
-  stays for external barcode scans / the OPC protocol URL.
+- Which container-state exporter is feeding Prometheus today
+  (cadvisor / docker-state-exporter / something else)? Determines
+  the metric name to alert on but doesn't block this slice.
+- Should the heartbeat threshold be tighter (e.g. 20s) so a single
+  missed reconnect attempt counts as unhealthy? Default 30s is
+  forgiving; can tune after we see real reconnect timing in prod.

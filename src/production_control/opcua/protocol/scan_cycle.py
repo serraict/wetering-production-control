@@ -15,6 +15,7 @@ from asyncua import Node, ua
 
 from .. import config
 from ..config import build_client, require_env
+from ..heartbeat import beat_while_alive
 from ..monitor import supervise
 from .scan_parser import parse_scan
 
@@ -118,9 +119,15 @@ async def _plc_loop(
         logger.info("subscribed to ScanResultaat")
         if ready is not None:
             ready.set()
+        beat = asyncio.create_task(beat_while_alive("plc", stop_event))
         try:
             await stop_event.wait()
         finally:
+            beat.cancel()
+            try:
+                await beat
+            except (asyncio.CancelledError, Exception):  # pragma: no cover
+                pass
             try:
                 await sub.delete()
             except Exception:  # pragma: no cover
@@ -185,9 +192,15 @@ async def _leuze_loop(
         logger.info("subscribed to LastScanData (timestamp-trigger)")
         if ready is not None:
             ready.set()
+        beat = asyncio.create_task(beat_while_alive("leuze", stop_event))
         try:
             await stop_event.wait()
         finally:
+            beat.cancel()
+            try:
+                await beat
+            except (asyncio.CancelledError, Exception):  # pragma: no cover
+                pass
             try:
                 await sub.delete()
             except Exception:  # pragma: no cover

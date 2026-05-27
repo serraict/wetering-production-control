@@ -19,6 +19,15 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    healthcheck:
+      # Reads heartbeat files written by each supervised OPC loop; flips
+      # to unhealthy if either subscription is stale. Does NOT open its
+      # own OPC session (the Omron and Leuze don't love extra sessions).
+      test: ["CMD", "python", "-m", "production_control.opcua.healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 60s
     networks:
       - serra-vine
 
