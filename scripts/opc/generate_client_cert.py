@@ -5,9 +5,16 @@ asyncua.crypto.cert_gen.setup_self_signed_certificate builds the cert with
 the SAN URI matching the application URI, SAN DNS matching the hostname,
 and both clientAuth + serverAuth EKUs (Omron requires both).
 
+Defaults:
+    --out-dir   certs
+    --hostname  socket.gethostname() of the machine running the script
+    --app-uri   urn:serra:production-control (must match runtime
+                client.application_uri and be ≤44 chars for Omron)
+    --days      365
+
 Usage:
-    python scripts/opc/generate_client_cert.py
-    python scripts/opc/generate_client_cert.py --hostname serraserver --app-uri urn:serra:pc-client
+    python scripts/opc/generate_client_cert.py --days 3650
+    python scripts/opc/generate_client_cert.py --hostname serraserver --app-uri urn:serra:pc-client --days 3650
 """
 
 import argparse
