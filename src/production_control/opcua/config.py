@@ -27,7 +27,7 @@ from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
 SecurityMode = Literal["secure", "none"]
 Role = Literal["plc", "leuze"]
 
-DEFAULT_APP_URI = "urn:serra:production-control-client"
+DEFAULT_APP_URI = "urn:serra:production-control"
 
 _ROLE_ENV: dict[Role, dict[str, str]] = {
     "plc": {

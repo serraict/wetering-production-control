@@ -82,7 +82,7 @@ list — copy it and fill in real values.
 | `VINEAPP_OPCUA_LEUZE_PASSWORD` |                                                                |
 | `VINEAPP_OPCUA_CLIENT_CERT`    | Path (in container) to client cert (DER).                       |
 | `VINEAPP_OPCUA_CLIENT_KEY`     | Path (in container) to client private key (PEM).                |
-| `VINEAPP_OPCUA_CLIENT_APP_URI` | Optional. Default `urn:serra:production-control-client`. Must ≤44 chars and match the SAN URI in the client cert (Omron limit). |
+| `VINEAPP_OPCUA_CLIENT_APP_URI` | Optional. Default `urn:serra:production-control`. Must ≤44 chars and match the SAN URI in the client cert (Omron limit). |
 | `VINEAPP_OPCUA_SECURITY`       | `none` → anonymous + NoSecurity, no creds/cert needed (only `*_URL` vars required). Anything else (default) → user/pwd + Basic256Sha256_SignAndEncrypt with the cert/key above. Contract enforced in [`opcua/config.py`](../src/production_control/opcua/config.py). |
 | `VINEAPP_OPCUA_MONITOR_LOG_DIR`| Reserved for monitor v4 (file logging); unused today.           |
 
