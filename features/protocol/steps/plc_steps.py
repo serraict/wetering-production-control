@@ -10,7 +10,10 @@ import time
 from asyncua import Client, ua
 from behave import given, then
 
-from production_control.opcua.protocol import PLC_SCAN_RESULTAAT_NODEID
+from production_control.opcua.protocol import (
+    PLC_AANTAL_BOLLEN_NODEID,
+    PLC_SCAN_RESULTAAT_NODEID,
+)
 from production_control.potting_lots.line_controller import ACTIVE_PARTIJ_NODEIDS
 
 ENDPOINT = "opc.tcp://127.0.0.1:4840"
@@ -61,6 +64,28 @@ def step_plc_reports_scan_resultaat(context, value):
 def step_pc_writes_scan_resultaat(context, value):
     _wait_for_scan_resultaat(value)
     context.expected_scan_resultaat = value
+
+
+@then("AantalBollenPerKrat = {value:d}")
+def step_aantal_bollen_equals(context, value):
+    # Once ScanResultaat is non-zero, AantalBollenPerKrat must already
+    # hold the value paired with that scan — that's the write-order
+    # invariant. Reading here (after the wait_for_scan_resultaat step)
+    # observes the value the OS would see.
+    actual = int(asyncio.run(_read(PLC_AANTAL_BOLLEN_NODEID)))
+    assert actual == value, (
+        f"expected AantalBollenPerKrat={value}, got {actual}"
+    )
+    context.expected_aantal_bollen = value
+
+
+@then("PC does not write to AantalBollenPerKrat")
+def step_pc_does_not_write_aantal_bollen(context):
+    expected = getattr(context, "expected_aantal_bollen", 0)
+    actual = int(asyncio.run(_read(PLC_AANTAL_BOLLEN_NODEID)))
+    assert actual == expected, (
+        f"expected AantalBollenPerKrat to stay at {expected}, but it became {actual}"
+    )
 
 
 @then("PC writes {value:d} to ActievePartijnummer{line:d}")

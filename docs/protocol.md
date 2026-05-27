@@ -36,8 +36,15 @@ Connection settings come from `VINEAPP_OPCUA_*` env vars — see
 | Protocol name             | NodeId                                          | Type  | Writer                         |
 | ------------------------- | ----------------------------------------------- | ----- | ------------------------------ |
 | `last_scan_data`          | `ns=4;s=OPCScanner/fbOPC/ScanResultaat`         | int32 | PC writes, OS resets to 0      |
+| `aantal_bollen_per_krat`  | `ns=4;s=OPCScanner/fbOPC/AantalBollenPerKrat`   | int32 | PC writes (on scan ack)        |
 | `actieve_partij_nummer_1` | `ns=4;s=OPCScanner/fbOPC/ActievePartijnummer1`  | int32 | PC writes (on operator action) |
 | `actieve_partij_nummer_2` | `ns=4;s=OPCScanner/fbOPC/ActievePartijnummer2`  | int32 | PC writes (on operator action) |
+
+`aantal_bollen_per_krat` is the bulb count for the scanned partij. PC
+writes it on each scan ack, paired with `last_scan_data`. The value
+ultimately comes from the bollen-picklist (lookup TBD); until that lookup
+is wired, PC writes a constant `600` via a single function so the source
+can be swapped without touching the protocol layer.
 
 `0` is the sentinel: in `last_scan_data` it means "OS ready for new
 data"; in `actieve_partij_nummer_*` it means "no active partij".
@@ -50,15 +57,6 @@ data"; in `actieve_partij_nummer_*` it means "no active partij".
 
 Example payload: `https://pc.potlilium.serraict.me/potting-lots/scan/27246`.
 
-### Deferred / out of scope
-
-- `bolmaat` (int32, PC → OS, `0 = onbekend`) — listed in the protocol
-  draft; not exchanged in this iteration. The PLC already exposes a slot
-  for it as `AantalBollenPerKrat` (under `OPCScanner/fbOPC/`) — when
-  `bolmaat` lands, PC writes there.
-- `Ziftmaat1`, `Ziftmaat2`, `vDummy` — referenced in old notes but **not
-  exposed** by the production PLC. Do not read or write.
-
 ## Sequences
 
 ### Scan cycle (one krat)
@@ -70,6 +68,7 @@ OS                 PLC (PC)                 Leuze                 PC
  |  triggers scan ───────────────────────▶
  |                                          publishes LastScanData ─▶
  |                   reads last_scan_data 0 ◀────────────────────────  (guard)
+ |                   aantal_bollen_per_krat := lookup(parsed_partij) ◀ (PC writes)
  |                   last_scan_data := parsed_partij ◀─────────────── (PC writes)
  |  reads non-zero ◀
  |  decides vrijgave locally
@@ -78,6 +77,9 @@ OS                 PLC (PC)                 Leuze                 PC
 
 **Key invariant: PC only writes `last_scan_data` after observing it
 equals 0.** That guards against overwriting an unread scan.
+`aantal_bollen_per_krat` is written *before* `last_scan_data` in the
+same ack, so OS sees a consistent pair when it reads the non-zero
+scan result.
 
 ### Active partij update (operator-driven)
 

@@ -69,13 +69,40 @@ async def test_line_controller_does_not_send_timestamps(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_scan_cycle_write_does_not_send_timestamps():
-    write_mock = AsyncMock()
-    fake_node = MagicMock()
-    fake_node.write_value = write_mock
+    scan_write = AsyncMock()
+    scan_node = MagicMock()
+    scan_node.write_value = scan_write
+
+    bollen_write = AsyncMock()
+    bollen_node = MagicMock()
+    bollen_node.write_value = bollen_write
 
     handler = ScanCycleHandler()
-    handler._plc_write_node = fake_node
+    handler._plc_write_node = scan_node
+    handler._plc_aantal_bollen_node = bollen_node
 
     await handler._write(27246)
 
-    _assert_omron_safe(_captured_datavalue(write_mock))
+    _assert_omron_safe(_captured_datavalue(scan_write))
+    _assert_omron_safe(_captured_datavalue(bollen_write))
+
+
+@pytest.mark.asyncio
+async def test_scan_cycle_writes_aantal_bollen_before_scan_resultaat():
+    """OS must never observe a non-zero ScanResultaat without the paired
+    AantalBollenPerKrat already in place. Enforce write order at the
+    callsite."""
+    order: list[str] = []
+
+    scan_node = MagicMock()
+    scan_node.write_value = AsyncMock(side_effect=lambda dv: order.append("scan"))
+    bollen_node = MagicMock()
+    bollen_node.write_value = AsyncMock(side_effect=lambda dv: order.append("bollen"))
+
+    handler = ScanCycleHandler()
+    handler._plc_write_node = scan_node
+    handler._plc_aantal_bollen_node = bollen_node
+
+    await handler._write(27246)
+
+    assert order == ["bollen", "scan"], f"unexpected write order: {order}"

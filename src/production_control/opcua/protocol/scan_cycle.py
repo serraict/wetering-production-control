@@ -24,7 +24,18 @@ logger = logging.getLogger("opcua_protocol")
 SUBSCRIPTION_INTERVAL_MS = 500
 
 PLC_SCAN_RESULTAAT_NODEID = "ns=4;s=OPCScanner/fbOPC/ScanResultaat"
+PLC_AANTAL_BOLLEN_NODEID = "ns=4;s=OPCScanner/fbOPC/AantalBollenPerKrat"
 LEUZE_LAST_SCAN_NODEID = "ns=5;i=6122"
+
+
+def bollen_per_krat_for(partij: int) -> int:
+    """Bulb count to publish for `partij` alongside ScanResultaat.
+
+    Real source is the bollen-picklist; lookup not yet wired. Single
+    seam so the protocol write path doesn't change when the lookup
+    arrives.
+    """
+    return 600
 
 
 class ScanCycleHandler:
@@ -37,11 +48,14 @@ class ScanCycleHandler:
     def __init__(self) -> None:
         self._last_scan_resultaat: int = 0
         self._plc_write_node: Node | None = None
+        self._plc_aantal_bollen_node: Node | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
 
     def register(self, node: Node, name: str) -> None:
         if node.nodeid.to_string() == PLC_SCAN_RESULTAAT_NODEID:
             self._plc_write_node = node
+        elif node.nodeid.to_string() == PLC_AANTAL_BOLLEN_NODEID:
+            self._plc_aantal_bollen_node = node
 
     def attach_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         # asyncua's notification thread isn't the loop's thread, so we
@@ -77,7 +91,11 @@ class ScanCycleHandler:
                 self._last_scan_resultaat,
             )
             return
-        if self._plc_write_node is None or self._loop is None:
+        if (
+            self._plc_write_node is None
+            or self._plc_aantal_bollen_node is None
+            or self._loop is None
+        ):
             logger.error("scan dropped: handler not fully wired")
             return
         asyncio.run_coroutine_threadsafe(self._write(partij), self._loop)
@@ -85,15 +103,24 @@ class ScanCycleHandler:
     async def _write(self, partij: int) -> None:
         try:
             assert self._plc_write_node is not None
+            assert self._plc_aantal_bollen_node is not None
             # Pre-build the DataValue so asyncua doesn't auto-set
             # SourceTimestamp; the Omron NX server rejects writes with
             # BadWriteNotSupported when any timestamp/status field is
             # populated.
-            dv = ua.DataValue(ua.Variant(partij, ua.VariantType.Int32))
-            await self._plc_write_node.write_value(dv)
-            logger.info("wrote partij %d to ScanResultaat", partij)
+            # Order matters: paired information fields must be valid
+            # by the time OS observes a non-zero ScanResultaat — so
+            # write AantalBollenPerKrat first, then ScanResultaat.
+            bollen = bollen_per_krat_for(partij)
+            await self._plc_aantal_bollen_node.write_value(
+                ua.DataValue(ua.Variant(bollen, ua.VariantType.Int32))
+            )
+            await self._plc_write_node.write_value(
+                ua.DataValue(ua.Variant(partij, ua.VariantType.Int32))
+            )
+            logger.info("wrote partij %d (AantalBollenPerKrat=%d) to PLC", partij, bollen)
         except Exception:  # pragma: no cover — surfaced in logs
-            logger.exception("write to ScanResultaat failed")
+            logger.exception("write to PLC failed")
 
 
 async def _plc_loop(
@@ -107,6 +134,8 @@ async def _plc_loop(
     async with client:
         node = client.get_node(PLC_SCAN_RESULTAAT_NODEID)
         handler.register(node, "ScanResultaat")
+        aantal_node = client.get_node(PLC_AANTAL_BOLLEN_NODEID)
+        handler.register(aantal_node, "AantalBollenPerKrat")
         handler.attach_loop(asyncio.get_running_loop())
         # Seed the guard with the current value before subscribing.
         try:

@@ -5,29 +5,39 @@ Feature: Scan cycle (PC acknowledges scans from OS)
   0. OS resets the field to 0 once it has read the value; the guard
   protects against overwriting an unread scan.
 
+  When the scan is acknowledged, PC also writes paired information
+  fields (currently AantalBollenPerKrat) *before* ScanResultaat, so OS
+  sees a consistent set whenever the scan result becomes non-zero.
+
   Background:
     Given the PLC reports ScanResultaat = 0
 
   Scenario: PC publishes a parsed partij when the guard allows
     When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
     Then PC writes 27246 to ScanResultaat
+    And AantalBollenPerKrat = 600
 
   Scenario: Successive scans cycle through OS acknowledgement
     When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
     Then PC writes 27246 to ScanResultaat
+    And AantalBollenPerKrat = 600
     When OS resets ScanResultaat to 0
     And a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27247"
     Then PC writes 27247 to ScanResultaat
+    And AantalBollenPerKrat = 600
 
   Scenario: PC drops a scan while the previous one is still unread
     Given the PLC reports ScanResultaat = 27246
     When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27247"
     Then PC does not write to ScanResultaat
+    And PC does not write to AantalBollenPerKrat
     And PC logs "scan dropped: guard not zero" at WARNING
 
   Scenario: A duplicate scan after OS ack writes again
     When a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
     Then PC writes 27246 to ScanResultaat
+    And AantalBollenPerKrat = 600
     When OS resets ScanResultaat to 0
     And a scan arrives with payload "https://pc.potlilium.serraict.me/potting-lots/scan/27246"
     Then PC writes 27246 to ScanResultaat
+    And AantalBollenPerKrat = 600
