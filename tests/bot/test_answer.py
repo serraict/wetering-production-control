@@ -188,6 +188,25 @@ def test_injected_now_flows_into_system_prompt(tmp_path):
     assert "2026-05-28" in content
 
 
+def test_system_prompt_warns_against_week_string_matching(tmp_path):
+    """Rule added to head off the Mistral 'oppot_week = '2026-W17'' failure."""
+    captured: list[dict] = []
+
+    def fake_chat(**kwargs):
+        captured.append(kwargs)
+        return _fake_response(content="ok")
+
+    answer.answer(
+        "anything",
+        llm_chat=fake_chat,
+        audit_path=str(tmp_path / "audit.jsonl"),
+        now=date(2026, 5, 28),
+    )
+    content = captured[0]["messages"][0]["content"]
+    assert "BETWEEN DATE" in content
+    assert "Do not string-match" in content
+
+
 def test_system_prompt_names_all_three_languages(tmp_path):
     """The language rule must explicitly name Dutch, English, and Polish."""
     captured: list[dict] = []

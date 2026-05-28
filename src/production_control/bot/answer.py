@@ -42,6 +42,14 @@ Rules:
 - When you talk about dates or periods in your reply, use ISO 8601
   week date notation (`YYYY-Www-D`, where day 1 is Monday) regardless
   of reply language.
+- For week-based filtering, filter on the actual date column
+  (e.g. `oppot_datum`) with a `BETWEEN DATE 'YYYY-MM-DD' AND DATE
+  'YYYY-MM-DD'` range. Do not string-match a `*_week` column against
+  ISO week labels — week columns are free-text and rarely contain
+  ISO formats. The current week's Monday–Sunday bounds are in the
+  Current date section above; for other weeks, compute the bounds
+  yourself. Each overview below ships an example query showing the
+  canonical date column to use.
 - After you have the data, give a short answer (1-3 sentences) above
   the data table.
 """

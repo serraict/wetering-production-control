@@ -27,6 +27,48 @@ OVERVIEWS: list[Type[SQLModel]] = [
     WijderzetRegistratie,
 ]
 
+# Per-overview example queries. The sample date range (W01-2024,
+# Mon 2024-01-01 to Sun 2024-01-07) is intentionally non-current so
+# the model copies the shape, not the values; the current-week
+# bounds are in the temporal context block. Each example references
+# the canonical date column so the model doesn't try to string-match
+# a `*_week` column against an ISO label.
+EXAMPLES: dict[Type[SQLModel], str] = {
+    PottingLot: (
+        'SELECT "id", "naam", "aantal_pot" '
+        'FROM "Productie.Oppotten"."oppotlijst" '
+        "WHERE \"oppot_datum\" BETWEEN DATE '2024-01-01' AND DATE '2024-01-07' "
+        'ORDER BY "aantal_pot" DESC LIMIT 10'
+    ),
+    BulbPickList: (
+        'SELECT "id", "ras", "aantal_bollen" '
+        'FROM "Productie.Oppotten"."bollen_pick_lijst" '
+        "WHERE \"oppot_datum\" BETWEEN DATE '2024-01-01' AND DATE '2024-01-07' "
+        'ORDER BY "aantal_bollen" DESC LIMIT 10'
+    ),
+    InspectieRonde: (
+        'SELECT "code", "klant_code", "product_naam", "aantal_in_kas" '
+        'FROM "Verkoop"."inspectie_ronde" '
+        "WHERE \"datum_afleveren_plan\" BETWEEN DATE '2024-01-01' AND DATE '2024-01-07' "
+        'ORDER BY "datum_afleveren_plan" LIMIT 10'
+    ),
+    Product: (
+        'SELECT "id", "name", "product_group_name" '
+        'FROM "Vines"."products" '
+        "WHERE LOWER(\"name\") LIKE '%lily%' LIMIT 10"
+    ),
+    Vloerplan19cm: (
+        'SELECT * FROM "Productie.Plan"."vloerplan_19cm" '
+        "WHERE \"datum_oppot_plan\" BETWEEN DATE '2024-01-01' AND DATE '2024-01-07' "
+        "LIMIT 10"
+    ),
+    WijderzetRegistratie: (
+        'SELECT * FROM "Productie.Controle"."registratie_controle" '
+        "WHERE \"datum_oppotten_real\" BETWEEN DATE '2024-01-01' AND DATE '2024-01-07' "
+        "LIMIT 10"
+    ),
+}
+
 
 def _full_table(model: Type[SQLModel]) -> str:
     """Return the fully-qualified Dremio view name in quoted form."""
@@ -68,7 +110,8 @@ def _render_overview(model: Type[SQLModel]) -> str:
         lines.append(f"  - `{col.name}` {sql_type}{nullable}{suffix}")
 
     lines.append("")
-    lines.append(f"Example: `SELECT * FROM {table} LIMIT 10`")
+    example = EXAMPLES.get(model, f"SELECT * FROM {table} LIMIT 10")
+    lines.append(f"Example: `{example}`")
     return "\n".join(lines)
 
 
