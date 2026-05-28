@@ -11,7 +11,8 @@ import json
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Optional
+from datetime import date, datetime, timedelta
+from typing import Any, Callable, List, Optional, Union
 
 from sqlalchemy import Engine
 
@@ -31,7 +32,16 @@ Rules:
   double-quoted schema + table, e.g. "Productie.Oppotten"."oppotlijst".
 - Prefer concrete queries (with WHERE / ORDER BY / GROUP BY) over
   SELECT *.
-- Reply in the user's language; default to Dutch.
+- Detect whether the user wrote in Dutch, English, or Polish, and
+  reply in the same language. Default to Dutch if the language is
+  unclear or mixed.
+- The "Current date" section below tells you today's date; use it to
+  resolve relative phrases such as "deze week" / "this week" /
+  "w tym tygodniu", "vorig jaar" / "last year", "afgelopen maand",
+  etc.
+- When you talk about dates or periods in your reply, use ISO 8601
+  week date notation (`YYYY-Www-D`, where day 1 is Monday) regardless
+  of reply language.
 - After you have the data, give a short answer (1-3 sentences) above
   the data table.
 """
@@ -52,8 +62,34 @@ class AnswerResult:
     error: Optional[str] = None
 
 
-def _system_prompt() -> str:
-    return SYSTEM_RULES + "\n" + schema.render()
+def _temporal_context(now: Union[date, datetime]) -> str:
+    """Render today's date as an ISO 8601 week-date context block.
+
+    `date.isocalendar()` is the authority: weekday is 1=Mon..7=Sun per
+    ISO 8601, so no conversion math. The ISO year may differ from the
+    Gregorian year at year boundaries (e.g. 2025-12-29 is in 2026-W01);
+    we use the Gregorian year for "Current year" since that's what
+    everyday phrases like "dit jaar" mean.
+    """
+    if isinstance(now, datetime):
+        now = now.date()
+    iso_year, iso_week, iso_weekday = now.isocalendar()
+    week_label = f"{iso_year}-W{iso_week:02d}"
+    week_date = f"{week_label}-{iso_weekday}"
+    weekday_name = now.strftime("%A")
+    monday = now - timedelta(days=iso_weekday - 1)
+    sunday = monday + timedelta(days=6)
+    return (
+        "## Current date\n"
+        f"Today: {week_date} ({weekday_name}, {now.isoformat()})\n"
+        f"Current year: {now.year}\n"
+        f"Current week: {week_label} — {week_label}-1 ({monday.isoformat()}) "
+        f"through {week_label}-7 ({sunday.isoformat()})\n"
+    )
+
+
+def _system_prompt(now: Union[date, datetime]) -> str:
+    return SYSTEM_RULES + "\n" + _temporal_context(now) + "\n" + schema.render()
 
 
 def _count_rows(markdown: str) -> int:
@@ -85,13 +121,20 @@ def answer(
     engine: Optional[Engine] = None,
     llm_chat: Callable[..., Any] = llm.chat,
     audit_path: Optional[str] = None,
+    now: Optional[Union[date, datetime]] = None,
 ) -> AnswerResult:
-    """Answer a user question via the configured LLM and bot tools."""
+    """Answer a user question via the configured LLM and bot tools.
+
+    `now` lets tests inject a deterministic "today"; defaults to
+    `date.today()`.
+    """
     started = time.monotonic()
     model = llm.model_name()
+    if now is None:
+        now = date.today()
 
     messages: List[dict] = [
-        {"role": "system", "content": _system_prompt()},
+        {"role": "system", "content": _system_prompt(now)},
         {"role": "user", "content": question},
     ]
 

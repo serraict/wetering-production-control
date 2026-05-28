@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from types import SimpleNamespace
 
 import pytest
@@ -161,6 +162,50 @@ def test_audit_path_env_var(monkeypatch, tmp_path):
 
     answer.answer("x", llm_chat=fake_chat)
     assert p.exists()
+
+
+def test_injected_now_flows_into_system_prompt(tmp_path):
+    """A `now=...` kwarg into answer() reaches the LLM via the system message."""
+    captured: list[dict] = []
+
+    def fake_chat(**kwargs):
+        captured.append(kwargs)
+        return _fake_response(content="ok")
+
+    answer.answer(
+        "wat speelt er deze week?",
+        llm_chat=fake_chat,
+        audit_path=str(tmp_path / "audit.jsonl"),
+        now=date(2026, 5, 28),
+    )
+    system_msg = captured[0]["messages"][0]
+    assert system_msg["role"] == "system"
+    content = system_msg["content"]
+    # Week-date form of today + week bounds visible.
+    assert "2026-W22-4" in content
+    assert "2026-W22-1" in content
+    assert "2026-W22-7" in content
+    assert "2026-05-28" in content
+
+
+def test_system_prompt_names_all_three_languages(tmp_path):
+    """The language rule must explicitly name Dutch, English, and Polish."""
+    captured: list[dict] = []
+
+    def fake_chat(**kwargs):
+        captured.append(kwargs)
+        return _fake_response(content="ok")
+
+    answer.answer(
+        "anything",
+        llm_chat=fake_chat,
+        audit_path=str(tmp_path / "audit.jsonl"),
+        now=date(2026, 5, 28),
+    )
+    content = captured[0]["messages"][0]["content"]
+    assert "Dutch" in content
+    assert "English" in content
+    assert "Polish" in content
 
 
 def test_audit_record_has_iso_timestamp(tmp_path):
