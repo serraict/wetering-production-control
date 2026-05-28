@@ -21,7 +21,9 @@ def _print_banner() -> None:
     print(
         f"Wetering production_control bot — model: {llm.model_name()}\n"
         "Type a question and press Enter. Empty line or Ctrl-D to exit.\n"
-        "(stateless v1 — each question is independent)\n",
+        "(stateless v1 — each question is independent)\n"
+        "Switch model with BOT_MODEL=...; see "
+        "src/production_control/bot/llm.py::MODEL_EXAMPLES for suggestions.\n",
         flush=True,
     )
 
