@@ -4,10 +4,6 @@ Product increments to realize the product vision.
 
 - **PLC reconnect-under-load test.** Deferred until next on-site session with
   the PLC engineer.
-- **Longer-lived client cert.** `scripts/opc/generate_client_cert.py` uses
-  asyncua's `setup_self_signed_certificate` (hardcoded 365 days). Switch to
-  `generate_self_signed_app_certificate(..., days=3650)` and write key + DER
-  ourselves.
 - **Cert expiry warning.** Extend `scripts/opc/show_config.py` (or new script)
   to report `notBefore` / `notAfter` for `VINEAPP_OPCUA_CLIENT_CERT` and warn
   within N days. Wire into a serraserver cron/healthcheck.
@@ -17,8 +13,17 @@ Product increments to realize the product vision.
 - **PLC engineer Q's (next on-site).** (1) Is
   `DeviceStatus.ErrorStatus == "ContinuousError"` steady-state or a real fault?
   (2) What does `UnpublishedVariablesStatus` count — useful signal or noise?
-- **`aantal_bollen_per_krat` real source.** PC currently writes a constant
-  `600` via a single function. Replace with a lookup from the bollen-picklist
-  for the scanned partij. Verify the lookup path first (which table/field).
+- **`aantal_bollen_per_krat` real source.** PC currently writes a constant `600`
+  via a single function. Replace with a lookup from the bollen-picklist for the
+  scanned partij. Verify the lookup path first (which table/field).
 - the performance of the app does not seem to be great.\
   seem if we can find a way to monitor and improve
+- **Zulip insights bot — slice 2 (Zulip transport).** Add a FastAPI
+  `/zulip` outgoing-webhook endpoint wrapping `bot.answer(...)`. New
+  compose service. See ADR-0002.
+- **Zulip insights bot — slice 3 (per-topic memory).** Multi-turn
+  context keyed by `(stream, topic)`, capped by turn count and tokens.
+  `@bot reset` clears. See ADR-0002.
+- **Zulip insights bot — slice 4 (polish).** Result formatting (dates,
+  numbers, links back into the app), cost/latency dashboards from the
+  audit JSONL, optional auth scoping. See ADR-0002.

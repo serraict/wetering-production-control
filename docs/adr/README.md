@@ -23,3 +23,4 @@ routine implementation choices.
 ## Index
 
 - [0001 — Zulip-backed per-lot messaging](0001-zulip-messaging-backend.md)
+- [0002 — Zulip insights bot](0002-zulip-insights-bot.md)

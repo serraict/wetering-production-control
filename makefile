@@ -116,6 +116,12 @@ server:
 	@echo "Starting web server..."
 	uv run python -m production_control.__web__
 
+bot:
+	@echo "Starting bot console..."
+	uv run python -m production_control.bot.console
+
+bot-console: bot
+
 check-ci:
 	@echo "Checking CI workflow..."
 	uv run python scripts/check_workflow.py CI --watch
