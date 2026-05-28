@@ -18,9 +18,6 @@ Product increments to realize the product vision.
   scanned partij. Verify the lookup path first (which table/field).
 - the performance of the app does not seem to be great.\
   seem if we can find a way to monitor and improve
-- **Zulip insights bot — slice 2 (Zulip transport).** Add a FastAPI
-  `/zulip` outgoing-webhook endpoint wrapping `bot.answer(...)`. New
-  compose service. See ADR-0002.
 - **Zulip insights bot — slice 3 (per-topic memory).** Multi-turn
   context keyed by `(stream, topic)`, capped by turn count and tokens.
   `@bot reset` clears. See ADR-0002.
