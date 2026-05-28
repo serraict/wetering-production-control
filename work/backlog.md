@@ -22,10 +22,6 @@ Product increments to realize the product vision.
   for "this year" filters because the model has no temporal anchor.
   Inject today's date into the system prompt. Tiny fix; do before
   slice 2. See `work/notes/bot/zulipbot_v1_capture.md`.
-- **Zulip insights bot — investigate latency.** Smoke-run felt slow.
-  Instrument per-step timings in the audit JSONL, then triage:
-  OpenRouter hop, schema-in-prompt token cost, two-round-trip pattern,
-  or model choice. See `work/notes/bot/zulipbot_v1_capture.md`.
 - **Zulip insights bot — slice 2 (Zulip transport).** Add a FastAPI
   `/zulip` outgoing-webhook endpoint wrapping `bot.answer(...)`. New
   compose service. See ADR-0002.
@@ -35,3 +31,7 @@ Product increments to realize the product vision.
 - **Zulip insights bot — slice 4 (polish).** Result formatting (dates,
   numbers, links back into the app), cost/latency dashboards from the
   audit JSONL, optional auth scoping. See ADR-0002.
+- **Zulip insights bot — investigate latency.** Smoke-run felt slow.
+  Instrument per-step timings in the audit JSONL, then triage:
+  OpenRouter hop, schema-in-prompt token cost, two-round-trip pattern,
+  or model choice. See `work/notes/bot/zulipbot_v1_capture.md`.
