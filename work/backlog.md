@@ -18,6 +18,14 @@ Product increments to realize the product vision.
   scanned partij. Verify the lookup path first (which table/field).
 - the performance of the app does not seem to be great.\
   seem if we can find a way to monitor and improve
+- **Zulip insights bot — current date in system prompt.** v1 used 2025
+  for "this year" filters because the model has no temporal anchor.
+  Inject today's date into the system prompt. Tiny fix; do before
+  slice 2. See `work/notes/bot/zulipbot_v1_capture.md`.
+- **Zulip insights bot — investigate latency.** Smoke-run felt slow.
+  Instrument per-step timings in the audit JSONL, then triage:
+  OpenRouter hop, schema-in-prompt token cost, two-round-trip pattern,
+  or model choice. See `work/notes/bot/zulipbot_v1_capture.md`.
 - **Zulip insights bot — slice 2 (Zulip transport).** Add a FastAPI
   `/zulip` outgoing-webhook endpoint wrapping `bot.answer(...)`. New
   compose service. See ADR-0002.

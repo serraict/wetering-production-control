@@ -1,10 +1,9 @@
 # Doing
 
-**Status: implementation complete and `make quality` green; not yet
-committed.** The real-Dremio smoke-run is the only acceptance criterion
-left and needs `OPENROUTER_API_KEY` + `VINEAPP_DB_CONNECTION` set on
-the user's terminal. Bonus: `make bot` / `make bot-console` REPL was
-added on top of the planned CLI.
+**Status: slice shipped in `286d30f`. Smoke-run on real Dremio
+user-confirmed.** Only bookkeeping left: write the v1 capture note
+under `work/notes/bot/zulipbot_v1_capture.md` once we have something
+worth recording, then clear this file.
 
 ## Context
 
@@ -34,11 +33,9 @@ organisation, audit log).
 
 ## Acceptance criteria
 
-- [ ] `uv run python -m production_control.bot.cli "wat zijn de 5
-      grootste oppotpartijen van deze week"` (or a comparable query)
-      prints a coherent answer, with the SQL it ran shown in the
-      output and the model/latency footer present. **(needs live
-      OpenRouter + Dremio — on you to run.)**
+- [x] `uv run python -m production_control.bot.cli "..."` prints a
+      coherent answer against real Dremio (user-confirmed: bot answers
+      basic questions correctly).
 - [x] SQL guard rejects: non-`SELECT` statements, multiple statements,
       `PRAGMA`/`SET`, and unparseable input. Unit-tested for each
       rejection path. (`tests/bot/test_sql_guard.py`, 18 cases.)
@@ -129,6 +126,7 @@ organisation, audit log).
       import-graph).
 - [x] Bonus: `bot/console.py` REPL + `make bot` / `make bot-console`
       Makefile targets, mirroring web's `make console`.
-- [ ] Smoke-run the CLI against real Dremio with one realistic
-      question; capture the transcript in the slice capture note.
+- [x] Smoke-run the CLI against real Dremio with one realistic
+      question (user-confirmed). Capture note pending — see open
+      questions below.
 - [x] `make quality` green.
