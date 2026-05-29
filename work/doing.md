@@ -1,5 +1,9 @@
 # Doing
 
+**Status: shipped 2026-05-29 (commit `c6257b4`).** Capture in
+`work/notes/bot/zulipbot_v2_capture.md`. Smoke-tested in #teelt — bot
+answers in Dutch with markdown table and footer.
+
 ## Context
 
 Slice 2 of the Zulip insights bot (ADR-0002). The CLI/console
