@@ -6,22 +6,34 @@ which Zulip then posts in the same stream/topic or DM thread. We
 speak the HTTP protocol directly — the `zulip` Python library is not
 imported.
 
-Stateless v1 (ADR-0002): every request is independent. Per-topic
-conversation memory is slice 3.
+Slice 3 (ADR-0002 §7): per-`(stream, topic)` (or per-DM-sender)
+multi-turn memory lives here. `bot.conversation` owns the store;
+this module derives the key from the payload, threads history into
+`bot.answer`, and persists the new turn back. `@bot reset` clears
+the current key's history.
 """
 
 from __future__ import annotations
 
 import os
+import re
 import secrets
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, status
 
 from production_control.bot import answer as answer_mod
-from production_control.bot.zulip_payload import ZulipWebhookPayload, strip_mention
+from production_control.bot import conversation
+from production_control.bot.zulip_payload import (
+    ZulipMessage,
+    ZulipWebhookPayload,
+    strip_mention,
+)
 
 TOKEN_ENV_VAR = "ZULIP_OUTGOING_WEBHOOK_TOKEN"
+
+_RESET_RE = re.compile(r"^/?reset\s*$", re.IGNORECASE)
+_RESET_ACK = "Context gewist; we beginnen opnieuw."
 
 app = FastAPI(title="Wetering insights bot")
 
@@ -33,6 +45,32 @@ def _verify_token(provided: str) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid Zulip outgoing-webhook token",
         )
+
+
+def _conversation_key(message: Optional[ZulipMessage]) -> Optional[str]:
+    """Derive a stable per-conversation key from the Zulip message.
+
+    Stream messages are keyed by (stream_id, topic); DMs by sender
+    email. If the payload lacks the fields we need (e.g. older tests
+    that only set `type`), returns None — caller falls back to a
+    memory-less call.
+    """
+    if message is None:
+        return None
+    if message.type == "stream" and message.stream_id is not None and message.subject:
+        return f"stream:{message.stream_id}:{message.subject}"
+    if message.type == "private" and message.sender_email:
+        return f"dm:{message.sender_email}"
+    return None
+
+
+def _format_reply(result: answer_mod.AnswerResult) -> str:
+    """Compose the body Zulip will post: text + SQL echo + footer."""
+    parts = [result.text]
+    if result.sql:
+        parts.append(f"```sql\n{result.sql[-1]}\n```")
+    parts.append(answer_mod.footer(result))
+    return "\n\n".join(parts)
 
 
 @app.get("/health")
@@ -47,6 +85,17 @@ def zulip_webhook(payload: ZulipWebhookPayload) -> Dict[str, Any]:
     if not question:
         # Empty JSON body is Zulip's "no reply" convention.
         return {}
-    result = answer_mod.answer(question)
-    body = result.text + "\n\n" + answer_mod.footer(result)
-    return {"content": body}
+
+    key = _conversation_key(payload.message)
+
+    if _RESET_RE.match(question):
+        if key:
+            conversation.reset(key)
+        return {"content": _RESET_ACK}
+
+    history = conversation.recall(key) if key else []
+    result = answer_mod.answer(question, history=history)
+    if key and not result.error:
+        conversation.extend(key, result.new_messages, result.tokens)
+
+    return {"content": _format_reply(result)}

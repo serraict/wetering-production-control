@@ -36,3 +36,40 @@ def test_model_examples_entries_are_pairs_of_strings():
             slug, note = entry
             assert isinstance(slug, str) and "/" in slug, f"bad slug: {slug!r}"
             assert isinstance(note, str) and note
+
+
+class TestSystemMessage:
+    """Anthropic prompt caching via OpenRouter — see
+    https://openrouter.ai/docs/guides/best-practices/prompt-caching.
+
+    Anthropic requires an explicit `cache_control` marker; other
+    providers either auto-cache or do not yet support it via
+    OpenRouter, so we only attach the marker for `anthropic/*` slugs.
+    """
+
+    def test_anthropic_default_wraps_content_with_cache_control(self, monkeypatch):
+        monkeypatch.delenv("BOT_MODEL", raising=False)  # default = anthropic
+        msg = llm.system_message("you are a bot")
+        assert msg["role"] == "system"
+        assert isinstance(msg["content"], list)
+        assert msg["content"][0]["type"] == "text"
+        assert msg["content"][0]["text"] == "you are a bot"
+        assert msg["content"][0]["cache_control"] == {"type": "ephemeral"}
+
+    def test_non_anthropic_model_returns_plain_string_content(self, monkeypatch):
+        monkeypatch.setenv("BOT_MODEL", "deepseek/deepseek-r1")
+        msg = llm.system_message("you are a bot")
+        assert msg == {"role": "system", "content": "you are a bot"}
+
+    def test_explicit_model_override_takes_precedence(self, monkeypatch):
+        monkeypatch.setenv("BOT_MODEL", "deepseek/deepseek-r1")
+        msg = llm.system_message("hi", model="anthropic/claude-haiku-4-5")
+        assert isinstance(msg["content"], list)
+        assert msg["content"][0]["cache_control"] == {"type": "ephemeral"}
+
+    def test_supports_anthropic_caching_helper(self, monkeypatch):
+        monkeypatch.setenv("BOT_MODEL", "anthropic/claude-sonnet-4.6")
+        assert llm.supports_anthropic_caching() is True
+        monkeypatch.setenv("BOT_MODEL", "google/gemini-2.5-pro")
+        assert llm.supports_anthropic_caching() is False
+        assert llm.supports_anthropic_caching("anthropic/claude-haiku-4-5") is True

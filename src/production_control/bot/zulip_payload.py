@@ -16,11 +16,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ZulipMessage(BaseModel):
-    """The nested `message` object Zulip sends. v1 only inspects `type`."""
+    """The nested `message` object Zulip sends.
+
+    Slice 3 needs `stream_id`+`subject` (for stream-topic keying) and
+    `sender_email` (for DM keying). Other Zulip fields are ignored.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
     type: str = Field(default="stream")  # "stream" or "private"
+    stream_id: Optional[int] = None
+    subject: Optional[str] = None  # Zulip's wire name for topic
+    sender_email: Optional[str] = None
 
 
 class ZulipWebhookPayload(BaseModel):

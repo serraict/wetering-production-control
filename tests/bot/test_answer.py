@@ -36,6 +36,14 @@ def _tool_call(call_id, name, arguments):
     )
 
 
+def _system_text(msg: dict) -> str:
+    """Read the system text whether content is a string or content-block list."""
+    content = msg["content"]
+    if isinstance(content, str):
+        return content
+    return "".join(block.get("text", "") for block in content)
+
+
 def test_text_only_terminates_immediately(tmp_path):
     audit_file = tmp_path / "audit.jsonl"
 
@@ -180,7 +188,7 @@ def test_injected_now_flows_into_system_prompt(tmp_path):
     )
     system_msg = captured[0]["messages"][0]
     assert system_msg["role"] == "system"
-    content = system_msg["content"]
+    content = _system_text(system_msg)
     # Week-date form of today + week bounds visible.
     assert "2026-W22-4" in content
     assert "2026-W22-1" in content
@@ -202,7 +210,7 @@ def test_system_prompt_warns_against_week_string_matching(tmp_path):
         audit_path=str(tmp_path / "audit.jsonl"),
         now=date(2026, 5, 28),
     )
-    content = captured[0]["messages"][0]["content"]
+    content = _system_text(captured[0]["messages"][0])
     assert "BETWEEN DATE" in content
     assert "Do not string-match" in content
 
@@ -221,10 +229,64 @@ def test_system_prompt_names_all_three_languages(tmp_path):
         audit_path=str(tmp_path / "audit.jsonl"),
         now=date(2026, 5, 28),
     )
-    content = captured[0]["messages"][0]["content"]
+    content = _system_text(captured[0]["messages"][0])
     assert "Dutch" in content
     assert "English" in content
     assert "Polish" in content
+
+
+def test_history_is_spliced_between_system_and_new_user_turn(tmp_path):
+    """When `history=` is passed, it appears in the LLM messages between
+    the system prompt and the new user question."""
+    captured: list[dict] = []
+
+    def fake_chat(**kwargs):
+        captured.append(kwargs)
+        return _fake_response(content="ok")
+
+    history = [
+        {"role": "user", "content": "wat speelde er vorige week?"},
+        {"role": "assistant", "content": "12 partijen."},
+    ]
+    answer.answer(
+        "en deze week?",
+        llm_chat=fake_chat,
+        audit_path=str(tmp_path / "audit.jsonl"),
+        history=history,
+    )
+    msgs = captured[0]["messages"]
+    assert msgs[0]["role"] == "system"
+    assert msgs[1] == history[0]
+    assert msgs[2] == history[1]
+    assert msgs[3] == {"role": "user", "content": "en deze week?"}
+
+
+def test_new_messages_contains_only_this_turn(tmp_path):
+    """`AnswerResult.new_messages` is just the user turn + what we appended,
+    even when prior history was passed in."""
+
+    def fake_chat(**_):
+        return _fake_response(content="hier is je antwoord")
+
+    history = [
+        {"role": "user", "content": "vorige vraag"},
+        {"role": "assistant", "content": "vorig antwoord"},
+    ]
+    result = answer.answer(
+        "nieuwe vraag",
+        llm_chat=fake_chat,
+        audit_path=str(tmp_path / "audit.jsonl"),
+        history=history,
+    )
+    assert result.new_messages[0] == {"role": "user", "content": "nieuwe vraag"}
+    assert any(
+        m.get("role") == "assistant" and "hier is je antwoord" in (m.get("content") or "")
+        for m in result.new_messages
+    )
+    # Prior history is NOT echoed back — caller still has it.
+    assert not any(
+        m.get("content") == "vorige vraag" for m in result.new_messages if m.get("role") == "user"
+    )
 
 
 def test_audit_record_has_iso_timestamp(tmp_path):

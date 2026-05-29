@@ -39,6 +39,19 @@ if leaked:
 """
 
 
+_CONVERSATION_PROBE = """
+import sys
+import production_control.bot.conversation  # noqa: F401
+leaked = sorted(
+    m for m in sys.modules
+    if m == "fastapi" or m.startswith("fastapi.")
+    or m == "zulip" or m.startswith("zulip.")
+)
+if leaked:
+    raise SystemExit("LEAKED: " + ",".join(leaked))
+"""
+
+
 def _run(probe: str):
     return subprocess.run(
         [sys.executable, "-c", probe],
@@ -59,4 +72,12 @@ def test_server_does_not_import_zulip_library():
     proc = _run(_SERVER_PROBE)
     assert proc.returncode == 0, (
         f"bot.server pulled in the zulip library.\n" f"stdout: {proc.stdout}\nstderr: {proc.stderr}"
+    )
+
+
+def test_conversation_does_not_import_fastapi_or_zulip():
+    proc = _run(_CONVERSATION_PROBE)
+    assert proc.returncode == 0, (
+        f"bot.conversation pulled in transport libs.\n"
+        f"stdout: {proc.stdout}\nstderr: {proc.stderr}"
     )

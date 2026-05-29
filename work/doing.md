@@ -1,142 +1,188 @@
 # Doing
 
-**Status: shipped 2026-05-29 (commit `c6257b4`).** Capture in
-`work/notes/bot/zulipbot_v2_capture.md`. Smoke-tested in #teelt — bot
-answers in Dutch with markdown table and footer.
+**Status: implementation complete, awaiting smoke test.**
+- All 9 automated acceptance criteria passed; `make quality` green
+  (465+ tests). Bonus inline change: Anthropic prompt-caching marker
+  via `bot.llm.system_message()` (see "Inline addition" below).
+- Pending: manual smoke test in `#teelt` (last checkbox) +
+  `work/notes/bot/zulipbot_v3_capture.md`.
 
 ## Context
 
-Slice 2 of the Zulip insights bot (ADR-0002). The CLI/console
-prototype works end-to-end against real Dremio and OpenRouter; this
-slice gives the bot a Zulip-facing surface so the rest of the team
-can actually talk to it.
+Slice 3 of the Zulip insights bot (ADR-0002). Slice 2 shipped a
+stateless transport: every `@serradata` mention is independent, so
+follow-ups like "OK, same query for last week" force the user to
+restate the full question. This slice gives the bot per-topic
+multi-turn memory so a Zulip topic feels like an actual conversation.
 
-Picking the outgoing-webhook style (as flagged in ADR-0002): Zulip
-POSTs a JSON payload to our endpoint when the bot is @-mentioned in a
-stream or DM'd; our endpoint replies synchronously with the answer
-content. No long-poll, no Zulip Python SDK on our side — we just
-speak the HTTP webhook protocol. This keeps `bot.answer(...)`
-transport-agnostic and `bot.server` thin.
+ADR-0002 §7 calls for this explicitly: memory keyed by Zulip
+`(stream, topic)`, capped by turn count *and* tokens, with replies
+echoing the SQL the bot ran so the inferred context stays visible to
+the user.
 
 ## Goals
 
-1. A `bot.server` FastAPI app exposes `POST /zulip` and `GET /health`.
-2. `POST /zulip` validates a shared outgoing-webhook token, extracts
-   the user's question (mention prefix stripped), calls
-   `bot.answer(...)`, and responds with
-   `{"content": "<answer text + footer>"}`.
-3. The bot runs as its own compose service alongside the web app and
-   the protocol daemon, sharing the image but with a different
-   entrypoint.
-4. v1 stays stateless: each @-mention or DM is an independent call.
-   Per-topic memory is slice 3.
+1. The bot remembers prior turns per `(stream, topic)` (for DMs:
+   per-sender). Follow-ups in the same topic see earlier user
+   questions, assistant replies, and tool results.
+2. History is bounded: oldest turns drop when either a turn cap or a
+   token cap is exceeded. The cap is configurable but has sane
+   defaults.
+3. Every reply shows the SQL the bot just ran, so users can tell what
+   context will carry forward and spot wrong-direction inferences
+   early.
+4. `@serradata reset` (no other text) clears the topic's history and
+   acknowledges in the user's language.
+5. `bot.answer(...)` stays transport-agnostic: the history store lives
+   in `bot.server` (and the CLI/console can opt in trivially), not in
+   `bot.answer`. Existing tests for `answer()` remain valid.
 
 ## Acceptance criteria
 
-- [ ] `POST /zulip` with a valid Zulip outgoing-webhook payload and
-      the correct token returns 200 with JSON
-      `{"content": "<text>\n\n<footer>"}` where the text comes from
-      `bot.answer(question).text` and the footer from
-      `answer.footer(result)`.
-- [ ] `POST /zulip` with a wrong/missing token returns 401.
-- [ ] `POST /zulip` with a malformed payload returns 422 (FastAPI
-      default; document this — Zulip will retry).
-- [ ] The mention prefix (`@**Bot Name**`, including silent-mention
-      form `@_**Bot Name**`) is stripped from the message content
-      before it reaches `bot.answer`.
-- [ ] `GET /health` returns 200 with a small JSON body
-      (`{"status": "ok"}`).
-- [ ] `bot.server` does not import the `zulip` package (we speak the
-      HTTP protocol directly). Extended import-graph test verifies.
-- [ ] `docker-compose.yml` has a new `bot` service: same image,
-      entrypoint runs `uvicorn production_control.bot.server:app`,
-      env_file: `.env`, restart policy + healthcheck.
-- [ ] `.env.example` documents `ZULIP_OUTGOING_WEBHOOK_TOKEN`.
-- [ ] `make quality` is green.
-- [ ] (Manual) Smoke test in a Zulip dev org: register an outgoing
-      webhook bot, @-mention it in a stream → response posts under
-      the same topic; DM it → response posts in the DM.
+- [x] Two consecutive `@serradata` mentions in the same Zulip topic:
+      the second can refer to "that" / "die week" / "the same query
+      but for X" and get a sensible answer that builds on the first.
+- [x] A third mention in a *different* topic does not see history
+      from the first topic.
+- [x] A DM follow-up sees history from the prior DM (same sender),
+      independent of any stream history.
+- [x] `@serradata reset` in a topic clears that topic's history and
+      replies with an acknowledgement in Dutch/English/Polish
+      matching the recent topic language (default Dutch).
+- [x] After enough turns (default 8 user turns, or 30k history
+      tokens — whichever first), oldest user/assistant exchanges drop
+      from the prompt; the most recent exchange is always retained.
+- [x] The reply text or footer shows the SQL the bot just executed
+      for this turn (single line under the answer, fenced as
+      `sql`).
+- [x] `bot.answer(...)` accepts a `history: list[dict]` parameter
+      that gets spliced between the system prompt and the new user
+      question. Default empty list = current stateless behaviour.
+- [x] `bot.conversation` module owns the in-memory `dict[key, deque]`
+      store and the cap-enforcement. Unit-tested in isolation
+      (recall/extend/reset, cap eviction by turn count and by tokens).
+- [x] Import-graph test still green: `bot.conversation` does not pull
+      in FastAPI or zulip.
+- [x] `make quality` is green.
+- [ ] (Manual) Smoke test in `#teelt`: ask a question, follow up with
+      "and for last week?", verify the bot uses the carried context;
+      then `@serradata reset`, ask the follow-up alone, verify it
+      now lacks context.
 
 ## Design
 
-- **Module shape.**
-  - `bot/server.py` — FastAPI app with two routes.
-  - `bot/zulip_payload.py` — Pydantic models for the outgoing
-    webhook payload + mention-stripping helper. Pure functions,
-    unit-tested in isolation.
-  - `tests/bot/test_zulip_payload.py` — payload parsing + mention
-    stripping.
-  - `tests/bot/test_server.py` — FastAPI `TestClient`, mocked
-    `answer.answer` (avoid hitting OpenRouter / Dremio in unit tests).
-- **Payload model (lean).** Zulip's outgoing-webhook POST is a fat
-  JSON; we only need:
-  - `token: str`
-  - `bot_full_name: str` (used to strip the mention)
-  - `data: str` (the raw message content, including the mention)
-  - `message.type: "stream" | "private"` (informational; v1 doesn't
-    branch on it)
-  Other fields accepted-and-ignored via `model_config = {"extra":
-  "ignore"}`.
-- **Token verification.** Compare `payload.token` to
-  `os.environ["ZULIP_OUTGOING_WEBHOOK_TOKEN"]` with `secrets.compare_digest`.
-  If the env var is unset, refuse all requests (return 503 or 401 +
-  log a clear error — pick 401 for simplicity).
-- **Mention stripping.** Strip leading
-  `@**<bot_full_name>** ` and `@_**<bot_full_name>** ` (both forms;
-  silent-mention variant has an underscore). Trim whitespace. If
-  nothing remains after stripping, return 200 with an empty body so
-  Zulip doesn't loop.
-- **Response shape.** `{"content": text + "\n\n" + footer}`. Zulip
-  posts that under the same stream/topic for stream mentions, as a
-  DM reply for DMs — Zulip handles the routing based on the original
-  message.
-- **Compose service.**
-  ```yaml
-  bot:
-    image: ghcr.io/serraict/wetering-production-control:latest
-    entrypoint: ["uvicorn", "production_control.bot.server:app",
-                 "--host", "0.0.0.0", "--port", "7902"]
-    ports:
-      - "7902:7902"
-    env_file:
-      - .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c",
-             "import urllib.request,sys; urllib.request.urlopen('http://localhost:7902/health', timeout=2)"]
-      interval: 30s
-      timeout: 5s
-      retries: 2
-      start_period: 10s
-    networks:
-      - serra-vine
+- **Store shape.** `bot/conversation.py` exposes:
+  ```python
+  recall(key: str) -> list[dict]
+  extend(key: str, new_messages: list[dict], tokens_added: int) -> None
+  reset(key: str) -> None
   ```
-  Port `7902` chosen to sit next to `7901` (web). Adjust if it's
-  taken.
-- **Out of scope for this slice.** Per-topic conversation memory
-  (slice 3). Auth scoping (slice 4). Rate limiting. Async/background
-  response — Zulip's outgoing webhook is synchronous, the answer must
-  fit within the webhook timeout (typically ~30s).
+  Backed by an in-process `dict[str, ConversationState]` where state
+  is a `deque` of messages plus a running token estimate. Process
+  restarts wipe state — acceptable for v1 (it's a chat assistant, not
+  a system of record). Persistence is a follow-up if anyone notices.
+
+- **Cap policy.** Two parallel caps, evicted oldest-first as
+  user/assistant *pairs* (drop a user turn → also drop its assistant
+  reply and any tool messages in between, to keep the message list
+  well-formed):
+  - `BOT_MAX_TURNS` (default 8 user turns)
+  - `BOT_MAX_HISTORY_TOKENS` (default 30000)
+  The most recent user/assistant pair is always retained even if it
+  blows a cap alone — better to send one giant turn than to send
+  nothing.
+
+- **Key derivation.** In `bot.server`:
+  - Stream message → `f"stream:{stream_id}:{topic_name}"`
+  - DM (private) → `f"dm:{sender_email}"` (group DMs: defer; treat
+    as per-sender for v1)
+  The payload's `message` block already carries `type`, `stream_id`,
+  `subject` (topic name), and `sender_email`. Extend
+  `ZulipWebhookPayload.Message` to model the fields we need.
+
+- **`answer(history=...)` plumbing.** New optional parameter; when
+  given, messages list becomes
+  `[system] + history + [{"role":"user","content":question}]`. After
+  the loop, return the *new* messages appended during this call
+  (everything from the user turn to the final assistant text) so the
+  server can persist them. Add a `new_messages: list[dict]` field to
+  `AnswerResult`.
+
+- **Reset command.** In `bot.server`, after mention-stripping, if the
+  remaining text matches `^/?reset\s*$` (case-insensitive),
+  short-circuit: `conversation.reset(key)`, return a hardcoded
+  Dutch/English/Polish ack based on the most recent stored language
+  (or just Dutch if empty). Don't call `answer()`.
+
+- **SQL echo.** Append a `sql` fenced block to the reply text when
+  `result.sql` is non-empty (last query only — earlier turns are in
+  the audit log). Slot it between the answer and the existing model
+  footer. Don't change the footer.
+
+- **What stays out of scope.**
+  - Cross-process persistence (Redis, SQLite). Defer until restart
+    wipes are observed as a real problem.
+  - Group-DM keying (multi-participant). Treat as per-sender; if it
+    matters, a follow-up slice.
+  - Pruning by content (e.g. "drop tool results, keep prose"). Whole-
+    turn FIFO eviction is enough for v1.
+  - Re-running prior SQL on history-replay. The model sees the prior
+    tool result text in the message list; it doesn't re-execute.
 
 ## Implementation steps
 
-- [ ] Add `bot/zulip_payload.py`: Pydantic models + `strip_mention(...)`
-      helper. Unit tests for both mention forms, with and without
-      surrounding whitespace, and the "nothing left" edge case.
-- [ ] Add `bot/server.py`: FastAPI `app`, `POST /zulip`, `GET /health`,
-      token verification via `secrets.compare_digest`. The route calls
-      `answer.answer(question)` and assembles `text + "\n\n" + footer`.
-- [ ] Tests with FastAPI `TestClient`: happy path (mocked answer),
-      wrong token → 401, missing token env → 401, malformed payload
-      → 422, `/health` → 200, mention stripping behavior end-to-end.
-- [ ] Extend `tests/bot/test_import_graph.py` so `bot.server` is also
-      asserted not to import `zulip` (FastAPI is allowed for the
-      server module specifically — the strict no-FastAPI rule only
-      applies to `bot.answer`).
-- [ ] Add the `bot` service to `docker-compose.yml`.
-- [ ] Add `ZULIP_OUTGOING_WEBHOOK_TOKEN=` to `.env.example` (with a
-      brief note on where to get the value in the Zulip admin UI).
-- [ ] `make quality` green.
-- [ ] (Manual, on user) Register an outgoing-webhook bot in the
-      Zulip dev org, set the URL to the bot service, smoke-test
-      stream-mention and DM.
+- [x] Add `bot/conversation.py` + `tests/bot/test_conversation.py`:
+      `recall` / `extend` / `reset`, turn-pair eviction, token-cap
+      eviction, "keep at least the latest pair" invariant. Pure
+      Python, no FastAPI/zulip imports.
+- [x] Extend `bot.answer`:
+      - Add `history: list[dict] | None = None` parameter.
+      - Add `new_messages: list[dict]` to `AnswerResult`.
+      - Splice history between system prompt and user turn; emit only
+        the new turn's messages back. Tests for: empty history (same
+        as today), with-history happy path, with-history + tool call.
+- [x] Extend `ZulipWebhookPayload.Message` to expose `stream_id`,
+      `subject`, `sender_email`, `type`. Update payload tests.
+- [x] Extend `bot.server`:
+      - Derive conversation key from payload.
+      - Detect the `reset` command pre-`answer()`; respond with ack.
+      - Pull `recall(key)` → pass into `answer(history=...)` → on
+        success, `extend(key, result.new_messages, result.tokens)`.
+      - Render SQL fenced block in the response body.
+      Tests: two-turn flow (state persists across `TestClient` calls
+      with a shared in-process store), different-topic isolation,
+      reset clears, SQL fence appears in response body.
+- [x] Update `tests/bot/test_import_graph.py` so
+      `bot.conversation` is asserted not to import fastapi or zulip.
+- [x] `make quality` green.
+- [ ] (Manual, on user) Smoke test in `#teelt`: multi-turn happy
+      path, cross-topic isolation, `reset`. Note observations in
+      `work/notes/bot/zulipbot_v3_capture.md`.
+
+## Inline addition: Anthropic prompt caching
+
+Folded into this slice (smoke-test session is the natural moment to
+measure latency before/after). Reason: investigating the v2 latency
+data showed every LLM hop on Sonnet 4.6 takes 5–10s, and OpenRouter's
+prompt-caching docs make clear that without an explicit
+`cache_control` marker we get zero caching on Anthropic — the ~5–6k
+token system prompt gets re-processed on every turn.
+
+- `bot.llm.system_message(text)` builds a system message; for
+  `anthropic/*` models it wraps the text in a content block with
+  `cache_control: {"type": "ephemeral"}`. Other providers get the
+  plain-string shape.
+- `bot.answer` routes its system prompt through `llm.system_message()`.
+- Tests in `tests/bot/test_llm.py::TestSystemMessage` cover Anthropic
+  default, non-Anthropic plain shape, explicit override, and the
+  helper itself. `tests/bot/test_answer.py` got a small
+  `_system_text()` helper so existing prompt-content assertions
+  handle both shapes.
+- Expected behaviour: first turn in a topic ~unchanged (cache write
+  costs 1.25× input). Subsequent turns within 5 min should be
+  visibly faster (TTFT drops sharply when ~90% of the prefix is
+  cache-read at 0.25× input pricing).
+- Verification ideas during smoke test:
+  - Time two CLI calls back-to-back; second should be faster.
+  - OpenRouter dashboard shows `cache_creation_input_tokens` and
+    `cache_read_input_tokens` once the marker is active.

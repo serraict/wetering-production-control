@@ -78,6 +78,36 @@ def model_name() -> str:
     return os.environ.get("BOT_MODEL", DEFAULT_MODEL)
 
 
+def supports_anthropic_caching(model: Optional[str] = None) -> bool:
+    """Anthropic requires an explicit `cache_control` marker; other
+    providers either auto-cache or do not yet support it via OpenRouter.
+    OpenRouter passes the marker through to direct Anthropic
+    (see https://openrouter.ai/docs/guides/best-practices/prompt-caching).
+    """
+    return (model or model_name()).lower().startswith("anthropic/")
+
+
+def system_message(text: str, *, model: Optional[str] = None) -> dict:
+    """Build a `system` message. For Anthropic models, wrap the text in
+    a content block with `cache_control: ephemeral` so the (large,
+    near-stable) system prompt is served from Anthropic's prefix cache
+    on subsequent turns. Other providers get the plain-string shape
+    OpenAI's spec expects.
+    """
+    if supports_anthropic_caching(model):
+        return {
+            "role": "system",
+            "content": [
+                {
+                    "type": "text",
+                    "text": text,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+        }
+    return {"role": "system", "content": text}
+
+
 def _client() -> OpenAI:
     key = os.environ.get("OPENROUTER_API_KEY")
     if not key:

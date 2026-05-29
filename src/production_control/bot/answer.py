@@ -68,6 +68,11 @@ class AnswerResult:
     iterations: int = 0
     model: str = ""
     error: Optional[str] = None
+    # Messages appended by *this* call, in order — the user turn, any
+    # tool exchanges, and the final assistant reply. Callers that
+    # persist conversation state (e.g. bot.server) hand this list back
+    # to bot.conversation.extend so the next turn can recall it.
+    new_messages: List[dict] = field(default_factory=list)
 
 
 def _temporal_context(now: Union[date, datetime]) -> str:
@@ -126,6 +131,7 @@ def _call_tool(name: str, arguments: str, engine: Optional[Engine]) -> str:
 def answer(
     question: str,
     *,
+    history: Optional[List[dict]] = None,
     engine: Optional[Engine] = None,
     llm_chat: Callable[..., Any] = llm.chat,
     audit_path: Optional[str] = None,
@@ -135,16 +141,22 @@ def answer(
 
     `now` lets tests inject a deterministic "today"; defaults to
     `date.today()`.
+
+    `history`, when provided, is the flat message list returned by
+    `bot.conversation.recall(...)` — prior user/assistant/tool
+    messages. It is spliced between the system prompt and the new
+    user turn; the call remains stateless from this module's POV.
     """
     started = time.monotonic()
     model = llm.model_name()
     if now is None:
         now = date.today()
 
-    messages: List[dict] = [
-        {"role": "system", "content": _system_prompt(now)},
-        {"role": "user", "content": question},
-    ]
+    messages: List[dict] = [llm.system_message(_system_prompt(now))]
+    if history:
+        messages.extend(history)
+    new_turn_start = len(messages)
+    messages.append({"role": "user", "content": question})
 
     sql_seen: List[str] = []
     rows_seen = 0
@@ -225,6 +237,7 @@ def answer(
         iterations=iters,
         model=model,
         error=error,
+        new_messages=messages[new_turn_start:],
     )
 
     audit.append(
