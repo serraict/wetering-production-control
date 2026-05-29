@@ -28,3 +28,9 @@ Product increments to realize the product vision.
   Instrument per-step timings in the audit JSONL, then triage:
   OpenRouter hop, schema-in-prompt token cost, two-round-trip pattern,
   or model choice. See `work/notes/bot/zulipbot_v1_capture.md`.
+- **Zulip insights bot — graceful Dremio-unavailable.** Connection
+  failures hang ~30s and the LLM may retry, blowing through Zulip's 10s
+  webhook timeout (observed 2026-05-29 during slice 2 setup). Set a
+  short Dremio connect timeout, distinguish "infra down" from "bad SQL"
+  inside `run_dremio_sql`, and have `answer()` short-circuit on the
+  former so the user sees a clean "Dremio onbereikbaar" reply.
