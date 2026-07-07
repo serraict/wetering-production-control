@@ -85,6 +85,7 @@ list — copy it and fill in real values.
 | `VINEAPP_OPCUA_CLIENT_APP_URI` | Optional. Default `urn:serra:production-control`. Must ≤44 chars and match the SAN URI in the client cert (Omron limit). |
 | `VINEAPP_OPCUA_SECURITY`       | `none` → anonymous + NoSecurity, no creds/cert needed (only `*_URL` vars required). Anything else (default) → user/pwd + Basic256Sha256_SignAndEncrypt with the cert/key above. Contract enforced in [`opcua/config.py`](../src/production_control/opcua/config.py). |
 | `VINEAPP_OPCUA_MONITOR_LOG_DIR`| Reserved for monitor v4 (file logging); unused today.           |
+| `VINEAPP_BOLLEN_PER_KRAT_DEFAULT` | Optional, default `999`. Fallback for `AantalBollenPerKrat` when the bollen-picklist lookup misses or errors. |
 
 ### Zulip
 

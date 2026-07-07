@@ -142,6 +142,11 @@ def before_all(context):
     os.environ.setdefault("VINEAPP_OPCUA_PLC_URL", ENDPOINT)
     os.environ.setdefault("VINEAPP_OPCUA_LEUZE_URL", ENDPOINT)
     os.environ["VINEAPP_OPCUA_SECURITY"] = "none"
+    # No Dremio in this suite: force the bollen-per-krat lookup down its
+    # error path so every scan ack writes the default (999), even when
+    # the developer's shell has a real VINEAPP_DB_CONNECTION.
+    os.environ["VINEAPP_DB_CONNECTION"] = ""
+    os.environ.pop("VINEAPP_BOLLEN_PER_KRAT_DEFAULT", None)
 
 
 def before_scenario(context, scenario):

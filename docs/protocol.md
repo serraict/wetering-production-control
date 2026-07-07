@@ -41,10 +41,13 @@ Connection settings come from `VINEAPP_OPCUA_*` env vars — see
 | `actieve_partij_nummer_2` | `ns=4;s=OPCScanner/fbOPC/ActievePartijnummer2`  | int32 | PC writes (on operator action) |
 
 `aantal_bollen_per_krat` is the bulb count for the scanned partij. PC
-writes it on each scan ack, paired with `last_scan_data`. The value
-ultimately comes from the bollen-picklist (lookup TBD); until that lookup
-is wired, PC writes a constant `600` via a single function so the source
-can be swapped without touching the protocol layer.
+writes it on each scan ack, paired with `last_scan_data`. The value is
+looked up from the bollen-picklist for the scanned partij:
+`aantal_bollen // aantal_bakken` (integer division). When the lookup
+misses (unknown partij, null/zero fields) or errors, PC writes a
+configurable default instead — `999`, overridable via
+`VINEAPP_BOLLEN_PER_KRAT_DEFAULT` — so the scan ack never blocks on
+Dremio availability or data quality.
 
 `0` is the sentinel: in `last_scan_data` it means "OS ready for new
 data"; in `actieve_partij_nummer_*` it means "no active partij".

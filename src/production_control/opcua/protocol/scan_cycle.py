@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from functools import partial
 
 from asyncua import Node, ua
@@ -28,14 +29,68 @@ PLC_AANTAL_BOLLEN_NODEID = "ns=4;s=OPCScanner/fbOPC/AantalBollenPerKrat"
 LEUZE_LAST_SCAN_NODEID = "ns=5;i=6122"
 
 
-def bollen_per_krat_for(partij: int) -> int:
+DEFAULT_BOLLEN_PER_KRAT = 999
+
+
+def _default_bollen_per_krat() -> int:
+    """Fallback bulb count; override via VINEAPP_BOLLEN_PER_KRAT_DEFAULT."""
+    raw = os.environ.get("VINEAPP_BOLLEN_PER_KRAT_DEFAULT")
+    if not raw:
+        return DEFAULT_BOLLEN_PER_KRAT
+    try:
+        return int(raw)
+    except ValueError:
+        logger.warning(
+            "invalid VINEAPP_BOLLEN_PER_KRAT_DEFAULT %r; using %d",
+            raw,
+            DEFAULT_BOLLEN_PER_KRAT,
+        )
+        return DEFAULT_BOLLEN_PER_KRAT
+
+
+def bollen_per_krat_for(partij: int, repository=None) -> int:
     """Bulb count to publish for `partij` alongside ScanResultaat.
 
-    Real source is the bollen-picklist; lookup not yet wired. Single
-    seam so the protocol write path doesn't change when the lookup
-    arrives.
+    Looked up from the bollen-picklist: aantal_bollen // aantal_bakken
+    (the picklist's bakken are the kratten on the ontstapelaar line).
+    Any miss — unknown partij, null/zero fields, non-positive result,
+    or a lookup error — falls back to the configurable default so the
+    scan ack never blocks on Dremio data quality.
+
+    Blocking call (Dremio query); run off the event loop.
     """
-    return 600
+    default = _default_bollen_per_krat()
+    try:
+        if repository is None:
+            from ...bulb_picklist.repositories import BulbPickListRepository
+
+            repository = BulbPickListRepository()
+        record = repository.get_by_id(partij)
+        if record is None or not record.aantal_bollen or not record.aantal_bakken:
+            logger.warning(
+                "bollen-per-krat: no usable picklist data for partij %d; using %d",
+                partij,
+                default,
+            )
+            return default
+        bollen = int(record.aantal_bollen // record.aantal_bakken)
+    except Exception as exc:  # noqa: BLE001 — any lookup failure → default
+        logger.warning(
+            "bollen-per-krat lookup failed for partij %d: %r; using %d",
+            partij,
+            exc,
+            default,
+        )
+        return default
+    if bollen <= 0:
+        logger.warning(
+            "bollen-per-krat: computed %d for partij %d; using %d",
+            bollen,
+            partij,
+            default,
+        )
+        return default
+    return bollen
 
 
 class ScanCycleHandler:
@@ -111,7 +166,9 @@ class ScanCycleHandler:
             # Order matters: paired information fields must be valid
             # by the time OS observes a non-zero ScanResultaat — so
             # write AantalBollenPerKrat first, then ScanResultaat.
-            bollen = bollen_per_krat_for(partij)
+            # to_thread: the picklist lookup is a blocking Dremio query;
+            # keep the event loop (subscriptions, heartbeats) responsive.
+            bollen = await asyncio.to_thread(bollen_per_krat_for, partij)
             await self._plc_aantal_bollen_node.write_value(
                 ua.DataValue(ua.Variant(bollen, ua.VariantType.Int32))
             )

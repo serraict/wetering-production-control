@@ -54,8 +54,5 @@ Product increments to realize the product vision.
 - **PLC engineer Q's (next on-site).** (1) Is
   `DeviceStatus.ErrorStatus == "ContinuousError"` steady-state or a real fault?
   (2) What does `UnpublishedVariablesStatus` count — useful signal or noise?
-- **`aantal_bollen_per_krat` real source.** PC currently writes a constant `600`
-  via a single function. Replace with a lookup from the bollen-picklist for the
-  scanned partij. Verify the lookup path first (which table/field).
 - the performance of the app does not seem to be great.\
   seem if we can find a way to monitor and improve
