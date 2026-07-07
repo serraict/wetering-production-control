@@ -193,9 +193,11 @@ class MonitorApp(App):
             tbl = self.query_one(f"#{tbl_id}", DataTable)
             # Explicit column keys so `_refresh_pane` can `update_cell` by key
             # rather than clearing+re-adding (which would reset the cursor).
+            # Value last so long payloads (e.g. Leuze scan URLs) can grow
+            # into the remaining width instead of squeezing the other columns.
             tbl.add_column("Node", key="name")
-            tbl.add_column("Value", key="value")
             tbl.add_column("Updated", key="updated")
+            tbl.add_column("Value", key="value")
             tbl.cursor_type = "row"
 
         plc_handler = StateHandler("plc", self.state)
@@ -270,8 +272,8 @@ class MonitorApp(App):
         for nid, row in new_items:
             tbl.add_row(
                 row.name,
-                _value_str(row.value),
                 _ago(row.received_at, now),
+                _value_str(row.value),
                 key=nid,
             )
             known.append(nid)
@@ -280,7 +282,9 @@ class MonitorApp(App):
         # after registration, and update_cell with the same value is wasteful.
         for nid, row in items:
             try:
-                tbl.update_cell(nid, "value", _value_str(row.value))
+                # update_width: without it the column keeps the width of the
+                # first-seen value and longer payloads get clipped.
+                tbl.update_cell(nid, "value", _value_str(row.value), update_width=True)
                 tbl.update_cell(nid, "updated", _ago(row.received_at, now))
             except Exception:  # pragma: no cover — row removed mid-refresh
                 pass
