@@ -125,6 +125,9 @@ bot-console: bot
 bot-server:
 	uv run uvicorn production_control.bot.server:app --host 0.0.0.0 --port 7902 --reload
 
+bot-prompt:
+	uv run python -m production_control.bot.print_prompt
+
 check-ci:
 	@echo "Checking CI workflow..."
 	uv run python scripts/check_workflow.py CI --watch
