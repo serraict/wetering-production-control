@@ -57,6 +57,11 @@ data"; in `actieve_partij_nummer_*` it means "no active partij".
 
 Example payload: `https://pc.potlilium.serraict.me/potting-lots/scan/27246`.
 
+Kratten on the line carry bulb-picklist labels, whose QR encodes
+`/bulb-picking/scan/<id>` — same potting-lot id (bulb-picklist rows *are*
+potting lots). The parser accepts both path forms (observed on-site
+2026-07-07).
+
 ## Sequences
 
 ### Scan cycle (one krat)
