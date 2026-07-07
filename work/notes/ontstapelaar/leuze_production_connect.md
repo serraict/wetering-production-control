@@ -31,23 +31,18 @@ Production Control and verify the scan path end-to-end.
   works in production, the cert exists in the certs volume — reuse it,
   don't regenerate (regenerating would break PLC trust).
 
-## Open items to resolve on-site (before testing)
+## Open items — resolved on-site 2026-07-07 (see leuze_connect_capture.md)
 
-1. **Production IP / URL.** Docs assume `opc.tcp://10.0.0.191:4840` —
-   confirm the actual address and that serraserver (10.0.0.3) can route
-   to it.
-2. **User account on the scanner.** Test bench used `Martin` /
-   `12345678` (capital M — the scanner is case-sensitive). Production
-   needs its own account, configured via the Leuze web interface /
-   Sensor Studio. Store the credentials in `.env` on serraserver only.
-3. **Client cert trust on the scanner.** Check whether the Leuze needs
-   our client cert in its trust list or accepts any cert with valid
-   user credentials. (This wasn't captured from the test-bench setup —
-   note what you find.)
-4. **Node IDs.** Verify `ns=5;i=6122` (LastScanData) exists on the
-   production unit; numeric ids can shift between firmware builds. Use
-   `monitor list --target leuze` (step 3 below) — it reads exactly the
-   fixed node set.
+1. **Production IP / URL.** Confirmed `opc.tcp://10.0.0.191:4840` as
+   documented.
+2. **User account on the scanner.** Configured via the Leuze web
+   interface; credentials live in `.env` on serraserver only.
+3. **Client cert trust on the scanner.** The Leuze rejects untrusted
+   clients with `BadSecurityChecksFailed` at OpenSecureChannel. Fix:
+   upload our `client_cert.der` to the device. A new/replaced device
+   starts with an empty trust store — re-upload after any device swap.
+4. **Node IDs.** Confirmed `ns=5;i=6122` (LastScanData) matches the
+   test bench.
 
 ## Test ladder
 
