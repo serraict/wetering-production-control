@@ -26,9 +26,8 @@ class LabelGenerator(BaseLabelGenerator[PottingLot]):
         """
         Generate HTML for one or more labels, duplicating each record.
 
-        For each potting lot, two identical labels are generated:
-        - One for the first pot of the lot
-        - One for the last pot of the lot
+        For each potting lot, four identical labels are generated: one on
+        each side of the first and of the last bench of the lot.
 
         Args:
             records: A single record or a list of records
@@ -41,12 +40,8 @@ class LabelGenerator(BaseLabelGenerator[PottingLot]):
         if not isinstance(records, list):
             records = [records]
 
-        # Duplicate each record to generate two identical labels
-        duplicated_records = []
-        for record in records:
-            # Add the record twice
-            duplicated_records.append(record)
-            duplicated_records.append(record)
+        # Repeat each record to generate four identical labels
+        duplicated_records = [record for record in records for _ in range(4)]
 
         # Call the parent class method with the duplicated records
         return super().generate_labels_html(duplicated_records, config)

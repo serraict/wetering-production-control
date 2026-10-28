@@ -125,7 +125,7 @@ def test_generate_pdf(sample_potting_lot):
 
 
 def test_generate_duplicate_labels(sample_potting_lot):
-    """Test that each potting lot gets two identical labels."""
+    """Test that each potting lot gets four identical labels."""
     generator = LabelGenerator()
     config = LabelConfig(width="100mm", height="75mm")
 
@@ -136,10 +136,10 @@ def test_generate_duplicate_labels(sample_potting_lot):
     # The QR code data URL will be unique for each label instance
     qr_code_count = html.count("data:image/png;base64,")
 
-    # Each potting lot should have two labels
-    assert qr_code_count == 2
+    # Each potting lot should have four labels
+    assert qr_code_count == 4
 
-    # Check for other identifying information that should appear twice
+    # Check for other identifying information that should appear four times
     assert html.count(str(sample_potting_lot.id)) >= 2
     assert html.count(sample_potting_lot.naam) >= 2
 
@@ -174,8 +174,8 @@ def test_generate_multiple_duplicate_labels(sample_potting_lot):
     # Count occurrences of key elements
     qr_code_count = html.count("data:image/png;base64,")
 
-    # Each potting lot should have two labels (total of 4)
-    assert qr_code_count == 4
+    # Each potting lot should have four labels (total of 8)
+    assert qr_code_count == 8
 
     # Check for identifying information from both records
     assert html.count(str(sample_potting_lot.id)) >= 2
