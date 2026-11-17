@@ -79,6 +79,11 @@ def display_batch_info(lot: PottingLot) -> None:
     ui.navigate.to(f"/scan/view/{lot.id}")
 
 
+def _scan_another() -> None:
+    """Return to the scanner with the camera started straight away."""
+    ui.navigate.to(f"{router.url_path_for('scan_page')}?autostart=true")
+
+
 LBL_STYLE = "text-xs text-gray-600 uppercase"
 VAL_STYLE = "text-sm font-medium"
 VAL_STYLE_DIRTY = "text-sm font-medium text-accent"
@@ -191,7 +196,7 @@ def view_batch(id: int) -> None:
                 with ui.column().classes("w-full max-w-2xl mx-auto p-1 sm:p-4 gap-2 sm:gap-4"):
                     ui.label("Batch Not Found").classes("text-2xl font-bold text-red-600")
                     ui.label(f"Batch {id} could not be found").classes("text-gray-600 mb-4")
-                    ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
+                    ui.button("Scan Another", on_click=_scan_another).props(
                         "icon=qr_code_scanner"
                     ).classes("w-full")
             return
@@ -224,7 +229,7 @@ def view_batch(id: int) -> None:
 
                 # Action buttons
                 with ui.row().classes("w-full gap-2 mt-4"):
-                    ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
+                    ui.button("Scan Another", on_click=_scan_another).props(
                         "icon=qr_code_scanner"
                     ).classes("flex-1")
                     ui.button(
@@ -238,6 +243,6 @@ def view_batch(id: int) -> None:
             with ui.column().classes("w-full max-w-2xl mx-auto p-1 sm:p-4 gap-2 sm:gap-4"):
                 ui.label("Error Loading Batch").classes("text-2xl font-bold text-red-600")
                 ui.label(f"An error occurred: {str(e)}").classes("text-gray-600 mb-4")
-                ui.button("Scan Another", on_click=lambda: ui.navigate.to("/scan")).props(
+                ui.button("Scan Another", on_click=_scan_another).props(
                     "icon=qr_code_scanner"
                 ).classes("w-full")
