@@ -22,18 +22,6 @@ logger = logging.getLogger(__name__)
 MAX_IMAGE_BYTES = 25 * 1024 * 1024
 
 
-async def read_upload(e: Any) -> tuple[str, bytes]:
-    """Return `(filename, bytes)` from an upload event.
-
-    The production image currently resolves NiceGUI 3 (`e.file`, async
-    `read()`), while `uv.lock` pins 2.x (`e.name` / `e.content`) — support both.
-    """
-    file = getattr(e, "file", None)
-    if file is not None:
-        return file.name, await file.read()
-    return e.name, e.content.read()
-
-
 def _format_timestamp(message: ZulipMessage) -> str:
     today = datetime.now().astimezone().date()
     local = message.timestamp.astimezone()
@@ -113,11 +101,11 @@ def render_communication_card(lot: Any) -> None:
 
             async def on_image(e: events.UploadEventArguments) -> None:
                 try:
-                    filename, data = await read_upload(e)
+                    data = await e.file.read()
                     await run.io_bound(
                         zulip_service.post_image,
                         lot,
-                        filename,
+                        e.file.name,
                         data,
                         caption=textarea.value or "",
                         user_name=user_name,

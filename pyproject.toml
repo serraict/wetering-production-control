@@ -5,7 +5,7 @@ authors = [{ name = "Marijn vander Zee", email = "marijn@serraict.com" }]
 requires-python = ">=3.10"
 urls = { project = "https://github.com/serraict/wetering_production_control", docs = "https://github.com/serraict/wetering_production_control/blob/main/README.md" }
 dependencies = [
-    "nicegui",
+    "nicegui>=3.14,<4",
     "typer",
     "sqlmodel",
     "rich",
@@ -68,6 +68,8 @@ markers = [
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "-p nicegui.testing.user_plugin"
+# NiceGUI 3: pages are registered by fixtures/tests, not a main.py entry point
+main_file = ""
 filterwarnings = [
     # Ignore HTTPX deprecation warning from NiceGUI testing plugin
     "ignore:The 'app' shortcut is now deprecated:DeprecationWarning:httpx",

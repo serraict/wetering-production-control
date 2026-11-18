@@ -45,10 +45,13 @@ RUN mkdir -p /app
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 
-# Create virtual environment and install all production dependencies
-RUN uv venv && uv pip install -r pyproject.toml
+# Create the virtual environment with exactly the locked production
+# dependencies (no dev extras, not the project itself — the app image
+# installs that). Installing from pyproject.toml alone ignored uv.lock and
+# silently picked up newer releases (NiceGUI 3 while we tested on 2.19).
+RUN uv sync --frozen --no-dev --no-install-project
 
 # The .venv is now at /app/.venv with all dependencies installed
 
