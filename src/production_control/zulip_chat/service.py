@@ -135,6 +135,39 @@ def post(
         raise ZulipServiceError(str(e)) from e
 
 
+def post_image(
+    lot: Any,
+    filename: str,
+    data: bytes,
+    *,
+    caption: str = "",
+    user_name: str = "Guest",
+    client: Optional[ZulipClient] = None,
+    config: Optional[ZulipConfig] = None,
+) -> int:
+    """Upload an image and post it to `lot`'s topic, with an optional caption.
+
+    Zulip renders the `[name](/user_uploads/...)` link as an inline image,
+    which `get_messages()` then shows in the thread.
+    """
+    if not data:
+        raise ZulipServiceError("Cannot post an empty image")
+    cli, cfg = _client_and_config(client, config)
+    try:
+        upload_path = cli.upload_file(filename, data)
+    except ZulipClientError as e:
+        raise ZulipServiceError(str(e)) from e
+    label = re.sub(r"[\[\]]", "", filename).strip() or "foto"
+    link = f"[{label}]({upload_path})"
+    text = caption.strip()
+    body = f"{text}\n{link}" if text else link
+    topic = topic_name_for(lot)
+    try:
+        return cli.send_message(cfg.stream, topic, f"**{user_name}**: {body}")
+    except ZulipClientError as e:
+        raise ZulipServiceError(str(e)) from e
+
+
 def narrow_url(lot: Any, *, config: Optional[ZulipConfig] = None) -> str:
     """Return a URL into the Zulip web client narrowed to this lot's topic."""
     cfg = config or get_zulip_config()

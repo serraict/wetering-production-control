@@ -148,3 +148,48 @@ def test_narrow_url(config: ZulipConfig) -> None:
 def test_narrow_url_blank_when_site_missing() -> None:
     cfg = ZulipConfig(site="", bot_email="x", bot_api_key="y")
     assert zulip_service.narrow_url(FakeLot(), config=cfg) == ""
+
+
+def test_post_image_uploads_then_posts_link(config: ZulipConfig) -> None:
+    client = MagicMock()
+    client.upload_file.return_value = "/user_uploads/2/ab/cd/foto.jpg"
+    client.send_message.return_value = 7
+
+    msg_id = zulip_service.post_image(
+        FakeLot(),
+        "foto.jpg",
+        b"jpegbytes",
+        caption="  blad geel  ",
+        user_name="Marijn",
+        client=client,
+        config=config,
+    )
+
+    assert msg_id == 7
+    client.upload_file.assert_called_once_with("foto.jpg", b"jpegbytes")
+    client.send_message.assert_called_once_with(
+        "teelt", "42", "**Marijn**: blad geel\n[foto.jpg](/user_uploads/2/ab/cd/foto.jpg)"
+    )
+
+
+def test_post_image_without_caption(config: ZulipConfig) -> None:
+    client = MagicMock()
+    client.upload_file.return_value = "/user_uploads/x/[weird].jpg"
+    zulip_service.post_image(FakeLot(), "[weird].jpg", b"x", client=client, config=config)
+    args, _ = client.send_message.call_args
+    assert args[2] == "**Guest**: [weird.jpg](/user_uploads/x/[weird].jpg)"
+
+
+def test_post_image_rejects_empty_data(config: ZulipConfig) -> None:
+    client = MagicMock()
+    with pytest.raises(ZulipServiceError):
+        zulip_service.post_image(FakeLot(), "a.jpg", b"", client=client, config=config)
+    client.upload_file.assert_not_called()
+
+
+def test_post_image_wraps_upload_error(config: ZulipConfig) -> None:
+    client = MagicMock()
+    client.upload_file.side_effect = ZulipClientError("too big")
+    with pytest.raises(ZulipServiceError, match="too big"):
+        zulip_service.post_image(FakeLot(), "a.jpg", b"x", client=client, config=config)
+    client.send_message.assert_not_called()

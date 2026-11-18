@@ -10,13 +10,16 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from nicegui import ui
+from nicegui import events, ui
 
 from ...zulip_chat import service as zulip_service
 from ...zulip_chat.service import ZulipMessage, ZulipServiceError
 from ..auth import get_current_user
 
 logger = logging.getLogger(__name__)
+
+# Zulip's default upload limit is 25 MB; phone photos are well under that.
+MAX_IMAGE_BYTES = 25 * 1024 * 1024
 
 
 def _format_timestamp(message: ZulipMessage) -> str:
@@ -96,6 +99,39 @@ def render_communication_card(lot: Any) -> None:
                 textarea.value = ""
                 _messages_block.refresh()
 
+            def on_image(e: events.UploadEventArguments) -> None:
+                try:
+                    zulip_service.post_image(
+                        lot,
+                        e.name,
+                        e.content.read(),
+                        caption=textarea.value or "",
+                        user_name=user_name,
+                    )
+                except ZulipServiceError as err:
+                    logger.warning("Zulip image post failed for lot %s: %s", lot.id, err)
+                    ui.notify(f"Foto versturen mislukt: {err}", type="negative")
+                    return
+                finally:
+                    uploader.reset()
+                textarea.value = ""
+                _messages_block.refresh()
+
+            # Hidden uploader; the camera button below opens its file picker,
+            # which on a phone offers the camera as well as the gallery.
+            uploader = (
+                ui.upload(
+                    on_upload=on_image,
+                    on_rejected=lambda: ui.notify("Foto is te groot (max 25 MB)", type="negative"),
+                    auto_upload=True,
+                    max_file_size=MAX_IMAGE_BYTES,
+                )
+                .props("accept=image/*")
+                .classes("hidden")
+            )
+            ui.button(icon="photo_camera", on_click=lambda: uploader.run_method("pickFiles")).props(
+                "dense flat color=primary"
+            ).tooltip("Foto toevoegen")
             ui.button(icon="send", on_click=on_send).props("dense flat color=primary").tooltip(
                 "Verstuur"
             )

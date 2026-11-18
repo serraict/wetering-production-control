@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import logging
 from threading import Lock
 from typing import Any, Dict, List, Optional
@@ -77,6 +78,17 @@ class ZulipClient:
         if result.get("result") != "success":
             raise ZulipClientError(f"Zulip send_message failed: {result.get('msg', result)}")
         return int(result["id"])
+
+    def upload_file(self, filename: str, data: bytes) -> str:
+        """Upload `data` as `filename`. Returns the `/user_uploads/...` path."""
+        sdk = self._get_sdk()
+        fp = io.BytesIO(data)
+        fp.name = filename  # the SDK and requests take the upload name from here
+        result = sdk.upload_file(fp)
+        if result.get("result") != "success":
+            raise ZulipClientError(f"Zulip upload_file failed: {result.get('msg', result)}")
+        # Zulip 9+ returns `url`; older servers only `uri`.
+        return result.get("url") or result["uri"]
 
 
 _default_client: Optional[ZulipClient] = None
