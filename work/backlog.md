@@ -56,3 +56,12 @@ Product increments to realize the product vision.
   (2) What does `UnpublishedVariablesStatus` count — useful signal or noise?
 - the performance of the app does not seem to be great.\
   seem if we can find a way to monitor and improve
+- **Upgrade NiceGUI 3.14 → 4.x.** Deliberate upgrade now that the base
+  image installs from `uv.lock`; recheck the test-plugin workarounds in
+  `tests/web/conftest.py` and the scanner/upload in a browser. See
+  `work/notes/platform/nicegui3_upgrade_capture.md`.
+- **Per-client refreshables.** Module-level `@ui.refreshable`s
+  (`server_side_paginated_table`, `_messages_block`) are shared by all
+  sessions: one user's `.refresh()` re-renders every connected user's
+  table/thread. Make them per-client. See
+  `work/notes/platform/nicegui3_upgrade_capture.md`.
