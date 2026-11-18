@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import io
 from dataclasses import dataclass
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from nicegui import ui
 from nicegui.testing import User
 from starlette.datastructures import UploadFile
 
-from production_control.web.components.communication_card import render_communication_card
+from production_control.web.components.communication_card import (
+    read_upload,
+    render_communication_card,
+)
 
 SERVICE = "production_control.web.components.communication_card.zulip_service"
 
@@ -39,11 +43,11 @@ async def test_uploaded_photo_is_posted_with_caption(user: User) -> None:
         upload = user.find(ui.upload).elements.pop()
         upload.handle_uploads([UploadFile(io.BytesIO(b"jpegbytes"), filename="foto.jpg")])
 
+        await user.should_see("Foto verstuurd")
         service.post_image.assert_called_once()
         args, kwargs = service.post_image.call_args
         assert args[1:] == ("foto.jpg", b"jpegbytes")
         assert kwargs["caption"] == "blad geel"
-        await user.should_see("Foto verstuurd")
 
 
 async def test_failed_photo_upload_is_reported(user: User) -> None:
@@ -57,3 +61,21 @@ async def test_failed_photo_upload_is_reported(user: User) -> None:
         upload.handle_uploads([UploadFile(io.BytesIO(b"x"), filename="foto.jpg")])
 
         await user.should_see("Foto versturen mislukt: network down")
+
+
+async def test_read_upload_supports_nicegui_3_event_shape() -> None:
+    """Production resolves NiceGUI 3, where the event carries `file` with an async read()."""
+
+    class FakeFile:
+        name = "foto.jpg"
+
+        async def read(self) -> bytes:
+            return b"jpegbytes"
+
+    event = SimpleNamespace(file=FakeFile())
+    assert await read_upload(event) == ("foto.jpg", b"jpegbytes")
+
+
+async def test_read_upload_supports_nicegui_2_event_shape() -> None:
+    event = SimpleNamespace(name="foto.jpg", content=io.BytesIO(b"jpegbytes"))
+    assert await read_upload(event) == ("foto.jpg", b"jpegbytes")

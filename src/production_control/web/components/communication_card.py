@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from nicegui import events, ui
+from nicegui import events, run, ui
 
 from ...zulip_chat import service as zulip_service
 from ...zulip_chat.service import ZulipMessage, ZulipServiceError
@@ -20,6 +20,18 @@ logger = logging.getLogger(__name__)
 
 # Zulip's default upload limit is 25 MB; phone photos are well under that.
 MAX_IMAGE_BYTES = 25 * 1024 * 1024
+
+
+async def read_upload(e: Any) -> tuple[str, bytes]:
+    """Return `(filename, bytes)` from an upload event.
+
+    The production image currently resolves NiceGUI 3 (`e.file`, async
+    `read()`), while `uv.lock` pins 2.x (`e.name` / `e.content`) — support both.
+    """
+    file = getattr(e, "file", None)
+    if file is not None:
+        return file.name, await file.read()
+    return e.name, e.content.read()
 
 
 def _format_timestamp(message: ZulipMessage) -> str:
@@ -99,12 +111,14 @@ def render_communication_card(lot: Any) -> None:
                 textarea.value = ""
                 _messages_block.refresh()
 
-            def on_image(e: events.UploadEventArguments) -> None:
+            async def on_image(e: events.UploadEventArguments) -> None:
                 try:
-                    zulip_service.post_image(
+                    filename, data = await read_upload(e)
+                    await run.io_bound(
+                        zulip_service.post_image,
                         lot,
-                        e.name,
-                        e.content.read(),
+                        filename,
+                        data,
                         caption=textarea.value or "",
                         user_name=user_name,
                     )
