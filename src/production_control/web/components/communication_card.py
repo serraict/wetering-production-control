@@ -108,28 +108,41 @@ def render_communication_card(lot: Any) -> None:
                         caption=textarea.value or "",
                         user_name=user_name,
                     )
-                except ZulipServiceError as err:
-                    logger.warning("Zulip image post failed for lot %s: %s", lot.id, err)
+                except Exception as err:  # surface every failure; upload handlers fail silently
+                    logger.warning("Image post failed for lot %s: %s", lot.id, err, exc_info=True)
                     ui.notify(f"Foto versturen mislukt: {err}", type="negative")
                     return
                 finally:
                     uploader.reset()
+                photo_dialog.close()
+                ui.notify("Foto verstuurd", type="positive")
                 textarea.value = ""
                 _messages_block.refresh()
 
-            # Hidden uploader; the camera button below opens its file picker,
-            # which on a phone offers the camera as well as the gallery.
-            uploader = (
-                ui.upload(
-                    on_upload=on_image,
-                    on_rejected=lambda: ui.notify("Foto is te groot (max 25 MB)", type="negative"),
-                    auto_upload=True,
-                    max_file_size=MAX_IMAGE_BYTES,
+            # The uploader must be tapped directly: mobile browsers only open
+            # the file picker (camera / gallery) from a real user gesture on
+            # the file input, not from a server round-trip like run_method().
+            with ui.dialog() as photo_dialog, ui.card().classes("items-stretch"):
+                ui.label("Foto toevoegen").classes("text-sm text-gray-600 uppercase")
+                ui.label("Tekst in het berichtveld wordt het onderschrift.").classes(
+                    "text-xs text-gray-500"
                 )
-                .props("accept=image/*")
-                .classes("hidden")
-            )
-            ui.button(icon="photo_camera", on_click=lambda: uploader.run_method("pickFiles")).props(
+                uploader = (
+                    ui.upload(
+                        label="Kies of maak een foto",
+                        on_upload=on_image,
+                        on_rejected=lambda: ui.notify(
+                            "Foto is te groot (max 25 MB)", type="negative"
+                        ),
+                        auto_upload=True,
+                        max_file_size=MAX_IMAGE_BYTES,
+                    )
+                    .props("accept=image/* flat bordered")
+                    .classes("w-full")
+                )
+                ui.button("Annuleren", on_click=photo_dialog.close).props("flat")
+
+            ui.button(icon="photo_camera", on_click=photo_dialog.open).props(
                 "dense flat color=primary"
             ).tooltip("Foto toevoegen")
             ui.button(icon="send", on_click=on_send).props("dense flat color=primary").tooltip(
